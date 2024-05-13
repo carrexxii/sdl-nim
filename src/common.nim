@@ -1,5 +1,11 @@
 import std/strformat
-export strformat
+export     strformat
+
+const
+    SDLDir* {.strdefine.} =  "./lib"
+    SDLPath* = fmt"{SDLDir}/libSDL3.so"
+
+proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SDLPath.}
 
 proc red*    (s: string): string = "\e[31m" & s & "\e[0m"
 proc green*  (s: string): string = "\e[32m" & s & "\e[0m"

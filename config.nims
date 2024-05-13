@@ -12,5 +12,4 @@ task build, "Build SDL":
 
 task test, "Run tests":
     echo "Running tests..."
-    with_dir "tests":
-        exec "nim c -r --path:.. test.nim"
+    exec "nim c -r -p:. -o:test tests/test.nim"

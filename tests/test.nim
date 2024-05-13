@@ -8,19 +8,20 @@ const
 echo fmt"Nim version: {NimVersion}"
 echo fmt"SDL version: {sdl.get_version()}"
 
-init(VideoFlag, EventsFlag)
-let window = sdl.create_window("SDL + BGFX", WinW, WinH, sdl.WindowResizable)
+init(ifVideo or ifEvents)
+let window = create_window("SDL + BGFX", WinW, WinH, wfResizable)
 
 var running = true
 while running:
-    for event in get_event():
+    for event in get_events():
         case event.kind
-        of Quit: running = false
-        of KeyUp: discard
-        of KeyDown:
+        of ekQuit:
+          running = false
+        of ekKeyDown:
             case event.key.keysym.sym
             of Key_Escape: running = false
             else: discard
+        else: discard
 
-close_window window
+destroy_window window
 sdl.quit()
