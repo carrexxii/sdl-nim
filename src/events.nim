@@ -15,122 +15,122 @@ type
     MouseButton* = distinct uint8
 
     EventKind* {.size: sizeof(uint32).} = enum
-        ekFirst = 0x0
-        ekQuit = 0x100
-        ekTerminating
-        ekLowMemory
-        ekWillEnterBackground
-        ekDidEnterBackground
-        ekWillEnterForeground
-        ekDidEnterForeground
-        ekLocaleChanged
-        ekSystemThemeChanged
+        First = 0x0
+        Quit = 0x100
+        Terminating
+        LowMemory
+        WillEnterBackground
+        DidEnterBackground
+        WillEnterForeground
+        DidEnterForeground
+        LocaleChanged
+        SystemThemeChanged
 
-        ekDisplayOrientation = 0x151
-        ekDisplayAdded
-        ekDisplayRemoved
-        ekDisplayMoved
-        ekDisplayContentScaleChanged
-        ekDisplayHDRStateChanged
+        DisplayOrientation = 0x151
+        DisplayAdded
+        DisplayRemoved
+        DisplayMoved
+        DisplayContentScaleChanged
+        DisplayHDRStateChanged
 
-        ekWindowShown = 0x202
-        ekWindowHidden
-        ekWindowExposed
-        ekWindowMoved
-        ekWindowResized
-        ekWindowPixelSizeChanged
-        ekWindowMinimized
-        ekWindowMaximized
-        ekWindowRestored
-        ekWindowMouseEnter
-        ekWindowMouseLeave
-        ekWindowFocusGained
-        ekWindowFocusLost
-        ekWindowCloseRequested
-        ekWindowTakeFocus
-        ekWindowHitTest
-        ekWindowICCProfChanged
-        ekWindowDisplayChanged
-        ekWindowDisplayScaleChanged
-        ekWindowOccluded
-        ekWindowEnterFullscreen
-        ekWindowLeaveFullscreen
-        ekWindowDestroyed
-        ekWindowPenEnter
-        ekWindowPenLeave
+        WindowShown = 0x202
+        WindowHidden
+        WindowExposed
+        WindowMoved
+        WindowResized
+        WindowPixelSizeChanged
+        WindowMinimized
+        WindowMaximized
+        WindowRestored
+        WindowMouseEnter
+        WindowMouseLeave
+        WindowFocusGained
+        WindowFocusLost
+        WindowCloseRequested
+        WindowTakeFocus
+        WindowHitTest
+        WindowICCProfChanged
+        WindowDisplayChanged
+        WindowDisplayScaleChanged
+        WindowOccluded
+        WindowEnterFullscreen
+        WindowLeaveFullscreen
+        WindowDestroyed
+        WindowPenEnter
+        WindowPenLeave
 
-        ekKeyDown = 0x300
-        ekKeyUp
-        ekTextEditing
-        ekTextInput
-        ekKeymapChanged
-        ekKeyboardAdded
-        ekKeyboardRemoved
+        KeyDown = 0x300
+        KeyUp
+        TextEditing
+        TextInput
+        KeymapChanged
+        KeyboardAdded
+        KeyboardRemoved
 
-        ekMouseMotion = 0x400
-        ekMouseButtonDownOWN
-        ekMouseButtonUp
-        ekMouseWheel
-        ekMouseAdded
-        ekMouseRemoved
+        MouseMotion = 0x400
+        MouseButtonDownOWN
+        MouseButtonUp
+        MouseWheel
+        MouseAdded
+        MouseRemoved
 
-        ekJoystickAxisMotion = 0x600
-        ekJoystickBallMotion
-        ekJoystickHatMotion
-        ekJoystickButtonDown
-        ekJoystickButtonUp
-        ekJoystickAdded
-        ekJoystickRemoved
-        ekJoystickBatteryUpdated
-        ekJoystickUpdateComplete
+        JoystickAxisMotion = 0x600
+        JoystickBallMotion
+        JoystickHatMotion
+        JoystickButtonDown
+        JoystickButtonUp
+        JoystickAdded
+        JoystickRemoved
+        JoystickBatteryUpdated
+        JoystickUpdateComplete
 
-        ekGamepadAxisMotion = 0x650
-        ekGamepadButtonDown
-        ekGamepadButtonUp
-        ekGamepadAdded
-        ekGamepadRemoved
-        ekGamepadRemapped
-        ekGamepadTouchpadDown
-        ekGamepadTouchpadMotion
-        ekGamepadTouchpadUp
-        ekGamepadSensorUpdate
-        ekGamepadUpdateComplete
-        ekGamepadSteamHandleUpdated
+        GamepadAxisMotion = 0x650
+        GamepadButtonDown
+        GamepadButtonUp
+        GamepadAdded
+        GamepadRemoved
+        GamepadRemapped
+        GamepadTouchpadDown
+        GamepadTouchpadMotion
+        GamepadTouchpadUp
+        GamepadSensorUpdate
+        GamepadUpdateComplete
+        GamepadSteamHandleUpdated
 
-        ekFingerDown = 0x700
-        ekFingerUp
-        ekFingerMotion
+        FingerDown = 0x700
+        FingerUp
+        FingerMotion
 
-        ekClipboardUpdate = 0x900
+        ClipboardUpdate = 0x900
 
-        ekDropFile = 0x1000
-        ekDropText
-        ekDropBegin
-        ekDropComplete
-        ekDropPosition
+        DropFile = 0x1000
+        DropText
+        DropBegin
+        DropComplete
+        DropPosition
 
-        ekAudioDeviceAdded = 0x1100
-        ekAudioDeviceRemoved
-        ekAudioDeviceFormatChanged
+        AudioDeviceAdded = 0x1100
+        AudioDeviceRemoved
+        AudioDeviceFormatChanged
 
-        ekSensorUpdate = 0x1200
+        SensorUpdate = 0x1200
 
-        ekPenDown = 0x1300
-        ekPenUp
-        ekPenMotion
-        ekPenButtonDown
-        ekPenButtonUp
+        PenDown = 0x1300
+        PenUp
+        PenMotion
+        PenButtonDown
+        PenButtonUp
 
-        ekCameraDeviceAdded = 0x1400
-        ekCameraDeviceRemoved
-        ekCameraDeviceApproved
-        ekCameraDeviceDenied
+        CameraDeviceAdded = 0x1400
+        CameraDeviceRemoved
+        CameraDeviceApproved
+        CameraDeviceDenied
 
-        ekRenderTargetsReset = 0x2000
-        ekRenderDeviceReset
+        RenderTargetsReset = 0x2000
+        RenderDeviceReset
 
-        ekPollSentinel = 0x7F00
-        ekUser = 0x8000
+        PollSentinel = 0x7F00
+        User = 0x8000
 
     EventState* = enum
         esReleased = 0
@@ -212,8 +212,7 @@ type
         window_id*: WindowID
         mouse_id* : MouseID
         state*    : uint32
-        x*        : float32
-        y*        : float32
+        x*, y*    : float32
         x_rel*    : float32
         y_rel*    : float32
 
@@ -227,17 +226,15 @@ type
         state*    : uint8
         clicks*   : uint8
         _         : uint8
-        x*        : float32
-        y*        : float32
+        x*, y*    : float32
 
     MouseWheelEvent* = object
-        kind*: EventKind
-        reserved: uint32
-        time* : Timestamp
+        kind*     : EventKind
+        reserved  : uint32
+        time*     : Timestamp
         window_id*: WindowID
         mouse_id* : MouseID
-        x*        : float32
-        y*        : float32
+        x*, y*    : float32
         direction*: MouseWheelDirection
         mouse_x*  : float32
         mouse_y*  : float32

@@ -1,5 +1,5 @@
-import std/strformat
-export     strformat
+import std/[strformat, options]
+export strformat, options
 
 const
     SDLDir* {.strdefine.} =  "./lib"
