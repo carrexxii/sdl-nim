@@ -1,5 +1,6 @@
 import common, pixels, rect
 
+# TODO: use a block structure for this
 # TODO: figure out how to move this to common
 proc check_pointer[T](p: pointer; msg: string): Option[T] =
     let msgi {.inject.} = msg # https://github.com/nim-lang/Nim/issues/10977
@@ -98,6 +99,7 @@ proc center_window*(window: Window) =
 
 proc destroy_window*(window: Window) {.importc: "SDL_DestroyWindow", dynlib: SDLPath.}
 proc quit*()                         {.importc: "SDL_Quit"         , dynlib: SDLPath.}
+proc destroy*(win: Window) {.inline.} = destroy_window win
 
 from properties import PropertyID
 proc get_num_video_drivers*(): int32          {.importc: "SDL_GetNumVideoDrivers"   , dynlib: SDLPath.}

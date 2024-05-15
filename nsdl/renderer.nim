@@ -6,7 +6,7 @@ proc check_pointer[T](p: pointer; msg: string): Option[T] =
         echo red fmt"Error: failed to get {msgi}: {get_error()}"
         result = none T
     else:
-        result = some cast[ptr T](p)[]
+        result = some cast[T](p)
 
 template check_error(msg, body) =
     when not defined NoSDLErrorChecks:
@@ -136,12 +136,26 @@ proc get_current_renderer_output_size*(ren): (int32, int32) =
     if get_current_renderer_output_size(ren, result[0].addr, result[1].addr) != 0:
         echo red fmt"Error: failed to get current renderer output size: {get_error()}"
 
-proc create_texture*(ren; format: PixelFormat; access: TextureAccess; w, h: int32): pointer {.importc: "SDL_CreateTexture"           , dynlib: SDLPath.}
-proc create_texture*(ren; surf): pointer                                                    {.importc: "SDL_CreateTextureFromSurface", dynlib: SDLPath.}
+proc create_texture*(ren; format: PixelFormat; access: TextureAccess; w, h: cint): pointer {.importc: "SDL_CreateTexture"           , dynlib: SDLPath.}
+proc create_texture_from_surface*(ren; surf): pointer                                      {.importc: "SDL_CreateTextureFromSurface", dynlib: SDLPath.}
 proc create_texture_opt*(ren; format: PixelFormat; access: TextureAccess; w, h: int): Option[Texture] =
-    check_pointer[Texture](create_texture(ren, format, access, int32 w, int32 h), "texture")
-proc create_texture_opt*(ren; surf): Option[Texture] =
-    check_pointer[Texture](create_texture(ren, surf), "texture from surface")
+    # let texp = create_texture(ren, format, access, cint w, cint h)
+    # case texp
+    # of nil:
+    #     echo red fmt"Error: failed to create texture: {get_error()}"
+    #     none[Texture]
+    # else: some texp
+
+    check_pointer[Texture](create_texture(ren, format, access, cint w, cint h), "texture")
+proc create_texture*(ren; surf): Option[Texture] =
+    let texp = ren.create_texture_from_surface surf
+    if texp == nil:
+        echo red fmt"Error: failed to create texture: {get_error()}"
+        result = none Texture
+    else:
+        result = some cast[Texture](texp)
+
+    # check_pointer[Texture](create_texture_from_surface(ren, surf), "texture from surface")
 
 #~Renderer Settings~###################################################
 proc set_scale*(ren; x, y: cfloat): cint        {.importc: "SDL_SetRenderScale", dynlib: SDLPath.}
@@ -212,8 +226,11 @@ proc rects*(ren; rects: seq[FRect])      {.inline.} = check_error "render rects"
 proc fill*(ren)                          {.inline.} = check_error "render fill rect" : render_fill_rect(ren, nil)
 proc fill_rect*(ren; rect: FRect)        {.inline.} = check_error "render fill rect" : render_fill_rect(ren, rect.addr)
 proc fill_rects*(ren; rects: seq[FRect]) {.inline.} = check_error "render fill rects": render_fill_rects(ren, rects[0].addr, cint rects.len)
+proc destroy*(tex) {.inline.} = destroy_texture tex
+proc destroy*(ren) {.inline.} = destroy_renderer ren
 
 proc texture*(ren; tex; src, dst: FRect) {.inline.} = check_error "render texture": render_texture(ren, tex, src.addr, dst.addr)
+proc texture*(ren; tex)                  {.inline.} = check_error "render texture": render_texture(ren, tex, nil, nil)
 proc texture*(ren; tex; src, dst: FRect; angle: SomeFloat; center: FPoint = FPoint(x:0, y:0); flip: FlipMode = None) {.inline.} =
     check_error "render texture rotated": render_texture_rotated(ren, tex, src.addr, dst.addr, angle, center, flip)
 proc geometry*(ren; tex; vertices: seq[Vertex]; indices: seq[int32]) {.inline.} =

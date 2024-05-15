@@ -97,6 +97,24 @@ template four_cc*(a, b, c, d: uint8) =
     c shl 16 or
     d shl 24
 
+const
+    Black*   = Colour(r: 0  , g: 0  , b: 0  , a: 255)
+    White*   = Colour(r: 255, g: 255, b: 255, a: 255)
+    Red*     = Colour(r: 255, g: 0  , b: 0  , a: 255)
+    Lime*    = Colour(r: 0  , g: 255, b: 0  , a: 255)
+    Blue*    = Colour(r: 0  , g: 0  , b: 255, a: 255)
+    Yellow*  = Colour(r: 255, g: 255, b: 0  , a: 255)
+    Cyan*    = Colour(r: 0  , g: 255, b: 255, a: 255)
+    Magenta* = Colour(r: 255, g: 0  , b: 255, a: 255)
+    Silver*  = Colour(r: 192, g: 192, b: 192, a: 255)
+    Gray*    = Colour(r: 128, g: 128, b: 128, a: 255)
+    Maroon*  = Colour(r: 128, g: 0  , b: 0  , a: 255)
+    Olive*   = Colour(r: 128, g: 128, b: 0  , a: 255)
+    Green*   = Colour(r: 0  , g: 128, b: 0  , a: 255)
+    Purple*  = Colour(r: 128, g: 0  , b: 128, a: 255)
+    Teal*    = Colour(r: 0  , g: 128, b: 128, a: 255)
+    Navy*    = Colour(r: 0  , g: 0  , b: 128, a: 255)
+
 # TODO
 
 #define SDL_BYTESPERPIXEL(X) \

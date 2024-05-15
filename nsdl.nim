@@ -1,36 +1,21 @@
-import src/common
+import nsdl/common
+from nsdl/ttf import init
 
-type Version* = object
-    major*: byte
-    minor*: byte
-    patch*: byte
-func `$`*(version: Version): string =
-    fmt"{version.major}.{version.minor}.{version.patch}"
-
-type InitFlag* {.size: sizeof(uint32).} = enum
-    Timer    = 0x0000_0001
-    Audio    = 0x0000_0010
-    Video    = 0x0000_0020
-    Joystick = 0x0000_0200
-    Haptic   = 0x0000_1000
-    Gamepad  = 0x0000_2000
-    Events   = 0x0000_4000
-    Sensor   = 0x0000_8000
-    Camera   = 0x0001_0000
-func `or`*(a, b: InitFlag): InitFlag =
-    InitFlag (a.ord or b.ord)
-
-proc init(flags: uint32): int32 {.importc: "SDL_Init", dynlib: SDLPath.}
-proc init*(flags: InitFlag) =
+proc init*(flags: uint32): cint {.importc: "SDL_Init", dynlib: SDLPath.}
+proc init*(flags: InitFlag; should_init_ttf = false): bool =
+    result = true
     if init(uint32 flags) != 0:
-        echo red fmt"Error: failed to initialize SDL (SDL_Init): {get_error()}"
+        echo red fmt"Error: failed to initialize SDL: {get_error()}"
+        result = false
 
-proc get_version(version: ptr Version) {.importc: "SDL_GetVersion", dynlib: SDLPath.}
-proc get_version*(): Version =
-    get_version result.addr
+    if should_init_ttf:
+        if ttf.init() != 0:
+            echo red fmt"Error: failed to initialize SDL_ttf: {get_error()}"
 
-import src/events, src/pixels, src/properties, src/video, src/renderer
-export     events,     pixels,     properties,     video,     renderer
+proc get_version*(version: ptr Version) {.importc: "SDL_GetVersion", dynlib: SDLPath.}
+proc get_version*(): Version = get_version result.addr
 
-import src/common
-export get_error
+import nsdl/events, nsdl/rect, nsdl/pixels, nsdl/properties, nsdl/surface, nsdl/video, nsdl/renderer, ttf
+export      events,      rect,      pixels,      properties,      surface,      video,      renderer, ttf
+# exports from common
+export get_error, InitFlag, Version, `or`

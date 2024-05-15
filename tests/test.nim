@@ -1,17 +1,24 @@
 import std/[strformat, options]
-import nsdl
+import nsdl, nsdl/ttf
 
 const
     WinW = 1280
     WinH = 800
 
-echo fmt"Nim version: {NimVersion}"
-echo fmt"SDL version: {nsdl.get_version()}"
+echo fmt"Nim version    : {NimVersion}"
+echo fmt"SDL version    : {nsdl.get_version()}"
+echo fmt"SDL_ttf version: {ttf.get_version()}"
 
-init(Video or Events)
-let (window, renderer) = create_window_and_renderer("SDL + BGFX", WinW, WinH, Resizable)
-set_draw_colour(renderer, Colour(r: 0, g: 77, b: 33, a: 255))
-clear renderer
+if not init(Video or Events, should_init_ttf = true):
+    echo "Failed to initialize SDL"
+    quit 1
+
+let (window, renderer) = create_window_and_renderer("SDL Tests", WinW, WinH, Resizable)
+renderer.set_draw_colour Olive
+
+let font = open_font "tests/fonts/fantasque.ttf"
+let msg = get font.render("Hello, World!", Black)
+let tex = get renderer.create_texture msg
 
 var running = true
 while running:
@@ -25,9 +32,10 @@ while running:
             else: discard
         else: discard
 
-    # clear renderer
     fill renderer
+    renderer.texture tex
     present renderer
 
-destroy_window window
+close font
+destroy window
 nsdl.quit()
