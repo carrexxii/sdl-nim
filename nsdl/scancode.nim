@@ -1,4 +1,4 @@
-type ScanCode* {.pure.} = enum
+type ScanCode* = enum
     Unknown = 0
 
     A = 4

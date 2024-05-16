@@ -28,6 +28,20 @@ func `or`*(a, b: InitFlag): InitFlag =
 
 proc get_error*(): cstring {.importc: "SDL_GetError"  , dynlib: SDLPath.}
 
+#[ -------------------------------------------------------------------- ]#
+
+type SDLError* = object of CatchableError
+
+template check_ptr*[T](msg: string, body: pointer): T =
+    let p = body
+    if p == nil:
+        raise new_exception(SDLError, "Error: " & msg & " (" & $get_error() & ")")
+    cast[T](p)
+
+template check_err*(msg, body) =
+    if body != 0:
+        raise new_exception(SDLError, "Error: " & msg & " (" & $get_error() & ")")
+
 proc red*    (s: string): string = "\e[31m" & s & "\e[0m"
 proc green*  (s: string): string = "\e[32m" & s & "\e[0m"
 proc yellow* (s: string): string = "\e[33m" & s & "\e[0m"

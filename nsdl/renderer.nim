@@ -1,23 +1,5 @@
 import common, properties, pixels, rect, surface, video
 
-proc check_pointer[T](p: pointer; msg: string): Option[T] =
-    let msgi {.inject.} = msg # https://github.com/nim-lang/Nim/issues/10977
-    if p == nil:
-        echo red fmt"Error: failed to get {msgi}: {get_error()}"
-        result = none T
-    else:
-        result = some cast[T](p)
-
-template check_error(msg, body) =
-    when not defined NoSDLErrorChecks:
-        let msgi {.inject.} = msg
-        if body != 0:
-            echo red fmt"Error: failed to {msgi}: {get_error()}"
-    else:
-        body
-
-#[ -------------------------------------------------------------------- ]#
-
 const SoftwareRenderer* = "software"
 
 type RendererFlag* {.size: sizeof(uint32).} = enum
@@ -58,7 +40,8 @@ type
         colour*   : FColour
         tex_coord*: FPoint
 
-#~Blending~############################################################
+#[ -------------------------------------------------------------------- ]#
+
 type
     BlendMode* {.size: sizeof(uint32).} = enum
         None    = 0x0000_0000
@@ -101,144 +84,196 @@ using
     surf  : Surface
     tex   : Texture
 
-proc get_num_render_drivers*(): int32                      {.importc: "SDL_GetNumRenderDrivers"   , dynlib: SDLPath.}
-proc get_render_driver*(index: int32): cstring             {.importc: "SDL_GetRenderDriver"       , dynlib: SDLPath.}
-proc create_renderer*(win; name: cstring; rflags): pointer {.importc: "SDL_CreateRenderer"        , dynlib: SDLPath.}
-proc create_software_renderer*(surf): pointer              {.importc: "SDL_CreateSoftwareRenderer", dynlib: SDLPath.}
-proc create_software_renderer_opt*(surf): Option[Renderer] =
-    let surf = create_software_renderer surf
-    check_pointer[Renderer](surf, "software renderer")
-proc create_renderer_opt*(win; name: string; rflags): Option[Renderer] =
-    check_pointer[Renderer](create_renderer(win, cstring name, rflags), "renderer")
-proc create_window_and_renderer*(title: cstring; w, h: int32; wflags; window: ptr Window; renderer: ptr Renderer): int32
-    {.importc: "SDL_CreateWindowAndRenderer", dynlib: SDLPath.}
-proc create_window_and_renderer*(title: string; w, h: int; wflags): (Window, Renderer) =
-    if create_window_and_renderer(cstring title, int32 w, int32 h, wflags, result[0].addr, result[1].addr) != 0:
-        echo red fmt"Error: failed to create window and renderer: {get_error()}"
-
-proc get_renderer*(win): pointer                                    {.importc: "SDL_GetRenderer"               , dynlib: SDLPath.}
-proc get_renderer_window*(ren): pointer                             {.importc: "SDL_GetRenderWindow"           , dynlib: SDLPath.}
-proc get_renderer_info*(ren; info: ptr RendererInfo): int32         {.importc: "SDL_GetRendererInfo"           , dynlib: SDLPath.}
-proc get_renderer_properties*(ren): PropertyID                      {.importc: "SDL_GetRendererProperties"     , dynlib: SDLPath.}
-proc get_renderer_output_size*(ren; w, h: ptr int32): int32         {.importc: "SDL_GetRenderOutputSize"       , dynlib: SDLPath.}
-proc get_current_renderer_output_size*(ren; w, h: ptr int32): int32 {.importc: "SDL_GetCurrentRenderOutputSize", dynlib: SDLPath.}
-proc get_renderer*(tex): pointer                                    {.importc: "SDL_GetRendererFromTexture"    , dynlib: SDLPath.}
-proc get_renderer_opt*(win): Option[Renderer]      = check_pointer[Renderer](get_renderer win, "renderer")
-proc get_renderer_window_opt*(ren): Option[Window] = check_pointer[Window](get_renderer_window ren, "renderer window")
-proc get_renderer_opt*(tex): Option[Renderer]      = check_pointer[Renderer](get_renderer tex, "renderer from texture")
-proc get_renderer_info*(ren): RendererInfo =
-    if get_renderer_info(ren, result.addr) != 0:
-        echo red fmt"Error: failed to get renderer info: {get_error()}"
-proc get_renderer_output_size*(ren): (int32, int32) =
-    if get_renderer_output_size(ren, result[0].addr, result[1].addr) != 0:
-        echo red fmt"Error: failed to get renderer output size: {get_error()}"
-proc get_current_renderer_output_size*(ren): (int32, int32) =
-    if get_current_renderer_output_size(ren, result[0].addr, result[1].addr) != 0:
-        echo red fmt"Error: failed to get current renderer output size: {get_error()}"
-
-proc create_texture*(ren; format: PixelFormat; access: TextureAccess; w, h: cint): pointer {.importc: "SDL_CreateTexture"           , dynlib: SDLPath.}
-proc create_texture_from_surface*(ren; surf): pointer                                      {.importc: "SDL_CreateTextureFromSurface", dynlib: SDLPath.}
-proc create_texture_opt*(ren; format: PixelFormat; access: TextureAccess; w, h: int): Option[Texture] =
-    # let texp = create_texture(ren, format, access, cint w, cint h)
-    # case texp
-    # of nil:
-    #     echo red fmt"Error: failed to create texture: {get_error()}"
-    #     none[Texture]
-    # else: some texp
-
-    check_pointer[Texture](create_texture(ren, format, access, cint w, cint h), "texture")
-proc create_texture*(ren; surf): Option[Texture] =
-    let texp = ren.create_texture_from_surface surf
-    if texp == nil:
-        echo red fmt"Error: failed to create texture: {get_error()}"
-        result = none Texture
-    else:
-        result = some cast[Texture](texp)
-
-    # check_pointer[Texture](create_texture_from_surface(ren, surf), "texture from surface")
-
-#~Renderer Settings~###################################################
-proc set_scale*(ren; x, y: cfloat): cint        {.importc: "SDL_SetRenderScale", dynlib: SDLPath.}
-proc get_scale*(ren; x, y: ptr cfloat): cint    {.importc: "SDL_GetRenderScale", dynlib: SDLPath.}
-proc set_scale*(ren; scale: (float32, float32)) {.inline.} = check_error "set scale": set_scale(ren, scale[0], scale[1])
-proc get_scale*(ren): (float32, float32)        {.inline.} = check_error "get scale": get_scale(ren, result[0].addr, result[1].addr)
-
-proc set_draw_colour*(ren; r, g, b, a: uint8): cint      {.importc: "SDL_SetRenderDrawColor"     , dynlib: SDLPath.}
-proc get_draw_colour*(ren; r, g, b, a: ptr uint8): cint  {.importc: "SDL_GetRenderDrawColor"     , dynlib: SDLPath.}
-proc set_draw_colour*(ren; r, g, b, a: cfloat): cint     {.importc: "SDL_SetRenderDrawColorFloat", dynlib: SDLPath.}
-proc get_draw_colour*(ren; r, g, b, a: ptr cfloat): cint {.importc: "SDL_GetRenderDrawColorFloat", dynlib: SDLPath.}
-proc set_draw_colour*(ren; colour: Colour | FColour) {.inline.} =
-    check_error "set draw colour": set_draw_colour(ren, colour.r, colour.g, colour.b, colour.a)
-proc get_draw_colour*(ren): Colour | FColour {.inline.} =
-    check_error "get draw colour": get_draw_colour(ren, result.r.addr, result.g.addr, result.b.addr, result.a.addr)
-
-proc set_colour_scale*(ren; scale: cfloat): cint     {.importc: "SDL_SetRenderColorScale", dynlib: SDLPath.}
-proc get_colour_scale*(ren; scale: ptr cfloat): cint {.importc: "SDL_GetRenderColorScale", dynlib: SDLPath.}
-proc set_colour_scale*(ren; scale: float) {.inline.} = check_error "set colour scale": set_colour_scale(ren, cfloat scale)
-proc get_colour_scale*(ren): float32      {.inline.} = check_error "get colour scale": get_colour_scale(ren, result.addr)
-
-proc set_draw_blend_mode*(ren; mode: cuint): cint     {.importc: "SDL_SetRenderDrawBlendMode", dynlib: SDLPath.}
-proc get_draw_blend_mode*(ren; mode: ptr cuint): cint {.importc: "SDL_GetRenderDrawBlendMode", dynlib: SDLPath.}
-proc set_draw_blend_mode*(ren; mode: BlendMode) {.inline.} =
-    check_error "set draw blend mode": set_draw_blend_mode(ren, cuint mode)
-proc get_draw_blend_mode*(ren): BlendMode {.inline.} =
-    check_error "get draw blend mode": get_draw_blend_mode(ren, cast[ptr cuint](result.addr))
-
-#~Renderer Drawing~####################################################
-
-proc render_clear*(ren): cint                                     {.importc: "SDL_RenderClear"    , dynlib: SDLPath.}
-proc render_point*(ren; x, y: cfloat): cint                       {.importc: "SDL_RenderPoint"    , dynlib: SDLPath.}
-proc render_points*(ren; points: ptr FPoint; count: cint): cint   {.importc: "SDL_RenderPoints"   , dynlib: SDLPath.}
-proc render_line*(ren; x1, y1, x2, y2: cfloat): cint              {.importc: "SDL_RenderLine"     , dynlib: SDLPath.}
-proc render_lines*(ren; points: ptr FPoint; count: cint): cint    {.importc: "SDL_RenderLines"    , dynlib: SDLPath.}
-proc render_rect*(ren; rect: ptr FRect): cint                     {.importc: "SDL_RenderRect"     , dynlib: SDLPath.}
-proc render_rects*(ren; rects: ptr FRect; count: cint): cint      {.importc: "SDL_RenderRects"    , dynlib: SDLPath.}
-proc render_fill_rect*(ren; rect: ptr FRect): cint                {.importc: "SDL_RenderFillRect" , dynlib: SDLPath.}
-proc render_fill_rects*(ren; rects: ptr FRect; count: cint): cint {.importc: "SDL_RenderFillRects", dynlib: SDLPath.}
-proc render_texture*(ren; tex; src, dst: ptr FRect): cint         {.importc: "SDL_RenderTexture"  , dynlib: SDLPath.}
+{.push dynlib: SDLPath.}
+proc get_num_render_drivers*(): cint                                                       {.importc: "SDL_GetNumRenderDrivers"       .}
+proc get_render_driver*(index: cint): cstring                                              {.importc: "SDL_GetRenderDriver"           .}
+proc create_renderer*(win; name: cstring; rflags): pointer                                 {.importc: "SDL_CreateRenderer"            .}
+proc create_software_renderer*(surf): pointer                                              {.importc: "SDL_CreateSoftwareRenderer"    .}
+proc get_renderer*(win): pointer                                                           {.importc: "SDL_GetRenderer"               .}
+proc get_renderer_window*(ren): pointer                                                    {.importc: "SDL_GetRenderWindow"           .}
+proc get_renderer_info*(ren; info: ptr RendererInfo): cint                                 {.importc: "SDL_GetRendererInfo"           .}
+proc get_renderer_properties*(ren): PropertyID                                             {.importc: "SDL_GetRendererProperties"     .}
+proc get_renderer_output_size*(ren; w, h: ptr cint): cint                                  {.importc: "SDL_GetRenderOutputSize"       .}
+proc get_current_renderer_output_size*(ren; w, h: ptr cint): cint                          {.importc: "SDL_GetCurrentRenderOutputSize".}
+proc get_renderer_from_texture*(tex): pointer                                              {.importc: "SDL_GetRendererFromTexture"    .}
+proc create_texture*(ren; format: PixelFormat; access: TextureAccess; w, h: cint): pointer {.importc: "SDL_CreateTexture"             .}
+proc create_texture_from_surface*(ren; surf): pointer                                      {.importc: "SDL_CreateTextureFromSurface"  .}
+proc set_render_scale*(ren; x, y: cfloat): cint                                            {.importc: "SDL_SetRenderScale"            .}
+proc get_render_scale*(ren; x, y: ptr cfloat): cint                                        {.importc: "SDL_GetRenderScale"            .}
+proc set_render_draw_colour*(ren; r, g, b, a: uint8): cint                                 {.importc: "SDL_SetRenderDrawColor"        .}
+proc get_render_draw_colour*(ren; r, g, b, a: ptr uint8): cint                             {.importc: "SDL_GetRenderDrawColor"        .}
+proc set_render_draw_colour_float*(ren; r, g, b, a: cfloat): cint                          {.importc: "SDL_SetRenderDrawColorFloat"   .}
+proc get_render_draw_colour_float*(ren; r, g, b, a: ptr cfloat): cint                      {.importc: "SDL_GetRenderDrawColorFloat"   .}
+proc set_render_colour_scale*(ren; scale: cfloat): cint                                    {.importc: "SDL_SetRenderColorScale"       .}
+proc get_render_colour_scale*(ren; scale: ptr cfloat): cint                                {.importc: "SDL_GetRenderColorScale"       .}
+proc set_render_draw_blend_mode*(ren; mode: BlendMode): cint                               {.importc: "SDL_SetRenderDrawBlendMode"    .}
+proc get_render_draw_blend_mode*(ren; mode: ptr BlendMode): cint                           {.importc: "SDL_GetRenderDrawBlendMode"    .}
+proc render_clear*(ren): cint                                                              {.importc: "SDL_RenderClear"               .}
+proc render_point*(ren; x, y: cfloat): cint                                                {.importc: "SDL_RenderPoint"               .}
+proc render_points*(ren; points: ptr FPoint; count: cint): cint                            {.importc: "SDL_RenderPoints"              .}
+proc render_line*(ren; x1, y1, x2, y2: cfloat): cint                                       {.importc: "SDL_RenderLine"                .}
+proc render_lines*(ren; points: ptr FPoint; count: cint): cint                             {.importc: "SDL_RenderLines"               .}
+proc render_rect*(ren; rect: ptr FRect): cint                                              {.importc: "SDL_RenderRect"                .}
+proc render_rects*(ren; rects: ptr FRect; count: cint): cint                               {.importc: "SDL_RenderRects"               .}
+proc render_fill_rect*(ren; rect: ptr FRect): cint                                         {.importc: "SDL_RenderFillRect"            .}
+proc render_fill_rects*(ren; rects: ptr FRect; count: cint): cint                          {.importc: "SDL_RenderFillRects"           .}
+proc render_texture*(ren; tex; src, dst: ptr FRect): cint                                  {.importc: "SDL_RenderTexture"             .}
+proc create_window_and_renderer*(title: cstring; w, h: cint; wflags; window: ptr Window; renderer: ptr Renderer): cint
+    {.importc: "SDL_CreateWindowAndRenderer".}
 proc render_texture_rotated*(ren; tex; src, dst: ptr FRect; angle: cdouble; center: ptr FPoint; flip: FlipMode): cint
-    {.importc: "SDL_RenderTextureRotated", dynlib: SDLPath.}
+    {.importc: "SDL_RenderTextureRotated".}
 proc render_geometry*(ren; tex; vertices: ptr Vertex; vertex_count: cint; indices: ptr cint; index_count: cint): cint
-    {.importc: "SDL_RenderGeometry", dynlib: SDLPath.}
+    {.importc: "SDL_RenderGeometry".}
 proc render_geometry_raw*(ren; tex; xys    : ptr cfloat; xy_stride    : cint;
                                     colours: ptr Colour; colour_stride: cint;
                                     uvs    : ptr cfloat; uv_stride    : cint;
                           vertex_count: cint; indices: pointer; index_count: cint; indices_size: cint): cint
-    {.importc: "SDL_RenderGeometryRaw", dynlib: SDLPath.}
+    {.importc: "SDL_RenderGeometryRaw".}
 proc render_geometry_raw_float*(ren; tex; xys: ptr cfloat ; xy_stride    : cint;
                                     colours  : ptr FColour; colour_stride: cint;
                                     uvs      : ptr cfloat ; uv_stride    : cint;
                           vertex_count: cint; indices: pointer; index_count: cint; indices_size: cint): cint
-    {.importc: "SDL_RenderGeometryRawFloat", dynlib: SDLPath.}
-proc render_read_pixels*(ren; rect: ptr Rect): pointer {.importc: "SDL_RenderReadPixels", dynlib: SDLPath.} # this needs to be free'd
-proc render_present*(ren): cint                        {.importc: "SDL_RenderPresent"   , dynlib: SDLPath.}
-proc destroy_texture*(tex)                             {.importc: "SDL_DestroyTexture"  , dynlib: SDLPath.}
-proc destroy_renderer*(ren)                            {.importc: "SDL_DestroyRenderer" , dynlib: SDLPath.}
-proc flush_renderer*(ren): cint                        {.importc: "SDL_FlushRenderer"   , dynlib: SDLPath.}
+    {.importc: "SDL_RenderGeometryRawFloat".}
+proc render_read_pixels*(ren; rect: ptr Rect): pointer {.importc: "SDL_RenderReadPixels".} # this needs to be free'd
+proc render_present*(ren): cint                        {.importc: "SDL_RenderPresent"   .}
+proc destroy_texture*(tex)                             {.importc: "SDL_DestroyTexture"  .}
+proc destroy_renderer*(ren)                            {.importc: "SDL_DestroyRenderer" .}
+proc flush_renderer*(ren): cint                        {.importc: "SDL_FlushRenderer"   .}
+{.pop.}
 
-proc clear*(ren)                         {.inline.} = check_error "clear renderer"   : render_clear ren
-proc point*(ren; x, y: float32)          {.inline.} = check_error "render point"     : render_point(ren, x, y)
-proc points*(ren; points: seq[FPoint])   {.inline.} = check_error "render points"    : render_points(ren, points[0].addr, cint points.len)
-proc line*(ren; p1, p2: FPoint)          {.inline.} = check_error "render line"      : render_line(ren, p1.x, p1.y, p2.x, p2.y)
-proc lines*(ren; points: seq[FPoint])    {.inline.} = check_error "render lines"     : render_lines(ren, points[0].addr, cint points.len)
-proc rect*(ren; rect: FRect)             {.inline.} = check_error "render rect"      : render_rect(ren, rect.addr)
-proc rects*(ren; rects: seq[FRect])      {.inline.} = check_error "render rects"     : render_rects(ren, rects[0].addr, cint rects.len)
-proc fill*(ren)                          {.inline.} = check_error "render fill rect" : render_fill_rect(ren, nil)
-proc fill_rect*(ren; rect: FRect)        {.inline.} = check_error "render fill rect" : render_fill_rect(ren, rect.addr)
-proc fill_rects*(ren; rects: seq[FRect]) {.inline.} = check_error "render fill rects": render_fill_rects(ren, rects[0].addr, cint rects.len)
-proc destroy*(tex) {.inline.} = destroy_texture tex
-proc destroy*(ren) {.inline.} = destroy_renderer ren
+#[ -------------------------------------------------------------------- ]#
 
-proc texture*(ren; tex; src, dst: FRect) {.inline.} = check_error "render texture": render_texture(ren, tex, src.addr, dst.addr)
-proc texture*(ren; tex)                  {.inline.} = check_error "render texture": render_texture(ren, tex, nil, nil)
-proc texture*(ren; tex; src, dst: FRect; angle: SomeFloat; center: FPoint = FPoint(x:0, y:0); flip: FlipMode = None) {.inline.} =
-    check_error "render texture rotated": render_texture_rotated(ren, tex, src.addr, dst.addr, angle, center, flip)
-proc geometry*(ren; tex; vertices: seq[Vertex]; indices: seq[int32]) {.inline.} =
-    check_error "render geometry": render_geometry(ren, tex, vertices[0].addr, cint vertices.len, indices[0].addr, cint indices.len)
-proc read_pixels*(ren; rect: Rect): Option[Surface] {.inline.} =
-    check_pointer[Surface](render_read_pixels(ren, rect.addr), "render read pixels")
-proc present*(ren) {.inline.} = check_error "render present": render_present ren
-proc flush*(ren)   {.inline.} = check_error "render flush"  : flush_renderer ren
+{.push inline.}
+
+proc create_renderer*(surf): Renderer {.raises: SDLError.} =
+    check_ptr[Renderer] "Failed to create software renderer":
+        create_software_renderer surf
+proc create_renderer*(win; name: string = ""; rflags = PresentVSync): Renderer {.raises: SDLError.} =
+    check_ptr[Renderer] "Failed to create renderer":
+        create_renderer(win, if name != "": cstring name else: nil, rflags)
+proc create_window_and_renderer*(title: string; w, h: int; wflags: WindowFlag = None): (Window, Renderer) {.raises: SDLError.} =
+    check_err "Failed to create window and renderer":
+        create_window_and_renderer(cstring title, cint w, cint h, wflags, result[0].addr, result[1].addr)
+
+proc get_info*(ren): RendererInfo {.raises: SDLError.} =
+    check_err "Failed to get renderer info":
+        get_renderer_info(ren, result.addr)
+proc get_output_size*(ren): tuple[x, y: int] {.raises: SDLError.} =
+    var x, y: cint
+    check_err "Failed to get renderer ouput size":
+        get_renderer_output_size(ren, x.addr, y.addr)
+
+    result.x = x
+    result.y = y
+proc get_current_output_size*(ren): tuple[x, y: int] {.raises: SDLError.} =
+    var x, y: cint
+    check_err "Failed to get current renderer ouput size":
+        get_current_renderer_output_size(ren, x.addr, y.addr)
+
+    result.x = x
+    result.y = y
+
+proc create_texture*(ren; format: PixelFormat; access: TextureAccess; w, h: int): Texture {.raises: SDLError.} =
+    check_ptr[Texture] "Failed to create texture":
+        create_texture(ren, format, access, cint w, cint h)
+proc create_texture*(ren; surf): Texture {.raises: SDLError.} =
+    check_ptr[Texture] "Failed to create texture from surface":
+        create_texture_from_surface(ren, surf)
+
+proc set_scale*(ren; x = 0.0; y = 0.0) {.raises: SDLError.} =
+    check_err "Failed to set renderer scale":
+        set_render_scale(ren, x, y)
+proc get_scale*(ren): tuple[x, y: float] {.raises: SDLError.} =
+    var tmp: (cfloat, cfloat)
+    check_err "Failed to get scale for renderer":
+        get_render_scale(ren, tmp[0].addr, tmp[1].addr)
+
+    result.x = tmp[0]
+    result.y = tmp[1]
+
+proc set_draw_colour*(ren; colour: Colour | FColour) {.raises: SDLError.} =
+    check_err "Failed to set renderer's draw colour":
+        set_render_draw_colour(ren, colour.r, colour.g, colour.b, colour.a)
+proc get_draw_colour*(ren): Colour | FColour {.raises: SDLError.} =
+    check_err "Failed to get renderer's draw colour":
+        get_render_draw_colour(ren, result.r.addr, result.g.addr, result.b.addr, result.a.addr)
+
+proc set_colour_scale*(ren; scale: float) {.raises: SDLError.} =
+    check_err "Failed to set renderer's colour scale":
+        set_render_colour_scale(ren, cfloat scale)
+proc get_colour_scale*(ren): float32 {.raises: SDLError.} =
+    check_err "Failed to get renderer's colour scale":
+        get_render_colour_scale(ren, result.addr)
+
+proc set_draw_blend_mode*(ren; mode: BlendMode) {.raises: SDLError.} =
+    check_err "Failed to set renderer's draw blend mode":
+        set_render_draw_blend_mode(ren, mode)
+proc get_draw_blend_mode*(ren): BlendMode {.raises: SDLError.} =
+    check_err "Failed to get renderer's draw blend mode":
+        get_render_draw_blend_mode(ren, result.addr)
+
+proc clear*(ren) {.raises: SDLError.} =
+    check_err "Failed to clear renderer":
+        render_clear ren
+proc draw_point*(ren; x, y: float32) {.raises: SDLError.} =
+    check_err "Failed to render point":
+        render_point(ren, x, y)
+proc draw_points*(ren; points: seq[FPoint]) {.raises: SDLError.} =
+    check_err "Failed to render points":
+        render_points(ren, points[0].addr, cint points.len)
+proc draw_line*(ren; p1, p2: FPoint) {.raises: SDLError.} =
+    check_err "Failed to render line":
+        render_line(ren, p1.x, p1.y, p2.x, p2.y)
+proc draw_lines*(ren; points: seq[FPoint]) {.raises: SDLError.} =
+    check_err "Failed to render lines":
+        render_lines(ren, points[0].addr, cint points.len)
+proc draw_rect*(ren; rect: FRect) {.raises: SDLError.} =
+    check_err "Failed to render rect":
+        render_rect(ren, rect.addr)
+proc draw_rects*(ren; rects: seq[FRect]) {.raises: SDLError.} =
+    check_err "Failed to render rects":
+        render_rects(ren, rects[0].addr, cint rects.len)
+proc draw_fill_rect*(ren; rect: FRect) {.raises: SDLError.} =
+    check_err "Failed to render fill rect":
+        render_fill_rect(ren, rect.addr)
+proc draw_fill_rects*(ren; rects: seq[FRect]) {.raises: SDLError.} =
+    check_err "Failed to render fill rects":
+        render_fill_rects(ren, rects[0].addr, cint rects.len)
+proc fill*(ren) {.raises: SDLError.} =
+    check_err "Failed to render fill rect":
+        render_fill_rect(ren, nil)
+
+proc draw_texture*(ren; tex; dst_rect, src_rect = FRect()) {.raises: SDLError.} =
+    let src = if src_rect.w != 0.0 and src_rect.h != 0.0: src_rect.addr else: nil
+    let dst = if dst_rect.w != 0.0 and dst_rect.h != 0.0: dst_rect.addr else: nil
+    check_err "Failed to render texture":
+        render_texture(ren, tex, src, dst)
+
+proc draw_texture*(ren; tex; angle: SomeNumber; src_rect = FRect(); dst_rect = FRect();
+                   center = FPoint(); flip = FlipMode.None) {.raises: SDLError.} =
+    let src = if src_rect.w != 0.0 and src_rect.h != 0.0: src_rect.addr else: nil
+    let dst = if dst_rect.w != 0.0 and dst_rect.h != 0.0: dst_rect.addr else: nil
+    check_err "Failed to render rotated texture":
+        render_texture_rotated(ren, tex, src.addr, dst.addr, cfloat angle, center, flip)
+
+proc geometry*(ren; tex; vertices: seq[Vertex]; indices: seq[int32]) {.raises: SDLError.} =
+    check_err "Failed to render geometry":
+        render_geometry(ren, tex, vertices[0].addr, cint vertices.len, indices[0].addr, cint indices.len)
+
+proc read_pixels*(ren; rect = Rect()): Surface {.raises: SDLError.} =
+    check_ptr[Surface] "Failed to read pixels":
+        render_read_pixels(ren, rect.addr)
+proc present*(ren) {.raises: SDLError.} =
+    check_err "Failed to present renderer":
+        render_present ren
+proc flush*(ren) {.raises: SDLError.} =
+    check_err "Failed to flush renderer":
+        flush_renderer ren
+
+proc destroy*(tex) = destroy_texture tex
+proc destroy*(ren) = destroy_renderer ren
+
+{.pop.}
 
 # TODO:
 

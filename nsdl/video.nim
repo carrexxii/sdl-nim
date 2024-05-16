@@ -1,18 +1,11 @@
-import common, pixels, rect
+{.push raises: [].}
 
-# TODO: use a block structure for this
-# TODO: figure out how to move this to common
-proc check_pointer[T](p: pointer; msg: string): Option[T] =
-    let msgi {.inject.} = msg # https://github.com/nim-lang/Nim/issues/10977
-    if p == nil:
-        echo red fmt"Error: failed to get {msgi}: {get_error()}"
-        result = none T
-    else:
-        result = some cast[ptr T](p)[]
+import common, pixels, rect
 
 type Window* = distinct pointer
 
 type WindowFlag* {.size: sizeof(uint64).} = enum
+    None             = 0x0000_0000_0000_0000
     Fullscreen       = 0x0000_0000_0000_0001
     OpenGL           = 0x0000_0000_0000_0002
     Occluded         = 0x0000_0000_0000_0004
@@ -76,111 +69,111 @@ type
         refresh_rate*: float32
         driver_data* : pointer
 
-proc create_window*(title: cstring, w, h: int32, flags: WindowFlag): pointer      {.importc: "SDL_CreateWindow"     , dynlib: SDLPath.}
-proc create_popup*(parent: Window; x, y, w, h: int32; flags: WindowFlag): pointer {.importc: "SDL_CreatePopupWindow", dynlib: SDLPath.}
-proc create_window_opt*(title: string, w, h: int32, flags: WindowFlag): Option[Window] =
-    let window = create_window(cstring title, w, h, flags)
-    if window == nil:
-        echo red fmt"Error: failed to open window: {get_error()}"
-        result = none Window
-    else:
-        result = some Window window
-proc create_popup_opt*(parent: Window; x, y, w, h: int32; flags: WindowFlag): Option[Window] =
-    let window = create_popup(parent, x, y, w, h, flags)
-    if window == nil:
-        echo red fmt"Error: failed to open popup window: {get_error()}"
-        result = none Window
-    else:
-        result = some Window window
-
-proc set_window_position*(window: Window; x, y: int32) {.importc: "SDL_SetWindowPosition", dynlib: SDLPath.}
-proc center_window*(window: Window) =
-    set_window_position(window, Centered, Centered)
-
-proc destroy_window*(window: Window) {.importc: "SDL_DestroyWindow", dynlib: SDLPath.}
-proc quit*()                         {.importc: "SDL_Quit"         , dynlib: SDLPath.}
-proc destroy*(win: Window) {.inline.} = destroy_window win
+#[ -------------------------------------------------------------------- ]#
 
 from properties import PropertyID
-proc get_num_video_drivers*(): int32          {.importc: "SDL_GetNumVideoDrivers"   , dynlib: SDLPath.}
-proc get_video_driver*(index: int32): cstring {.importc: "SDL_GetVideoDriver"       , dynlib: SDLPath.}
-proc get_current_video_driver*(): cstring     {.importc: "SDL_GetCurrentVideoDriver", dynlib: SDLPath.}
-proc get_system_theme*(): SystemTheme         {.importc: "SDL_GetSystemTheme"       , dynlib: SDLPath.}
+using
+    window: Window
+    d_id: DisplayID
 
-proc get_displays*(count: ptr int32): ptr UncheckedArray[DisplayID] {.importc: "SDL_GetDisplays"         , dynlib: SDLPath.}
-proc get_primary_display*(): DisplayID                              {.importc: "SDL_GetPrimaryDisplay"   , dynlib: SDLPath.}
-proc get_properties*(id: DisplayID): PropertyID                     {.importc: "SDL_GetDisplayProperties", dynlib: SDLPath.}
-proc get_name*(id: DisplayID): cstring                              {.importc: "SDL_GetDisplayName"      , dynlib: SDLPath.}
+{.push dynlib: SDLPath.}
+proc create_window*(title: cstring, w, h: cint, flags: WindowFlag): pointer                     {.importc: "SDL_CreateWindow"                   .}
+proc create_popup_window*(parent: Window; x, y, w, h: cint; flags: WindowFlag): pointer         {.importc: "SDL_CreatePopupWindow"              .}
+proc set_window_position*(window; x, y: cint)                                                   {.importc: "SDL_SetWindowPosition"              .}
+proc destroy_window*(window)                                                                    {.importc: "SDL_DestroyWindow"                  .}
+proc quit*()                                                                                    {.importc: "SDL_Quit"                           .}
+proc get_num_video_drivers*(): cint                                                             {.importc: "SDL_GetNumVideoDrivers"             .}
+proc get_video_driver*(index: cint): cstring                                                    {.importc: "SDL_GetVideoDriver"                 .}
+proc get_current_video_driver*(): cstring                                                       {.importc: "SDL_GetCurrentVideoDriver"          .}
+proc get_system_theme*(): SystemTheme                                                           {.importc: "SDL_GetSystemTheme"                 .}
+proc get_displays*(count: ptr cint): ptr DisplayID                                              {.importc: "SDL_GetDisplays"                    .}
+proc get_primary_display*(): DisplayID                                                          {.importc: "SDL_GetPrimaryDisplay"              .}
+proc get_display_properties*(d_id): PropertyID                                                  {.importc: "SDL_GetDisplayProperties"           .}
+proc get_display_name*(d_id): cstring                                                           {.importc: "SDL_GetDisplayName"                 .}
+proc get_display_bounds*(d_id; rect: ptr Rect): cint                                            {.importc: "SDL_GetDisplayBounds"               .}
+proc get_display_usable_bounds*(d_id; rect: ptr Rect): cint                                     {.importc: "SDL_GetDisplayUsableBounds"         .}
+proc get_natural_display_orientation*(d_id): DisplayOrientation                                 {.importc: "SDL_GetNaturalDisplayOrientation"   .}
+proc get_current_display_orientation*(d_id): DisplayOrientation                                 {.importc: "SDL_GetCurrentDisplayOrientation"   .}
+proc get_display_content_scale*(d_id): cfloat                                                   {.importc: "SDL_GetDisplayContentScale"         .}
+proc get_fullscreen_display_modes*(d_id; count: ptr cint): ptr ptr DisplayMode                  {.importc: "SDL_GetFullscreenDisplayModes"      .}
+proc get_closest_fullscreen_display_mode*(d_id; w, h: cint; refresh: cfloat; hd: bool): pointer {.importc: "SDL_GetClosestFullscreenDisplayMode".}
+proc get_desktop_display_mode*(d_id): pointer                                                   {.importc: "SDL_GetDesktopDisplayMode"          .}
+proc get_current_display_mode*(d_id): pointer                                                   {.importc: "SDL_GetCurrentDisplayMode"          .}
+proc get_display_for_point*(point: ptr Point): DisplayID                                        {.importc: "SDL_GetDisplayForPoint"             .}
+proc get_display_for_rect*(point: ptr Rect): DisplayID                                          {.importc: "SDL_GetDisplayForRect"              .}
+proc get_display_for_window*(window): DisplayID                                                 {.importc: "SDL_GetDisplayForWindow"            .}
+proc get_window_pixel_density*(window): float32                                                 {.importc: "SDL_GetWindowPixelDensity"          .}
+proc get_window_display_scale*(window): float32                                                 {.importc: "SDL_GetWindowDisplayScale"          .}
+proc set_window_fullscreen_mode*(window; mode: ptr DisplayMode): int32                          {.importc: "SDL_SetWindowFullscreenMode"        .}
+proc get_window_fullscreen_mode*(window): ptr DisplayMode                                       {.importc: "SDL_GetWindowFullscreenMode"        .}
+proc get_window_icc_profile*(window; size: ptr csize_t): pointer                                {.importc: "SDL_GetWindowICCProfile"            .}
+proc get_window_pixel_format*(window): PixelFormat                                              {.importc: "SDL_GetWindowPixelFormat"           .}
+{.pop.}
 
-proc get_bounds*(id: DisplayID; rect: ptr Rect): int32        {.importc: "SDL_GetDisplayBounds"      , dynlib: SDLPath.}
-proc get_usable_bounds*(id: DisplayID; rect: ptr Rect): int32 {.importc: "SDL_GetDisplayUsableBounds", dynlib: SDLPath.}
-proc get_bounds*(id: DisplayID): Rect =
-    if get_bounds(id, result.addr) != 0:
-        echo red fmt"Error: failed to get bounds for display: {get_error()}"
-proc get_usable_bounds*(id: DisplayID): Rect =
-    if get_usable_bounds(id, result.addr) != 0:
-        echo red fmt"Error: failed to get usable bounds for display: {get_error()}"
+#[ -------------------------------------------------------------------- ]#
 
-proc get_natural_orientation*(id: DisplayID): DisplayOrientation {.importc: "SDL_GetNaturalDisplayOrientation", dynlib: SDLPath.}
-proc get_current_orientation*(id: DisplayID): DisplayOrientation {.importc: "SDL_GetCurrentDisplayOrientation", dynlib: SDLPath.}
-proc get_content_scale*(id: DisplayID): float32                  {.importc: "SDL_GetDisplayContentScale"      , dynlib: SDLPath.}
+{.push inline.}
 
-# TODO: The modes returned need to be freed
-proc get_fullscreen_modes*(id: DisplayID; count: ptr int32): ptr UncheckedArray[ptr DisplayMode] {.importc: "SDL_GetFullscreenDisplayModes", dynlib: SDLPath.}
-proc get_fullscreen_modes*(id: DisplayID): seq[DisplayMode] =
-    var count: int32
-    let modes = get_fullscreen_modes(id, count.addr)
-    if modes == nil:
-        echo red fmt"Error: failed to get fullscreen display modes: {get_error()}"
-    else:
-        for mode in to_open_array(modes, 0, count - 1):
-            result.add mode[]
+proc create_window*(title: string, w, h: int, flags: WindowFlag = None): Window {.raises: SDLError.} =
+    check_ptr[Window] "Failed to create window":
+        create_window(cstring title, cint w, cint h, flags)
+proc create_popup*(parent: Window; x, y, w, h: int; flags: WindowFlag = None): Window {.raises: SDLError.} =
+    check_ptr[Window] "Failed to create popup window":
+        create_popup_window(parent, cint x, cint y, cint w, cint h, flags)
 
-proc get_closest_fullscreen_mode*(id: DisplayID; w, h: int32; refresh_rate: float32; include_high_density: bool): pointer
-    {.importc: "SDL_GetClosestFullscreenDisplayMode", dynlib: SDLPath.}
-proc get_desktop_mode*(id: DisplayID): pointer {.importc: "SDL_GetDesktopDisplayMode", dynlib: SDLPath.}
-proc get_current_mode*(id: DisplayID): pointer {.importc: "SDL_GetCurrentDisplayMode", dynlib: SDLPath.}
-proc get_closest_fullscreen_mode_opt*(id: DisplayID; w, h: int32; refresh_rate: float32; include_high_density: bool): Option[DisplayMode] =
-    let mode = get_closest_fullscreen_mode(id, w, h, refresh_rate, include_high_density)
-    check_pointer[DisplayMode](mode, "closest fullscreen mode")
-proc get_desktop_mode_opt*(id: DisplayID): Option[DisplayMode] = check_pointer[DisplayMode](get_desktop_mode id, "desktop mode")
-proc get_current_mode_opt*(id: DisplayID): Option[DisplayMode] = check_pointer[DisplayMode](get_current_mode id, "current mode")
+proc get_bounds*(d_id): Rect {.raises: SDLError.} =
+    check_err "Failed to get bounds for display":
+        get_display_bounds(d_id, result.addr)
+proc get_usable_bounds*(d_id): Rect {.raises: SDLError.} =
+    check_err "Failed to get usable bounds for display":
+        get_display_usable_bounds(d_id, result.addr)
 
-proc get_display*(point: ptr Point): DisplayID {.importc: "SDL_GetDisplayForPoint" , dynlib: SDLPath.}
-proc get_display*(point: ptr Rect): DisplayID  {.importc: "SDL_GetDisplayForRect"  , dynlib: SDLPath.}
-proc get_display*(window: Window): DisplayID   {.importc: "SDL_GetDisplayForWindow", dynlib: SDLPath.}
+# TODO: The modes returned need to be free'd
+proc get_fullscreen_modes*(d_id): seq[DisplayMode] {.raises: SDLError.} =
+    var count: cint
+    let modes = check_ptr[ptr UncheckedArray[ptr DisplayMode]] "Failed to get fullscreen display modes":
+        get_fullscreen_display_modes(d_id, count.addr)
+
+    for mode in to_open_array(modes, 0, count - 1):
+        result.add mode[]
+proc get_desktop_mode_opt*(d_id): DisplayMode {.raises: SDLError.} =
+    let mode = check_ptr[ptr DisplayMode] "Failed to get desktop display mode":
+        get_desktop_display_mode d_id
+    mode[]
+proc get_current_mode_opt*(d_id): DisplayMode {.raises: SDLError.} =
+    let mode = check_ptr[ptr DisplayMode] "Failed to get current display mode":
+        get_current_display_mode d_id
+    mode[]
+
+proc set_fullscreen_mode*(window; mode: DisplayMode) {.raises: SDLError.} =
+    check_err "Failed to set fullscreen mode for window":
+        set_window_fullscreen_mode(window, mode.addr)
+proc get_fullscreen_mode*(window): DisplayMode {.raises: SDLError.} =
+    let mode = check_ptr[ptr DisplayMode] "Failed to get fullscreen window mode":
+        get_window_fullscreen_mode window
+    mode[]
+
+#[ -------------------------------------------------------------------- ]#
+
+proc center*(window) =
+    set_window_position(window, Centered, Centered)
+
 proc get_display*(x, y: int): DisplayID =
     let point = Point(x: int32 x, y: int32 y)
-    get_display point.addr
+    get_display_for_point point.addr
 proc get_display*(x, y, w, h: int): DisplayID =
     let rect = Rect(x: int32 x, y: int32 y, w: int32 w, h: int32 h)
-    get_display rect.addr
+    get_display_for_rect rect.addr
 
-proc get_pixel_density*(window: Window): float32 {.importc: "SDL_GetWindowPixelDensity", dynlib: SDLPath.}
-proc get_display_scale*(window: Window): float32 {.importc: "SDL_GetWindowDisplayScale", dynlib: SDLPath.}
-
-proc set_fullscreen_mode_nocheck*(window: Window; mode: ptr DisplayMode): int32 {.importc: "SDL_SetWindowFullscreenMode", dynlib: SDLPath.}
-proc get_fullscreen_mode_nocheck*(window: Window): ptr DisplayMode              {.importc: "SDL_GetWindowFullscreenMode", dynlib: SDLPath.}
-proc set_fullscreen_mode*(window: Window; mode: DisplayMode) =
-    if set_fullscreen_mode_nocheck(window, mode.addr) != 0:
-        echo red fmt"Error: failed to set fullscreen mode for window: {get_error()}"
-proc get_fullscreen_mode*(window: Window): Option[DisplayMode] =
-    let mode = get_fullscreen_mode_nocheck window
-    if mode == nil:
-        none DisplayMode
-    else:
-        some mode[]
-
-# TODO: this memory returned needs to be free'd
-proc get_icc_profile_nocheck*(window: Window; size: ptr csize_t): pointer {.importc: "SDL_GetWindowICCProfile" , dynlib: SDLPath.}
-proc get_pixel_format_nocheck*(window: Window): PixelFormat               {.importc: "SDL_GetWindowPixelFormat", dynlib: SDLPath.}
-proc get_icc_profile_opt*(window: Window; size: uint64): Option[ICCProfile] =
-    let profile = get_icc_profile_nocheck(window, cast[ptr csize_t](size.addr))
-    check_pointer[ICCProfile](profile, "ICC profile")
-proc get_pixel_format*(window: Window): PixelFormat =
-    result = get_pixel_format_nocheck window
+proc get_pixel_format*(window): PixelFormat =
+    result = get_window_pixel_format window
     if result == Unknown:
         echo red fmt"Error: failed to get pixel format for window: {get_error()}"
+
+proc destroy*(window) =
+    destroy_window window
+
+{.pop.}
 
 # TODO
 

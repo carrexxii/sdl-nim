@@ -2,22 +2,24 @@ import common
 
 type
     Point* = object
-        x*, y*: int32
+        x*, y*: int32 = 0
     FPoint* = object
-        x*, y*: float32
+        x*, y*: float32 = 0.0
 
     Rect* = object
-        x*, y*, w*, h*: int32
+        x*, y*, w*, h*: int32 = 0
     FRect* = object
-        x*, y*, w*, h*: float32
+        x*, y*, w*, h*: float32 = 0.0
 
-# func point*(x, y: SomeNumber): Point =
-#     result.x = x
-#     result.y = y
+func point*(x, y: SomeNumber = 0): Point =
+    result = Point(x: int32 x, y: int32 y)
+func fpoint*(x, y: SomeNumber = 0.0): FPoint =
+    result = FPoint(x: float32 x, y: float32 y)
 
-# func fpoint*(x, y: SomeFloat): FPoint =
-#     result.x = x
-#     result.y = y
+func rect*(x, y, w, h: SomeNumber = 0): Rect =
+    result = Rect(x: int32 x, y: int32 y, w: int32 w, h: int32 h)
+func frect*(x, y, w, h: SomeNumber = 0.0): FRect =
+    result = FRect(x: float32 x, y: float32 y, w: float32 w, h: float32 h)
 
 # TODO
 
