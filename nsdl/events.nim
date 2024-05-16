@@ -1,12 +1,6 @@
-import common, scancode, keycode, video
+import common, keyboard, video
 
-export keycode
-
-type Keysym* = object
-    scancode*: Scancode
-    sym*     : Keycode
-    modifier*: uint16
-    _        : uint32
+export keyboard
 
 type
     Timestamp*   = distinct uint64
