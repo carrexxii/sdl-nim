@@ -23,6 +23,13 @@ func frect*(x, y, w, h: SomeNumber = 0.0): FRect =
 func rect*(rect: FRect): Rect  = rect( rect.x, rect.y, rect.w, rect.h)
 func frect*(rect: Rect): FRect = frect(rect.x, rect.y, rect.w, rect.h)
 
+func in_rect*(pt: Point | FPoint; rect: Rect | FRect): bool =
+    (pt.x >= rect.x) and (pt.x < rect.x + rect.w) and
+    (pt.y >= rect.y) and (pt.y < rect.y + rect.h)
+func `in`*(pt: Point | FPoint; rect: Rect | FRect): bool           = pt.in_rect rect
+func in_rect*(x, y: SomeNumber; rect: Rect | FRect): bool          = point(x, y) in rect
+func `in`*(pt: (SomeNumber, SomeNumber); rect: Rect | FRect): bool = point(pt[0], pt[1]) in rect
+
 # TODO
 
 # SDL_FORCE_INLINE SDL_bool SDL_PointInRect(const SDL_Point *p, const SDL_Rect *r)

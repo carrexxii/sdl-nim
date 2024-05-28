@@ -1,12 +1,65 @@
-import common, keyboard, video
+import common, keyboard
+from video   import Window, WindowID, DisplayID
+from surface import Surface
 
 export keyboard
 
 type
+    MouseButton* = distinct uint8
+    MouseID*     = distinct uint32
+    Cursor*      = distinct pointer
+
+    SystemCursor* {.size: sizeof(cint).} = enum
+        Arrow
+        IBeam
+        Wait
+        Crosshair
+        WaitArrow
+        SizeNWSE
+        SizeNESW
+        SizeWE
+        SizeNS
+        SizeAll
+        No
+        Hand
+        WindowTopLeft
+        WindowTop
+        WindowTopRight
+        WindowRight
+        WindowBottomRight
+        WindowBottom
+        WindowBottomLeft
+        WindowLeft
+
+    MouseWheelDirection* {.size: sizeof(cint).} = enum
+        Normal
+        Flipped
+
+    MouseButtonKind* {.size: sizeof(uint8).} = enum
+        Left   = 1
+        Middle = 2
+        Right  = 3
+        X1     = 4
+        X2     = 5
+
+    # Hard-coded unlike the SDL version which calculates it based off of MouseButtonKind values
+    # assigning values to the enum seems to break the bitset
+    MouseButtonFlag* {.size: sizeof(uint32).} = enum
+        Left
+        Middle
+        Right
+        X1
+        X2
+    MouseButtonMask* = set[MouseButtonFlag]
+
+converter to_button_mask*(mask: SomeInteger): MouseButtonMask =
+    cast[MouseButtonMask](mask)
+
+#[ -------------------------------------------------------------------- ]#
+
+type
     Timestamp*   = distinct uint64
     KeyboardID*  = distinct uint32
-    MouseID*     = distinct uint32
-    MouseButton* = distinct uint8
 
     EventKind* {.size: sizeof(cint).} = enum
         First = 0x0
@@ -131,10 +184,6 @@ type
         Released = 0
         Pressed  = 1
 
-    MouseWheelDirection* {.size: sizeof(cint).} = enum
-        Normal
-        Flipped
-
     EventAction* {.size: sizeof(cint).} = enum
         Add
         Peek
@@ -142,7 +191,6 @@ type
 
     CustomEvent* = distinct uint32
 
-type
     CommonEvent* = object
         kind*   : uint32
         reserved: uint32
@@ -281,11 +329,36 @@ type
 func `==`*[T, U: CustomEvent | SomeInteger](a: T; b: U): bool =
     (uint32 a) == (uint32 b)
 
+#[ -------------------------------------------------------------------- ]#
+
 {.push dynlib: SDLPath.}
 proc poll_event*(event: ptr Event): bool            {.importc: "SDL_PollEvent"          .}
 proc register_events*(count: cint): uint32          {.importc: "SDL_RegisterEvents"     .}
 proc allocate_event_memory*(size: csize_t): pointer {.importc: "SDL_AllocateEventMemory".}
 proc push_event*(event: ptr Event): cint            {.importc: "SDL_PushEvent"          .}
+
+proc has_mouse*(): bool                                                                {.importc: "SDL_HasMouse"             .}
+proc get_mice*(count: ptr cint): ptr MouseID                                           {.importc: "SDL_GetMice"              .}
+proc get_mouse_instance_name*(id: MouseID): cstring                                    {.importc: "SDL_GetMouseInstanceName" .}
+proc get_mouse_focus*(): Window                                                        {.importc: "SDL_GetMouseFocus"        .}
+proc get_mouse_state*(x, y: ptr cfloat): uint32                                        {.importc: "SDL_GetMouseState"        .}
+proc get_global_mouse_state*(x, y: ptr cfloat): uint32                                 {.importc: "SDL_GetGlobalMouseState"  .}
+proc get_relative_mouse_state*(x, y: ptr cfloat): uint32                               {.importc: "SDL_GetRelativeMouseState".}
+proc warp_mouse_in_window*(window: Window; x, y: cfloat)                               {.importc: "SDL_WarpMouseInWindow"    .}
+proc warp_mouse_global*(x, y: cfloat): cint                                            {.importc: "SDL_WarpMouseGlobal"      .}
+proc set_relative_mouse_mode*(enabled: bool): cint                                     {.importc: "SDL_SetRelativeMouseMode" .}
+proc capture_mouse*(enabled: bool): cint                                               {.importc: "SDL_CaptureMouse"         .}
+proc get_relative_mouse_mode*(): bool                                                  {.importc: "SDL_GetRelativeMouseMode" .}
+proc create_cursor*(data: ptr UncheckedArray[uint8]; w, h, hot_x, hot_y: cint): Cursor {.importc: "SDL_CreateCursor"         .}
+proc create_colour_cursor*(surf: Surface; hot_x, hot_y: cint): Cursor                  {.importc: "SDL_CreateColorCursor"    .}
+proc create_system_cursor*(id: SystemCursor): Cursor                                   {.importc: "SDL_CreateSystemCursor"   .}
+proc set_cursor*(cursor: Cursor): cint                                                 {.importc: "SDL_SetCursor"            .}
+proc get_cursor*(): Cursor                                                             {.importc: "SDL_GetCursor"            .}
+proc get_default_cursor*(): Cursor                                                     {.importc: "SDL_GetDefaultCursor"     .}
+proc destroy_cursor*(cursor: Cursor)                                                   {.importc: "SDL_DestroyCursor"        .}
+proc show_cursor*(): cint                                                              {.importc: "SDL_DestroyCursor"        .}
+proc hide_cursor*(): cint                                                              {.importc: "SDL_ShowCursor"           .}
+proc cursor_visible*(): bool                                                           {.importc: "SDL_CursorVisible"        .}
 {.pop.}
 
 {.push inline, raises: [].}
@@ -312,6 +385,14 @@ proc push_event*(event: Event) =
             echo yellow &"[NSDL] Warning: event '{event}' was filtered"
     except ValueError:
         echo "IDK"
+
+# Mouse #
+
+proc get_mouse_state*(): tuple[buttons: MouseButtonMask; x, y: float] =
+    var x, y: cfloat
+    result.buttons = get_mouse_state(x.addr, y.addr)
+    result.x       = x
+    result.y       = y
 
 {.pop.}
 
