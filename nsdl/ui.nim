@@ -17,7 +17,10 @@ type
         font_size* = 18
         font*   = colour(225, 225, 225)
         bg*     = colour(45 , 45 , 45 )
-        panel*  = colour(45 , 45 , 45 )
+        panel*: UITheme =
+            (default: colour(15, 15, 55),
+             hovered: colour(15, 15, 95),
+             clicked: colour(15, 15, 125))
         button*: UITheme =
             (default: colour(30 , 70 , 155),
              hovered: colour(50 , 90 , 205),
@@ -40,6 +43,7 @@ type
     UIPanel* = ref object
         ctx*    : UIContext
         hovered*: bool
+        clicked*: bool
         rect*   : Rect
         z*      : int
         objs*   : seq[UIObject]
@@ -88,21 +92,19 @@ proc add_object*(panel: var UIPanel; kind: UIObjectKind; x, y, w, h: int; text =
             let text_surf = ctx.font.render_blended(text, ctx.theme.font)
             let text_tex  = ctx.renderer.create_texture text_surf
             let (tw, th)  = ctx.font.size text
-            let trect = rect((float panel.rect.x + x) + w/2 - tw/2,
-                             (float panel.rect.y + y) + h/2 - th/2,
-                             float tw, float th)
-            result = UIObject(kind: kind, rect: rect(panel.rect.x + x, panel.rect.y + y, w, h), z: objz,
-                              cb: cb, has_text: true, text_rect: trect, text: text_tex)
+            let trect = rect(w/2 - tw/2, h/2 - th/2, float tw, float th)
+            result = UIObject(kind: kind, rect: rect(x, y, w, h), z: objz, cb: cb,
+                              has_text: true, text_rect: trect, text: text_tex)
 
     panel.objs.add result
 
 ## Automatic positioning based off of the previous object added
 proc add_object*(panel: var UIPanel; dir: UIDirection = Vertical; padding = 5; text = ""; cb: CallbackFn = nil; z = -1): UIObject =
-    assert(panel.objs.len > 0, "Automatic positioning requires at least one object")
+    assert(panel.objs.len > 0, "Automatic positioning requires at least one previous object")
     let
         last = panel.objs[panel.objs.len - 1]
-        x = (if dir == Horizontal: last.rect.x + last.rect.w + padding else: last.rect.x) - panel.rect.x
-        y = (if dir == Vertical  : last.rect.y + last.rect.h + padding else: last.rect.y) - panel.rect.y
+        x = if dir == Horizontal: last.rect.x + last.rect.w + padding else: last.rect.x
+        y = if dir == Vertical  : last.rect.y + last.rect.h + padding else: last.rect.y
     panel.add_object(last.kind, x, y, last.rect.w, last.rect.h, text, cb, z)
 
 ## Automatic positioning for a list of objects
@@ -112,6 +114,7 @@ proc add_objects*(panel: var UIPanel; kind: UIObjectKind; x, y, w, h: int; objs:
         discard panel.add_object(dir, padding, obj.text, obj.cb, z)
 
 var
+    target : UIObject
     hot_obj: UIObject
     lmb_prev = false
 proc update*(ctx: UIContext) =
@@ -122,13 +125,18 @@ proc update*(ctx: UIContext) =
     let lmb_state   = if Left in btns: true else: false
     let lmb_changed = lmb_state != lmb_prev
 
-    var target: UIObject
+    var no_panel_hit = true
     for panel in ctx.panels:
-        if (mx, my) notin panel.rect:
+        panel.hovered = (mx, my) in panel.rect
+        if not panel.hovered:
             continue
 
+        no_panel_hit = false
+        target = nil
         for obj in panel.objs:
-            if (target != nil and target.z > obj.z) or (mx, my) notin obj.rect:
+            let relx = mx - panel.rect.x
+            let rely = my - panel.rect.y
+            if (target != nil and target.z > obj.z) or (relx, rely) notin obj.rect:
                 obj.hovered = false
                 obj.clicked = false
                 continue
@@ -139,8 +147,7 @@ proc update*(ctx: UIContext) =
                 target.clicked = false
             target = obj
 
-            obj.hovered = true
-            obj.clicked = lmb_state
+            # Check if the object is hot/the one originally clicked on
             if lmb_changed:
                 if obj == hot_obj and not lmb_state:
                     hot_obj = nil
@@ -149,6 +156,12 @@ proc update*(ctx: UIContext) =
                 elif lmb_state:
                     hot_obj = obj
 
+            obj.hovered = true
+            obj.clicked = lmb_state and hot_obj == obj
+
+    if target != nil and no_panel_hit:
+        target.hovered = false
+        target.clicked = false
     lmb_prev = lmb_state
 
 proc draw*(ctx: UIContext) =
@@ -159,12 +172,25 @@ proc draw*(ctx: UIContext) =
 
     let ren = ctx.renderer
     for panel in ctx.panels:
+        let colour = panel.get_colour ctx.theme.panel
+        ren.set_draw_colour colour
+        ren.draw_fill_rect panel.rect
         for obj in panel.objs:
-            let colour = obj.get_colour ctx.theme.button
-            ren.set_draw_colour colour
-            ren.draw_fill_rect obj.rect
+            # Clipping
+            let w = if obj.rect.x + obj.rect.w > panel.rect.w: panel.rect.w - obj.rect.x else: obj.rect.w
+            let h = if obj.rect.y + obj.rect.h > panel.rect.h: panel.rect.h - obj.rect.y else: obj.rect.h
+            ren.set_draw_colour (obj.get_colour ctx.theme.button)
+            ren.draw_fill_rect frect(panel.rect.x + obj.rect.x, panel.rect.y + obj.rect.y, w, h)
+
             case obj.kind
             of Button:
                 if not obj.has_text:
                     continue
-                ren.draw_texture(obj.text, frect obj.text_rect)
+
+                let
+                    tx = panel.rect.x + obj.rect.x + obj.text_rect.x
+                    ty = panel.rect.y + obj.rect.y + obj.text_rect.y
+                    tw = if obj.text_rect.x + obj.text_rect.w > w: w - obj.text_rect.x else: obj.text_rect.w
+                    th = if obj.text_rect.y + obj.text_rect.h > h: h - obj.text_rect.y else: obj.text_rect.h
+                ren.draw_texture(obj.text, dst_rect = frect(tx, ty, tw, th),
+                                           src_rect = frect(0 , 0 , tw, th))
