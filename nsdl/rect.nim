@@ -11,6 +11,8 @@ type
     FRect* = object
         x*, y*, w*, h*: float32 = 0.0
 
+{.push inline.}
+
 func point*(x, y: SomeNumber = 0): Point =
     result = Point(x: int32 x, y: int32 y)
 func fpoint*(x, y: SomeNumber = 0.0): FPoint =
@@ -26,9 +28,12 @@ func frect*(rect: Rect): FRect = frect(rect.x, rect.y, rect.w, rect.h)
 func in_rect*(pt: Point | FPoint; rect: Rect | FRect): bool =
     (pt.x >= rect.x) and (pt.x < rect.x + rect.w) and
     (pt.y >= rect.y) and (pt.y < rect.y + rect.h)
-func `in`*(pt: Point | FPoint; rect: Rect | FRect): bool           = pt.in_rect rect
-func in_rect*(x, y: SomeNumber; rect: Rect | FRect): bool          = point(x, y) in rect
-func `in`*(pt: (SomeNumber, SomeNumber); rect: Rect | FRect): bool = point(pt[0], pt[1]) in rect
+func `in`*(pt: Point | FPoint          ; rect: Rect | FRect): bool = pt.in_rect rect
+func `in`*(pt: (SomeNumber, SomeNumber); rect: Rect)        : bool =  point(pt[0], pt[1]).in_rect rect
+func `in`*(pt: (SomeNumber, SomeNumber); rect: FRect)       : bool = fpoint(pt[0], pt[1]).in_rect rect
+func `notin`*(pt: (SomeNumber, SomeNumber) | Point | FPoint; rect: Rect | FRect): bool = not (pt in rect)
+
+{.pop.}
 
 # TODO
 

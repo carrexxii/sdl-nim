@@ -388,11 +388,11 @@ proc push_event*(event: Event) =
 
 # Mouse #
 
-proc get_mouse_state*(): tuple[buttons: MouseButtonMask; x, y: float] =
+proc get_mouse_state*(): tuple[buttons: MouseButtonMask; x, y: int] =
     var x, y: cfloat
     result.buttons = get_mouse_state(x.addr, y.addr)
-    result.x       = x
-    result.y       = y
+    result.x = int x
+    result.y = int y
 
 {.pop.}
 
