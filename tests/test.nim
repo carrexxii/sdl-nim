@@ -20,7 +20,7 @@ echo fmt"SDL_ttf version: {ttf.get_version()}"
 
 init(Video or Events, should_init_ttf = true)
 
-let (window, renderer) = create_window_and_renderer("SDL Tests", WinW, WinH, Resizable)
+let (window, renderer) = create_window_and_renderer("SDL Tests", WinW, WinH, Resizeable)
 renderer.set_draw_colour Olive
 
 let font = open_font fmt"tests/fonts/{FontName}.ttf"
@@ -28,6 +28,7 @@ font.set_size 16
 let fonth = font.height()
 
 let msg = font.render_lcd(&"Font: '{FontName}'\n\n" & TestText, Black, Olive, wrap_length = WinW - 200)
+
 let tex = renderer.create_texture msg
 
 var running = true

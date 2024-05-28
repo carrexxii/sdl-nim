@@ -20,6 +20,8 @@ func rect*(x, y, w, h: SomeNumber = 0): Rect =
     result = Rect(x: int32 x, y: int32 y, w: int32 w, h: int32 h)
 func frect*(x, y, w, h: SomeNumber = 0.0): FRect =
     result = FRect(x: float32 x, y: float32 y, w: float32 w, h: float32 h)
+func rect*(rect: FRect): Rect  = rect( rect.x, rect.y, rect.w, rect.h)
+func frect*(rect: Rect): FRect = frect(rect.x, rect.y, rect.w, rect.h)
 
 # TODO
 

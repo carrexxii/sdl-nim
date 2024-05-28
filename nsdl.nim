@@ -11,9 +11,11 @@ proc init*(flags: InitFlag; should_init_ttf = false) =
             ttf.init()
 
 proc get_version*(version: ptr Version) {.importc: "SDL_GetVersion", dynlib: SDLPath.}
-proc get_version*(): Version = get_version result.addr
+proc get_version*(): string =
+    var v: Version
+    get_version v.addr
+    fmt"{v.major}.{v.minor}.{v.patch}"
 
-import nsdl/events, nsdl/rect, nsdl/pixels, nsdl/properties, nsdl/surface, nsdl/video, nsdl/renderer, ttf
-export      events,      rect,      pixels,      properties,      surface,      video,      renderer, ttf
-# exports from common
+import nsdl/events, nsdl/rect, nsdl/pixels, nsdl/properties, nsdl/surface, nsdl/video, nsdl/renderer, nsdl/opengl
+export      events,      rect,      pixels,      properties,      surface,      video,      renderer,      opengl
 export SDLError, InitFlag, Version, get_error, `or`

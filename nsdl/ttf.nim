@@ -8,6 +8,8 @@ import common
 
 # TODO: default colours
 
+const DefaultFontSize = 16
+
 type
     UnicodeBOM* {.size: sizeof(cint).} = enum
         Native  = 0xFEFF
@@ -152,7 +154,7 @@ proc get_harfbuzz_version*(): Version =
     get_harfbuzz_version(v[0].addr, v[1].addr, v[2].addr)
     Version(major: byte v[0], minor: byte v[1], patch: byte v[2])
 
-proc open_font*(src: string; pt_size = 14; index = 0; hdpi = 0; vdpi = 0): Font {.raises: SDLError.} =
+proc open_font*(src: string; pt_size = DefaultFontSize; index = 0; hdpi = 0; vdpi = 0): Font {.raises: SDLError.} =
     var font: pointer
     if vdpi != 0 or hdpi != 0:
         font = open_font_index_dpi(src, cint pt_size, clong index, cuint hdpi, cuint vdpi)
@@ -161,7 +163,7 @@ proc open_font*(src: string; pt_size = 14; index = 0; hdpi = 0; vdpi = 0): Font 
 
     check_ptr[Font] "Failed to load font from file " & src:
         font
-proc open_font*(stream; close_io = false; pt_size = 14; index = 0; hdpi = 0; vdpi = 0): Font {.raises: SDLError.} =
+proc open_font*(stream; close_io = false; pt_size = DefaultFontSize; index = 0; hdpi = 0; vdpi = 0): Font {.raises: SDLError.} =
     var font: pointer
     if vdpi != 0 or hdpi != 0:
         font = open_font_index_dpi_io(stream, close_io, cint pt_size, clong index, cuint hdpi, cuint vdpi)

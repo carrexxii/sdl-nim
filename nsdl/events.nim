@@ -8,7 +8,7 @@ type
     MouseID*     = distinct uint32
     MouseButton* = distinct uint8
 
-    EventKind* {.size: sizeof(uint32).} = enum
+    EventKind* {.size: sizeof(cint).} = enum
         First = 0x0
         Quit = 0x100
         Terminating
@@ -125,19 +125,22 @@ type
 
         PollSentinel = 0x7F00
         User = 0x8000
+        UserMax = high uint32 # To allow custom events
 
-    EventState* = enum
-        esReleased = 0
-        esPressed  = 1
+    EventState* {.size: sizeof(cint).} = enum
+        Released = 0
+        Pressed  = 1
 
-    MouseWheelDirection* {.size: sizeof(int32).} = enum
-        mwdNormal
-        mwdFlipped
+    MouseWheelDirection* {.size: sizeof(cint).} = enum
+        Normal
+        Flipped
 
-    EventAction* {.size: sizeof(int32).} = enum
-        eaAddEvent
-        eaPeekEvent
-        eaGetEvent
+    EventAction* {.size: sizeof(cint).} = enum
+        Add
+        Peek
+        Get
+
+    CustomEvent* = distinct uint32
 
 type
     CommonEvent* = object
@@ -275,11 +278,42 @@ type
         # clipboard*: ClipboardEvent
         padding: array[128, byte]
 
-proc get_event(event: ptr Event): bool {.importc: "SDL_PollEvent", dynlib: SDLPath.}
+func `==`*[T, U: CustomEvent | SomeInteger](a: T; b: U): bool =
+    (uint32 a) == (uint32 b)
+
+{.push dynlib: SDLPath.}
+proc poll_event*(event: ptr Event): bool            {.importc: "SDL_PollEvent"          .}
+proc register_events*(count: cint): uint32          {.importc: "SDL_RegisterEvents"     .}
+proc allocate_event_memory*(size: csize_t): pointer {.importc: "SDL_AllocateEventMemory".}
+proc push_event*(event: ptr Event): cint            {.importc: "SDL_PushEvent"          .}
+{.pop.}
+
+{.push inline, raises: [].}
+
 iterator get_events*(): Event =
     var event: Event
-    while get_event(addr event):
+    while poll_event(addr event):
         yield event
+
+proc register_event*(): CustomEvent {.raises: SDLError.} =
+    check_err 0, "Failed to register event":
+        CustomEvent register_events 1
+
+proc push_event*(event: Event) =
+    let err = push_event event.addr
+    if err > 0:
+        return
+
+    # This is needed to avoid having a ValueError raises tag which can prevent usage in a closure (mpv_set_wakeup_callback)
+    try:
+        if err < 0:
+            echo red &"[NSDL] Failed to push event '{event}': {get_error()}"
+        elif err == 0:
+            echo yellow &"[NSDL] Warning: event '{event}' was filtered"
+    except ValueError:
+        echo "IDK"
+
+{.pop.}
 
 # TODO:
 
@@ -313,7 +347,6 @@ iterator get_events*(): Event =
 # extern DECLSPEC void SDLCALL SDL_FlushEvents(Uint32 minType, Uint32 maxType);
 # extern DECLSPEC SDL_bool SDLCALL SDL_WaitEvent(SDL_Event *event);
 # extern DECLSPEC SDL_bool SDLCALL SDL_WaitEventTimeout(SDL_Event *event, Sint32 timeoutMS);
-# extern DECLSPEC int SDLCALL SDL_PushEvent(SDL_Event *event);
 # typedef int (SDLCALL *SDL_EventFilter)(void *userdata, SDL_Event *event);
 # extern DECLSPEC void SDLCALL SDL_SetEventFilter(SDL_EventFilter filter, void *userdata);
 # extern DECLSPEC SDL_bool SDLCALL SDL_GetEventFilter(SDL_EventFilter *filter, void **userdata);
@@ -322,5 +355,3 @@ iterator get_events*(): Event =
 # extern DECLSPEC void SDLCALL SDL_FilterEvents(SDL_EventFilter filter, void *userdata);
 # extern DECLSPEC void SDLCALL SDL_SetEventEnabled(Uint32 type, SDL_bool enabled);
 # extern DECLSPEC SDL_bool SDLCALL SDL_EventEnabled(Uint32 type);
-# extern DECLSPEC Uint32 SDLCALL SDL_RegisterEvents(int numevents);
-# extern DECLSPEC void * SDLCALL SDL_AllocateEventMemory(size_t size);

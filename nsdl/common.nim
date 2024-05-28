@@ -10,8 +10,6 @@ type Version* = object
     major*: byte
     minor*: byte
     patch*: byte
-func `$`*(version: Version): string =
-    fmt"{version.major}.{version.minor}.{version.patch}"
 
 type InitFlag* {.size: sizeof(uint32).} = enum
     Timer    = 0x0000_0001
@@ -26,7 +24,7 @@ type InitFlag* {.size: sizeof(uint32).} = enum
 func `or`*(a, b: InitFlag): InitFlag =
     InitFlag (a.ord or b.ord)
 
-proc get_error*(): cstring {.importc: "SDL_GetError"  , dynlib: SDLPath.}
+proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SDLPath.}
 
 #[ -------------------------------------------------------------------- ]#
 
@@ -38,9 +36,17 @@ template check_ptr*[T](msg: string, body: pointer): T =
         raise new_exception(SDLError, "Error: " & msg & " (" & $get_error() & ")")
     cast[T](p)
 
+# When the return value is only the error value
 template check_err*(msg, body) =
     if body != 0:
         raise new_exception(SDLError, "Error: " & msg & " (" & $get_error() & ")")
+
+# When the return value is also the value needed (properties.nim)
+template check_err*(err_val, msg, body) =
+    let res = body
+    if res == err_val:
+        raise new_exception(SDLError, "Error: " & msg & " (" & $get_error() & ")")
+    return res
 
 proc red*    (s: string): string = "\e[31m" & s & "\e[0m"
 proc green*  (s: string): string = "\e[32m" & s & "\e[0m"

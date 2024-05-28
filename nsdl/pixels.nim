@@ -57,21 +57,27 @@ type
         N2101010
         N1010102
 
-    # TODO
-    PixelFormat* {.size: sizeof(int32).} = enum
-        Unknown
+#[ -------------------------------------------------------------------- ]#
+
+template pixel_format*(kind: PixelKind; order: PixelOrder; layout: PackedLayout; bits, bytes: int): int =
+    ((int 1     ) shl 28) or
+    ((int kind  ) shl 24) or
+    ((int order ) shl 20) or
+    ((int layout) shl 16) or
+    ((int bits  ) shl 8)  or
+    ((int bytes ) shl 0)
+
+# TODO
+type PixelFormat* {.size: sizeof(int32).} = enum
+    Unknown
+    ARGB8888 = pixel_format(Packed32, PackedOrder.ARGB, N8888, 32, 4)
+    RGBA8888 = pixel_format(Packed32, PackedOrder.RGBA, N8888, 32, 4)
+    ABGR8888 = pixel_format(Packed32, PackedOrder.ABGR, N8888, 32, 4)
+    BGRA8888 = pixel_format(Packed32, PackedOrder.BGRA, N8888, 32, 4)
 
 func `==`*(a, b: PixelFormat): bool = a == b
 
 type Pixel* = distinct uint32
-
-template pixel_format*(kind: PixelKind; order: PixelOrder; layout: PackedLayout; bits, bytes: int): PixelFormat =
-    (1      shl 28) or
-    (kind   shl 24) or
-    (order  shl 20) or
-    (layout shl 16) or
-    (bits   shl 8)  or
-    (bytes  shl 0)
 
 template pixel_flag*(px: Pixel)     = (px shr 28) and 0x0F
 template pixel_kind*(px: Pixel)     = (px shr 24) and 0x0F
@@ -81,15 +87,22 @@ template bits_per_pixel*(px: Pixel) = (px shr 8)  and 0xFF
 
 type
     Colour* = object
-        r*, g*, b*, a*: uint8
+        r*, g*, b*: uint8 = 0
+        a*: uint8 = 255
     FColour* = object
-        r*, g*, b*, a*: float
+        r*, g*, b*: float32 = 0.0
+        a*: float32 = 1.0
 
     Palette* = object
         colour_count*: int32
         colours*     : Colour
         version      : uint32
         ref_count    : int32
+
+func colour*(r, g, b: uint8; a: uint8 = 255): Colour =
+    Colour(r: r, g: g, b: b, a: a)
+func fcolour*(r, g, b, a: SomeFloat): FColour =
+    FColour(r: r, g: g, b: b, a: a)
 
 template four_cc*(a, b, c, d: uint8) =
     a shl 0  or
@@ -107,13 +120,30 @@ const
     Cyan*    = Colour(r: 0  , g: 255, b: 255, a: 255)
     Magenta* = Colour(r: 255, g: 0  , b: 255, a: 255)
     Silver*  = Colour(r: 192, g: 192, b: 192, a: 255)
-    Gray*    = Colour(r: 128, g: 128, b: 128, a: 255)
+    Grey*    = Colour(r: 128, g: 128, b: 128, a: 255)
     Maroon*  = Colour(r: 128, g: 0  , b: 0  , a: 255)
     Olive*   = Colour(r: 128, g: 128, b: 0  , a: 255)
     Green*   = Colour(r: 0  , g: 128, b: 0  , a: 255)
     Purple*  = Colour(r: 128, g: 0  , b: 128, a: 255)
     Teal*    = Colour(r: 0  , g: 128, b: 128, a: 255)
     Navy*    = Colour(r: 0  , g: 0  , b: 128, a: 255)
+
+    FBlack*   = FColour(r: 0.0, g: 0.0, b: 0.0, a: 1.0)
+    FWhite*   = FColour(r: 1.0, g: 1.0, b: 1.0, a: 1.0)
+    FRed*     = FColour(r: 1.0, g: 0.0, b: 0.0, a: 1.0)
+    FLime*    = FColour(r: 0.0, g: 1.0, b: 0.0, a: 1.0)
+    FBlue*    = FColour(r: 0.0, g: 0.0, b: 1.0, a: 1.0)
+    FYellow*  = FColour(r: 1.0, g: 1.0, b: 0.0, a: 1.0)
+    FCyan*    = FColour(r: 0.0, g: 1.0, b: 1.0, a: 1.0)
+    FMagenta* = FColour(r: 1.0, g: 0.0, b: 1.0, a: 1.0)
+    FSilver*  = FColour(r: 0.8, g: 0.8, b: 0.8, a: 1.0)
+    FGrey*    = FColour(r: 0.5, g: 0.5, b: 0.5, a: 1.0)
+    FMaroon*  = FColour(r: 0.5, g: 0.0, b: 0.0, a: 1.0)
+    FOlive*   = FColour(r: 0.5, g: 0.5, b: 0.0, a: 1.0)
+    FGreen*   = FColour(r: 0.0, g: 0.5, b: 0.0, a: 1.0)
+    FPurple*  = FColour(r: 0.5, g: 0.0, b: 0.5, a: 1.0)
+    FTeal*    = FColour(r: 0.0, g: 0.5, b: 0.5, a: 1.0)
+    FNavy*    = FColour(r: 0.0, g: 0.0, b: 0.5, a: 1.0)
 
 # TODO
 

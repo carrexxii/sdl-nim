@@ -25,7 +25,7 @@ task builddeps, "Build SDL":
 
 task test, "Run tests":
     echo "Running tests..."
-    exec "nim c -r -p:. -o:test tests/test.nim"
+    exec "nim c -r -p:. -o:test tests/test_ui.nim"
 
 task clean, "Cleanup":
     echo "Cleaning..."
