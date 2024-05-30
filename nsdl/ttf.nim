@@ -1,5 +1,3 @@
-{.push raises: [].}
-
 from std/unicode import Rune, `$`
 from io      import Stream
 from pixels  import Colour
@@ -52,9 +50,6 @@ using
     font  : Font
 
 {.push dynlib: TTFPath.}
-proc linked_version*(): ptr Version                                                                       {.importc: "TTF_Linked_Version"               .}
-proc get_freetype_version*(major, minor, patch: ptr cint)                                                 {.importc: "TTF_GetFreeTypeVersion"           .}
-proc get_harfbuzz_version*(major, minor, patch: ptr cint)                                                 {.importc: "TTF_GetHarfBuzzVersion"           .}
 proc byte_swapped_unicode*(swapped: bool)                                                                 {.importc: "TTF_ByteSwappedUNICODE"           .}
 proc init*(): cint                                                                                        {.importc: "TTF_Init"                         .}
 proc quit*()                                                                                              {.importc: "TTF_Quit"                         .}
@@ -142,17 +137,7 @@ proc render_unicode_lcd_wrapped*(font; text: ptr uint16; fg, bg: Colour; wrap_le
 
 #[ -------------------------------------------------------------------- ]#
 
-{.push inline.}
-
-proc get_version*(): Version = linked_version()[]
-proc get_freetype_version*(): Version =
-    var v: array[3, cint]
-    get_freetype_version(v[0].addr, v[1].addr, v[2].addr)
-    Version(major: byte v[0], minor: byte v[1], patch: byte v[2])
-proc get_harfbuzz_version*(): Version =
-    var v: array[3, cint]
-    get_harfbuzz_version(v[0].addr, v[1].addr, v[2].addr)
-    Version(major: byte v[0], minor: byte v[1], patch: byte v[2])
+{.push inline, raises: [].}
 
 proc open_font*(src: string; pt_size = DefaultFontSize; index = 0; hdpi = 0; vdpi = 0): Font {.raises: SDLError.} =
     var font: pointer
@@ -163,6 +148,7 @@ proc open_font*(src: string; pt_size = DefaultFontSize; index = 0; hdpi = 0; vdp
 
     check_ptr[Font] "Failed to load font from file " & src:
         font
+
 proc open_font*(stream; close_io = false; pt_size = DefaultFontSize; index = 0; hdpi = 0; vdpi = 0): Font {.raises: SDLError.} =
     var font: pointer
     if vdpi != 0 or hdpi != 0:
@@ -178,9 +164,11 @@ proc close*(font) = close_font font
 proc set_size*(font; pt_size: int) {.raises: SDLError.} =
     check_err "Failed to set font size":
         set_font_size(font, cint pt_size)
+
 proc set_size*(font; pt_size, hdpi, vdpi: int) {.raises: SDLError.} =
     check_err "Failed to set font size with dpi":
         set_font_size_dpi(font, cint pt_size, cuint hdpi, cuint vdpi)
+
 proc get_style*(font): FontStyle        = FontStyle get_font_style font
 proc set_style*(font; style: FontStyle) = set_font_style(font, cint style)
 proc get_outline*(font): int            = get_font_style font

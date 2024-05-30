@@ -168,7 +168,7 @@ proc get_display*(x, y, w, h: int): DisplayID =
 proc get_pixel_format*(window): PixelFormat =
     result = get_window_pixel_format window
     if result == Unknown:
-        echo red fmt"Error: failed to get pixel format for window: {get_error()}"
+        echo red &"Error: failed to get pixel format for window: {get_error()}"
 
 proc destroy*(window) =
     destroy_window window

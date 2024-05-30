@@ -1,15 +1,11 @@
-import std/[strformat, options]
-export strformat, options
+import std/options
+from std/strformat import `&`
+export options, `&`
 
 const
     SDLDir* {.strdefine.} =  "."
-    SDLPath* = fmt"{SDLDir}/lib/libSDL3.so"
-    TTFPath* = fmt"{SDLDir}/lib/libSDL3_ttf.so"
-
-type Version* = object
-    major*: byte
-    minor*: byte
-    patch*: byte
+    SDLPath* = &"{SDLDir}/lib/libSDL3.so"
+    TTFPath* = &"{SDLDir}/lib/libSDL3_ttf.so"
 
 type InitFlag* {.size: sizeof(uint32).} = enum
     Timer    = 0x0000_0001

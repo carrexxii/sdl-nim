@@ -8,8 +8,8 @@ const
     FontName = "fantasque"
 
 echo fmt"Nim version    : {NimVersion}"
-echo fmt"SDL version    : {nsdl.get_version()}"
-echo fmt"SDL_ttf version: {ttf.get_version()}"
+echo fmt"SDL version    : {sdl_version()}"
+echo fmt"SDL_ttf version: {ttf_version()}"
 
 init(Video or Events, should_init_ttf = true)
 
