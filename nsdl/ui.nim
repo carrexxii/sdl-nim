@@ -194,3 +194,4 @@ proc draw*(ctx: UIContext) =
                     th = if obj.text_rect.y + obj.text_rect.h > h: h - obj.text_rect.y else: obj.text_rect.h
                 ren.draw_texture(obj.text, dst_rect = frect(tx, ty, tw, th),
                                            src_rect = frect(0 , 0 , tw, th))
+

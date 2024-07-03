@@ -331,7 +331,7 @@ func `==`*[T, U: CustomEvent | SomeInteger](a: T; b: U): bool =
 
 #[ -------------------------------------------------------------------- ]#
 
-{.push dynlib: SDLPath.}
+{.push dynlib: SDLLib.}
 proc poll_event*(event: ptr Event): bool            {.importc: "SDL_PollEvent"          .}
 proc register_events*(count: cint): uint32          {.importc: "SDL_RegisterEvents"     .}
 proc allocate_event_memory*(size: csize_t): pointer {.importc: "SDL_AllocateEventMemory".}

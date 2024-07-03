@@ -76,7 +76,7 @@ using
     window: Window
     d_id: DisplayID
 
-{.push dynlib: SDLPath.}
+{.push dynlib: SDLLib.}
 proc create_window*(title: cstring, w, h: cint, flags: WindowFlag): pointer                     {.importc: "SDL_CreateWindow"                   .}
 proc create_popup_window*(parent: Window; x, y, w, h: cint; flags: WindowFlag): pointer         {.importc: "SDL_CreatePopupWindow"              .}
 proc set_window_position*(window; x, y: cint)                                                   {.importc: "SDL_SetWindowPosition"              .}

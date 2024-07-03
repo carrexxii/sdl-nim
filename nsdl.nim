@@ -1,7 +1,7 @@
 import nsdl/common
 from nsdl/ttf import init
 
-proc init*(flags: uint32): cint {.importc: "SDL_Init", dynlib: SDLPath.}
+proc init*(flags: uint32): cint {.importc: "SDL_Init".}
 proc init*(flags: InitFlag; should_init_ttf = false) =
     check_err "Failed to initialize SDL":
         init(uint32 flags)
@@ -19,10 +19,12 @@ func micro*(v: Version): int =  (int v) mod 1000
 func `$`*(v: Version): string =
     &"{v.major}.{v.minor}.{v.micro}"
 
-proc sdl_version*(): Version                              {.importc: "SDL_GetVersion"        , dynlib: SDLPath.}
-proc ttf_version*(): Version                              {.importc: "TTF_Version"           , dynlib: TTFPath.}
-proc get_freetype_version*(major, minor, patch: ptr cint) {.importc: "TTF_GetFreeTypeVersion", dynlib: TTFPath.}
-proc get_harfbuzz_version*(major, minor, patch: ptr cint) {.importc: "TTF_GetHarfBuzzVersion", dynlib: TTFPath.}
+{.push dynlib: SDLLib.}
+proc sdl_version*(): Version                              {.importc: "SDL_GetVersion"        .}
+proc ttf_version*(): Version                              {.importc: "TTF_Version"           .}
+proc get_freetype_version*(major, minor, patch: ptr cint) {.importc: "TTF_GetFreeTypeVersion".}
+proc get_harfbuzz_version*(major, minor, patch: ptr cint) {.importc: "TTF_GetHarfBuzzVersion".}
+{.pop.}
 
 proc freetype_version*(): Version =
     var major, minor, patch: cint
@@ -37,3 +39,4 @@ proc harfbuzz_version*(): Version =
 import nsdl/events, nsdl/rect, nsdl/pixels, nsdl/properties, nsdl/surface, nsdl/video, nsdl/renderer, nsdl/opengl
 export      events,      rect,      pixels,      properties,      surface,      video,      renderer,      opengl
 export SDLError, InitFlag, get_error, `or`
+

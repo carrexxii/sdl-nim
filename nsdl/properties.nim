@@ -121,7 +121,7 @@ func `$`*(x: PropertyID): string {.borrow.}
 from video    import Window
 from renderer import Texture
 
-{.push dynlib: SDLPath.}
+{.push dynlib: SDLLib.}
 proc get_property*       (id: PropertyID; name: PropertyName; default: pointer): pointer {.importc: "SDL_GetProperty"         .}
 proc get_number_property*(id: PropertyID; name: PropertyName; default: int64  ): int64   {.importc: "SDL_GetNumberProperty"   .}
 proc get_window_properties*(window: Window): uint32                                      {.importc: "SDL_GetWindowProperties" .}
@@ -157,3 +157,4 @@ proc get_texture_number*(texture: Texture): int64 {.raises: SDLError.} =
     check_err -1, "Failed to get texture number":
         get_number_property(get_properties texture, TextureOpenGLTextureNumber, -1)
 {.pop.}
+

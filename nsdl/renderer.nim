@@ -83,7 +83,7 @@ type
 
 proc compose_custom_blendmode*(src_colour, dst_colour: BlendFactor; colour_op: BlendOperation;
                                src_alpha , dst_alpha : BlendFactor; alpha_op : BlendOperation): BlendMode
-    {.importc: "SDL_ComposeCustomBlendMode", dynlib: SDLPath.}
+    {.importc: "SDL_ComposeCustomBlendMode".}
 
 #[ -------------------------------------------------------------------- ]#
 
@@ -97,7 +97,7 @@ using
     surf  : Surface
     tex   : Texture
 
-{.push dynlib: SDLPath.}
+{.push dynlib: SDLLib.}
 proc get_num_render_drivers*(): cint                                                       {.importc: "SDL_GetNumRenderDrivers"       .}
 proc get_render_driver*(index: cint): cstring                                              {.importc: "SDL_GetRenderDriver"           .}
 proc create_renderer*(win; name: cstring; rflags): pointer                                 {.importc: "SDL_CreateRenderer"            .}

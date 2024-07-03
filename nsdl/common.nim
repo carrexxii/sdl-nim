@@ -2,10 +2,8 @@ import std/options
 from std/strformat import `&`
 export options, `&`
 
-const
-    SDLDir* {.strdefine.} =  "."
-    SDLPath* = &"{SDLDir}/lib/libSDL3.so"
-    TTFPath* = &"{SDLDir}/lib/libSDL3_ttf.so"
+const SDLLib*    = "SDL3"
+const SDLTTFLib* = "SDL3_ttf"
 
 type InitFlag* {.size: sizeof(uint32).} = enum
     Timer    = 0x0000_0001
@@ -20,7 +18,7 @@ type InitFlag* {.size: sizeof(uint32).} = enum
 func `or`*(a, b: InitFlag): InitFlag =
     InitFlag (a.ord or b.ord)
 
-proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SDLPath.}
+proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SDLLib.}
 
 #[ -------------------------------------------------------------------- ]#
 
@@ -50,3 +48,4 @@ proc yellow* (s: string): string = "\e[33m" & s & "\e[0m"
 proc blue*   (s: string): string = "\e[34m" & s & "\e[0m"
 proc magenta*(s: string): string = "\e[35m" & s & "\e[0m"
 proc cyan*   (s: string): string = "\e[36m" & s & "\e[0m"
+

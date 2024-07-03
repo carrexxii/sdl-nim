@@ -21,3 +21,4 @@ type
         map         : BlitMap
         ref_count   : int32
     Surface* = ptr SurfaceObj
+    

@@ -3,7 +3,7 @@ from video import Window
 
 type GLContext* = distinct pointer
 
-{.push dynlib: SDLPath.}
+{.push dynlib: SDLLib.}
 proc gl_get_proc_address*(name: cstring): pointer {.importc: "SDL_GL_GetProcAddress".}
 proc gl_create_context*(window: Window): pointer  {.importc: "SDL_GL_CreateContext" .}
 proc gl_swap_window*(window: Window): cint        {.importc: "SDL_GL_SwapWindow"    .}

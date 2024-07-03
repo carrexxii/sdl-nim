@@ -49,7 +49,7 @@ using
     stream: Stream
     font  : Font
 
-{.push dynlib: TTFPath.}
+{.push dynlib: SDLTTFLib.}
 proc byte_swapped_unicode*(swapped: bool)                                                                 {.importc: "TTF_ByteSwappedUNICODE"           .}
 proc init*(): cint                                                                                        {.importc: "TTF_Init"                         .}
 proc quit*()                                                                                              {.importc: "TTF_Quit"                         .}
@@ -274,3 +274,4 @@ proc render_lcd*(font; text: string; fg, bg: Colour; wrap_length: int): Surface 
         render_utf8_lcd_wrapped(font, text, fg, bg, uint32 wrap_length)
 
 {.pop.}
+
