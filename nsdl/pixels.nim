@@ -2,80 +2,80 @@ import common
 
 type
     Alpha* {.size: sizeof(int32).} = enum
-        Transparent = 0
-        Opaque      = 255
+        aTransparent = 0
+        aOpaque      = 255
 
     PixelKind* {.size: sizeof(int32).} = enum
-        Unknown
-        Index1
-        Index4
-        Index8
-        Packed8
-        Packed16
-        Packed32
-        ArrayU8
-        ArrayU16
-        ArrayU32
-        ArrayF16
-        ArrayF32
+        pkUnknown
+        pkIndex1
+        pkIndex4
+        pkIndex8
+        pkPacked8
+        pkPacked16
+        pkPacked32
+        pkArrayU8
+        pkArrayU16
+        pkArrayU32
+        pkArrayF16
+        pkArrayF32
 
     BitmapOrder* {.size: sizeof(int32).} = enum
-        None
-        N4321
-        N1234
+        boNone
+        bo4321
+        bo1234
 
     PackedOrder* {.size: sizeof(int32).} = enum
-        None
-        XRGB
-        RGBX
-        ARGB
-        RGBA
-        XBGR
-        BGRX
-        ABGR
-        BGRA
+        poNone
+        poXRGB
+        poRGBX
+        poARGB
+        poRGBA
+        poXBGR
+        poBGRX
+        poABGR
+        poBGRA
 
     ArrayOrder* {.size: sizeof(int32).} = enum
-        None
-        RGB
-        RGBA
-        ARGB
-        BGR
-        BGRA
-        ABGR
+        aoNone
+        aoRGB
+        aoRGBA
+        aoARGB
+        aoBGR
+        aoBGRA
+        aoABGR
 
     PixelOrder* = BitmapOrder | PackedOrder | ArrayOrder
 
     PackedLayout* {.size: sizeof(int32).} = enum
-        None
-        N332
-        N4444
-        N1555
-        N5551
-        N565
-        N8888
-        N2101010
-        N1010102
+        plNone
+        pl332
+        pl4444
+        pl1555
+        pl5551
+        pl565
+        pl8888
+        pl2101010
+        pl1010102
 
 #[ -------------------------------------------------------------------- ]#
 
 template pixel_format*(kind: PixelKind; order: PixelOrder; layout: PackedLayout; bits, bytes: int): int =
-    ((int 1     ) shl 28) or
-    ((int kind  ) shl 24) or
-    ((int order ) shl 20) or
-    ((int layout) shl 16) or
-    ((int bits  ) shl 8)  or
-    ((int bytes ) shl 0)
+    (1          shl 28) or
+    (kind.ord   shl 24) or
+    (order.ord  shl 20) or
+    (layout.ord shl 16) or
+    (bits       shl 8)  or
+    (bytes      shl 0)
 
 # TODO
 type PixelFormat* {.size: sizeof(int32).} = enum
-    Unknown
-    ARGB8888 = pixel_format(Packed32, PackedOrder.ARGB, N8888, 32, 4)
-    RGBA8888 = pixel_format(Packed32, PackedOrder.RGBA, N8888, 32, 4)
-    ABGR8888 = pixel_format(Packed32, PackedOrder.ABGR, N8888, 32, 4)
-    BGRA8888 = pixel_format(Packed32, PackedOrder.BGRA, N8888, 32, 4)
+    pfUnknown
+    pfARGB8888 = pixel_format(pkPacked32, poARGB, pl8888, 32, 4)
+    pfRGBA8888 = pixel_format(pkPacked32, poRGBA, pl8888, 32, 4)
+    pfABGR8888 = pixel_format(pkPacked32, poABGR, pl8888, 32, 4)
+    pfBGRA8888 = pixel_format(pkPacked32, poBGRA, pl8888, 32, 4)
 
-func `==`*(a, b: PixelFormat): bool = a == b
+# func `==`*(a, b: PixelFormat): bool = a == b
 
 type Pixel* = distinct uint32
 
@@ -96,15 +96,15 @@ type
     Palette* = object
         colour_count*: int32
         colours*     : Colour
-        version      : uint32
-        ref_count    : int32
+        version*     : uint32
+        ref_count*   : int32
 
 func colour*(r, g, b: uint8; a: uint8 = 255): Colour =
     Colour(r: r, g: g, b: b, a: a)
 func fcolour*(r, g, b, a: SomeFloat): FColour =
     FColour(r: r, g: g, b: b, a: a)
 
-template four_cc*(a, b, c, d: uint8) =
+func fourcc*(a, b, c, d: uint8): uint32 =
     a shl 0  or
     b shl 8  or
     c shl 16 or

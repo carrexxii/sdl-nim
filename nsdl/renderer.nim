@@ -14,16 +14,16 @@ func `or`*(a, b: RendererFlag): RendererFlag =
 
 type
     TextureAccess* {.size: sizeof(int32).} = enum
-        Static
-        Streaming
-        Target
+        taStatic
+        taStreaming
+        taTarget
 
     LogicalPresent* {.size: sizeof(int32).} = enum
-        Disabled
-        Stretch
-        Letterbox
-        Overscan
-        IntegerScale
+        lpDisabled
+        lpStretch
+        lpLetterbox
+        lpOverscan
+        lpIntegerScale
 
 type
     Renderer* = distinct pointer
@@ -55,31 +55,31 @@ func vertex*(xy = FPoint(); rgba = FColour(); uv = FPoint()): Vertex =
 
 type
     BlendMode* {.size: sizeof(uint32).} = enum
-        None    = 0x0000_0000
-        Blend   = 0x0000_0001
-        Add     = 0x0000_0002
-        Mod     = 0x0000_0004
-        Mul     = 0x0000_0008
-        Invalid = 0x7FFF_FFFF
+        bmNone    = 0x0000_0000
+        bmBlend   = 0x0000_0001
+        bmAdd     = 0x0000_0002
+        bmMod     = 0x0000_0004
+        bmMul     = 0x0000_0008
+        bmInvalid = 0x7FFF_FFFF
 
     BlendOperation* {.size: sizeof(int32).} = enum
-        Add         = 0x1
-        Subtract    = 0x2
-        RevSubtract = 0x3
-        Minimum     = 0x4
-        Maximum     = 0x5
+        boAdd         = 0x1
+        boSubtract    = 0x2
+        boRevSubtract = 0x3
+        boMinimum     = 0x4
+        boMaximum     = 0x5
 
     BlendFactor* {.size: sizeof(int32).} = enum
-        Zero              = 0x1
-        One               = 0x2
-        SrcColour         = 0x3
-        OneMinusSrcColour = 0x4
-        SrcAlpha          = 0x5
-        OneMinusSrcAlpha  = 0x6
-        DstColour         = 0x7
-        OneMinusDstColour = 0x8
-        DstAlpha          = 0x9
-        OneMinusDstAlpha  = 0xA
+        bfZero              = 0x1
+        bfOne               = 0x2
+        bfSrcColour         = 0x3
+        bfOneMinusSrcColour = 0x4
+        bfSrcAlpha          = 0x5
+        bfOneMinusSrcAlpha  = 0x6
+        bfDstColour         = 0x7
+        bfOneMinusDstColour = 0x8
+        bfDstAlpha          = 0x9
+        bfOneMinusDstAlpha  = 0xA
 
 proc compose_custom_blendmode*(src_colour, dst_colour: BlendFactor; colour_op: BlendOperation;
                                src_alpha , dst_alpha : BlendFactor; alpha_op : BlendOperation): BlendMode
@@ -121,16 +121,17 @@ proc set_render_colour_scale*(ren; scale: cfloat): cint                         
 proc get_render_colour_scale*(ren; scale: ptr cfloat): cint                                {.importc: "SDL_GetRenderColorScale"       .}
 proc set_render_draw_blend_mode*(ren; mode: BlendMode): cint                               {.importc: "SDL_SetRenderDrawBlendMode"    .}
 proc get_render_draw_blend_mode*(ren; mode: ptr BlendMode): cint                           {.importc: "SDL_GetRenderDrawBlendMode"    .}
-proc render_clear*(ren): cint                                                              {.importc: "SDL_RenderClear"               .}
-proc render_point*(ren; x, y: cfloat): cint                                                {.importc: "SDL_RenderPoint"               .}
-proc render_points*(ren; points: ptr FPoint; count: cint): cint                            {.importc: "SDL_RenderPoints"              .}
-proc render_line*(ren; x1, y1, x2, y2: cfloat): cint                                       {.importc: "SDL_RenderLine"                .}
-proc render_lines*(ren; points: ptr FPoint; count: cint): cint                             {.importc: "SDL_RenderLines"               .}
-proc render_rect*(ren; rect: ptr FRect): cint                                              {.importc: "SDL_RenderRect"                .}
-proc render_rects*(ren; rects: ptr FRect; count: cint): cint                               {.importc: "SDL_RenderRects"               .}
-proc render_fill_rect*(ren; rect: ptr FRect): cint                                         {.importc: "SDL_RenderFillRect"            .}
-proc render_fill_rects*(ren; rects: ptr FRect; count: cint): cint                          {.importc: "SDL_RenderFillRects"           .}
-proc render_texture*(ren; tex; src, dst: ptr FRect): cint                                  {.importc: "SDL_RenderTexture"             .}
+
+proc render_clear*(ren): cint                                     {.importc: "SDL_RenderClear"    .}
+proc render_point*(ren; x, y: cfloat): cint                       {.importc: "SDL_RenderPoint"    .}
+proc render_points*(ren; points: ptr FPoint; count: cint): cint   {.importc: "SDL_RenderPoints"   .}
+proc render_line*(ren; x1, y1, x2, y2: cfloat): cint              {.importc: "SDL_RenderLine"     .}
+proc render_lines*(ren; points: ptr FPoint; count: cint): cint    {.importc: "SDL_RenderLines"    .}
+proc render_rect*(ren; rect: ptr FRect): cint                     {.importc: "SDL_RenderRect"     .}
+proc render_rects*(ren; rects: ptr FRect; count: cint): cint      {.importc: "SDL_RenderRects"    .}
+proc render_fill_rect*(ren; rect: ptr FRect): cint                {.importc: "SDL_RenderFillRect" .}
+proc render_fill_rects*(ren; rects: ptr FRect; count: cint): cint {.importc: "SDL_RenderFillRects".}
+proc render_texture*(ren; tex; src, dst: ptr FRect): cint         {.importc: "SDL_RenderTexture"  .}
 proc create_window_and_renderer*(title: cstring; w, h: cint; wflags; window: ptr Window; renderer: ptr Renderer): cint
     {.importc: "SDL_CreateWindowAndRenderer".}
 proc render_texture_rotated*(ren; tex; src, dst: ptr FRect; angle: cdouble; center: ptr FPoint; flip: FlipMode): cint
@@ -169,7 +170,7 @@ proc create_renderer*(surf): Renderer {.raises: SDLError.} =
 proc create_renderer*(win; name: string = ""; rflags = PresentVSync): Renderer {.raises: SDLError.} =
     check_ptr[Renderer] "Failed to create renderer":
         create_renderer(win, if name != "": cstring name else: nil, rflags)
-proc create_window_and_renderer*(title: string; w, h: int; wflags: WindowFlag = None): (Window, Renderer) {.raises: SDLError.} =
+proc create_window_and_renderer*(title: string; w, h: int; wflags: WindowFlag = wfNone): (Window, Renderer) {.raises: SDLError.} =
     check_err "Failed to create window and renderer":
         create_window_and_renderer(cstring title, cint w, cint h, wflags, result[0].addr, result[1].addr)
 
@@ -191,7 +192,7 @@ proc get_current_output_size*(ren): tuple[x, y: int] {.raises: SDLError.} =
     result.x = x
     result.y = y
 
-proc create_texture*(ren; w, h: int; format = RGBA8888; access = Static): Texture {.raises: SDLError.} =
+proc create_texture*(ren; w, h: int; format: PixelFormat = pfRGBA8888; access: TextureAccess = taStatic): Texture {.raises: SDLError.} =
     check_ptr[Texture] "Failed to create texture":
         create_texture(ren, format, access, cint w, cint h)
 proc create_texture*(ren; surf): Texture {.raises: SDLError.} =
@@ -292,18 +293,20 @@ proc draw_texture*(ren; tex; dst_rect, src_rect = FRect()) {.raises: SDLError.} 
         render_texture(ren, tex, src, dst)
 
 proc draw_texture*(ren; tex; angle: SomeNumber; src_rect = FRect(); dst_rect = FRect();
-                   center = FPoint(); flip = FlipMode.None) {.raises: SDLError.} =
+                   center = FPoint(); flip: FlipMode = fmNone) {.raises: SDLError.} =
     let src = if src_rect.w != 0.0 and src_rect.h != 0.0: src_rect.addr else: nil
     let dst = if dst_rect.w != 0.0 and dst_rect.h != 0.0: dst_rect.addr else: nil
     check_err "Failed to render rotated texture":
         render_texture_rotated(ren, tex, src.addr, dst.addr, cfloat angle, center, flip)
 
-proc geometry*(ren; vertices: seq[Vertex]; indices = none seq[int32]; texture = none Texture) {.raises: SDLError.} =
-    let tex = if is_some texture: cast[pointer](get texture) else: nil
-    let (indc, inds) = if is_some indices: ((get indices).len, (get indices)[0].addr)
-                       else: (0, nil)
+proc geometry*(ren; vertices: openArray[Vertex]; indices: openArray[int32] = []; texture = none Texture) {.raises: SDLError.} =
+    let
+        tex   = if is_some texture: cast[pointer](get texture) else: nil
+        vertc = cint vertices.len
+        indc  = cint indices.len
+        inds  = if indc > 0: indices[0].addr else: nil
     check_err "Failed to render geometry":
-        render_geometry(ren, cast[Texture](tex), vertices[0].addr, cint vertices.len, inds, cint indc)
+        render_geometry(ren, cast[Texture](tex), vertices[0].addr, vertc, inds, indc)
 
 proc read_pixels*(ren; rect = Rect()): Surface {.raises: SDLError.} =
     let src = if rect.w != 0 and rect.h != 0: rect.addr else: nil
@@ -319,7 +322,7 @@ proc flush*(ren) {.raises: SDLError.} =
 proc destroy*(tex) = destroy_texture tex
 proc destroy*(ren) = destroy_renderer ren
 
-{.pop.} # inline
+{.pop.}
 
 # TODO:
 

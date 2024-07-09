@@ -1,16 +1,16 @@
 import pixels, rect
 
+type FlipMode* {.size: sizeof(cint).} = enum
+    fmNone
+    fmHorizontal
+    fmVertical
+
 type
     BlitMap* = distinct pointer
 
-    FlipMode* {.size: sizeof(cint).} = enum
-        None
-        Horizontal
-        Vertical
-
     SurfaceObj* = object
-        flags       : uint32
-        format      : ptr PixelFormat
+        flags*      : uint32
+        format*     : ptr PixelFormat
         w*, h*      : int32
         pitch*      : int32
         pixels      : pointer
@@ -21,4 +21,4 @@ type
         map         : BlitMap
         ref_count   : int32
     Surface* = ptr SurfaceObj
-    
+

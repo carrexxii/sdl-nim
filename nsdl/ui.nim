@@ -1,7 +1,6 @@
 import
     std/options,
     common, rect, pixels, renderer, events, ttf
-from std/sugar import `->`
 
 type
     CallbackFn* = UIObject -> void
@@ -122,7 +121,7 @@ proc update*(ctx: UIContext) =
         return
 
     let (btns, mx, my) = get_mouse_state()
-    let lmb_state   = if Left in btns: true else: false
+    let lmb_state   = mbLeft in btns
     let lmb_changed = lmb_state != lmb_prev
 
     var no_panel_hit = true

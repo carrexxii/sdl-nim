@@ -1,60 +1,43 @@
 {.push raises: [].}
 
-import common, pixels, rect
+import common, bitgen, pixels, rect
 
 type Window* = distinct pointer
 
-type WindowFlag* {.size: sizeof(uint64).} = enum
-    None             = 0x0000_0000_0000_0000
-    Fullscreen       = 0x0000_0000_0000_0001
-    OpenGL           = 0x0000_0000_0000_0002
-    Occluded         = 0x0000_0000_0000_0004
-    Hidden           = 0x0000_0000_0000_0008
-    Borderless       = 0x0000_0000_0000_0010
-    Resizeable       = 0x0000_0000_0000_0020
-    Minimized        = 0x0000_0000_0000_0040
-    Maximized        = 0x0000_0000_0000_0080
-    MouseGrabbed     = 0x0000_0000_0000_0100
-    InputFocus       = 0x0000_0000_0000_0200
-    MouseFocus       = 0x0000_0000_0000_0400
-    External         = 0x0000_0000_0000_0800
-    HighPixelDensity = 0x0000_0000_0000_2000
-    MouseCapture     = 0x0000_0000_0000_4000
-    AlwaysOnTop      = 0x0000_0000_0000_8000
-    SkipTaskbar      = 0x0000_0000_0001_0000
-    Utility          = 0x0000_0000_0002_0000
-    Tooltip          = 0x0000_0000_0004_0000
-    PopupMenu        = 0x0000_0000_0008_0000
-    KeyboardGrabbed  = 0x0000_0000_0010_0000
-    Vulkan           = 0x0000_0000_1000_0000
-    Metal            = 0x0000_0000_2000_0000
-    Transparent      = 0x0000_0000_4000_0000
-    NotFocusable     = 0x0000_0000_8000_0000
-func `or`*(a, b: WindowFlag): WindowFlag =
-    WindowFlag (a.ord or b.ord)
-
-type WindowPos* {.size: sizeof(int32).} = enum
-    Undefined = 0x1FFF_0000
-    Centered  = 0x2FFF_0000
-converter toInt32(x: WindowPos): int32 = int32 x
+type WindowFlag* = distinct uint64
+WindowFlag.gen_bit_ops(
+    wfFullscreen, wfOpenGL, wfOccluded, wfHidden,
+    wfBorderless, wfResizeable, wfMinimized, wfMaximized,
+    wfMouseGrabbed, wfInputFocus, wfMouseFocus, wfExternal,
+    _, wfHighPixelDensity, wfMouseCapture, wfAlwaysOnTop,
+    wfSkipTaskbar, wfUtility, wfTooltip, wfPopupMenu,
+    wfKeyboardGrabbed, _, _, _,
+    _, _, _, _,
+    wfVulkan, wfMetal, wfTransparent, wfNotFocusable,
+)
+const wfNone* = WindowFlag 0
 
 type
+    WindowPos* {.size: sizeof(int32).} = enum
+        wpUndefined = 0x1FFF_0000
+        wpCentred  = 0x2FFF_0000
+
     SystemTheme* {.size: sizeof(int32).} = enum
-        Unknown
-        Light
-        Dark
+        stUnknown
+        stLight
+        stDark
 
     DisplayOrientation* {.size: sizeof(int32).} = enum
-        Unknown
-        Landscape
-        LandscapeFlipped
-        Portrait
-        PortraitFlipped
+        doUnknown
+        doLandscape
+        doLandscapeFlipped
+        doPortrait
+        doPortraitFlipped
 
     FlashOperation* {.size: sizeof(int32).} = enum
-        Cancel
-        Briefly
-        UntilFocused
+        foCancel
+        foBriefly
+        foUntilFocused
 
 type
     DisplayID*  = distinct uint32
@@ -77,11 +60,12 @@ using
     d_id: DisplayID
 
 {.push dynlib: SDLLib.}
-proc create_window*(title: cstring, w, h: cint, flags: WindowFlag): pointer                     {.importc: "SDL_CreateWindow"                   .}
-proc create_popup_window*(parent: Window; x, y, w, h: cint; flags: WindowFlag): pointer         {.importc: "SDL_CreatePopupWindow"              .}
-proc set_window_position*(window; x, y: cint)                                                   {.importc: "SDL_SetWindowPosition"              .}
-proc destroy_window*(window)                                                                    {.importc: "SDL_DestroyWindow"                  .}
-proc quit*()                                                                                    {.importc: "SDL_Quit"                           .}
+proc create_window*(title: cstring, w, h: cint, flags: WindowFlag): pointer             {.importc: "SDL_CreateWindow"     .}
+proc create_popup_window*(parent: Window; x, y, w, h: cint; flags: WindowFlag): pointer {.importc: "SDL_CreatePopupWindow".}
+proc set_window_position*(window; x, y: cint)                                           {.importc: "SDL_SetWindowPosition".}
+proc destroy_window*(window)                                                            {.importc: "SDL_DestroyWindow"    .}
+proc quit*()                                                                            {.importc: "SDL_Quit"             .}
+
 proc get_num_video_drivers*(): cint                                                             {.importc: "SDL_GetNumVideoDrivers"             .}
 proc get_video_driver*(index: cint): cstring                                                    {.importc: "SDL_GetVideoDriver"                 .}
 proc get_current_video_driver*(): cstring                                                       {.importc: "SDL_GetCurrentVideoDriver"          .}
@@ -114,10 +98,10 @@ proc get_window_pixel_format*(window): PixelFormat                              
 
 {.push inline.}
 
-proc create_window*(title: string, w, h: int, flags: WindowFlag = None): Window {.raises: SDLError.} =
+proc create_window*(title: string, w, h: int, flags: WindowFlag = wfNone): Window {.raises: SDLError.} =
     check_ptr[Window] "Failed to create window":
         create_window(cstring title, cint w, cint h, flags)
-proc create_popup*(parent: Window; x, y, w, h: int; flags: WindowFlag = None): Window {.raises: SDLError.} =
+proc create_popup*(parent: Window; x, y, w, h: int; flags: WindowFlag = wfNone): Window {.raises: SDLError.} =
     check_ptr[Window] "Failed to create popup window":
         create_popup_window(parent, cint x, cint y, cint w, cint h, flags)
 
@@ -156,7 +140,7 @@ proc get_fullscreen_mode*(window): DisplayMode {.raises: SDLError.} =
 #[ -------------------------------------------------------------------- ]#
 
 proc center*(window) =
-    set_window_position(window, Centered, Centered)
+    set_window_position window, wpCentred.ord, wpCentred.ord
 
 proc get_display*(x, y: int): DisplayID =
     let point = Point(x: int32 x, y: int32 y)
@@ -167,7 +151,7 @@ proc get_display*(x, y, w, h: int): DisplayID =
 
 proc get_pixel_format*(window): PixelFormat =
     result = get_window_pixel_format window
-    if result == Unknown:
+    if result == pfUnknown:
         echo red &"Error: failed to get pixel format for window: {get_error()}"
 
 proc destroy*(window) =

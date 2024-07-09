@@ -23,3 +23,4 @@ proc gl_swap*(window: Window) {.raises: SDLError.} =
         gl_swap_window window
 
 {.pop.}
+

@@ -5,10 +5,8 @@ const
     SDLTTFFlags = "-DSDL3_ROOT=../sdl/build"
 
 let
-    bin_path  = get_current_dir() / "a.out"
     src_dir   = "./src"
     lib_dir   = "./lib"
-    tool_dir  = "./tools"
     build_dir = "./build"
     test_dir  = "./tests"
     docs_dir  = "./docs"
@@ -16,22 +14,17 @@ let
     deps: seq[tuple[src, dst, tag: string; cmds: seq[string]]] = @[
         (src  : "https://github.com/libsdl-org/SDL/",
          dst  : lib_dir / "sdl",
-         tag  : "",
+         tag  : "bf03dee86609fbed159543446a39584a3cee2141",
          cmds : @[&"cmake -S . -B ./build {SDLFlags}",
                    "cmake --build ./build -j8",
                    "cp ./build/libSDL3.so* ../"]),
         (src  : "https://github.com/libsdl-org/SDL_ttf",
          dst  : lib_dir / "sdl_ttf",
-         tag  : "",
+         tag  : "a8582e6c4141b7236533f3fd1a1b4ac30f548f33",
          cmds : @[&"cmake -S . -B ./build {SDLTTFFlags}",
                    "cmake --build ./build -j8",
                    "mv ./build/libSDL3_ttf.so* ../"]),
     ]
-
-    flags = "--nimCache:{build_dir} -o:{bin_path}"
-    debug_flags   = &"--cc:tcc {flags} --passL:\"-ldl -lm\" --tlsEmulation:on -d:useMalloc"
-    release_flags = &"--cc:gcc {flags} -d:release -d:danger --opt:speed"
-    post_release = @[""]
 
 #[ -------------------------------------------------------------------- ]#
 
@@ -73,7 +66,7 @@ task restore, "Fetch and build dependencies":
                 run cmd
 
 task test, "Run the project's tests":
-    run &"nim c -r -p:. -o:test {test_dir}/test_ui.nim"
+    run &"nim c -r -p:. -d:NSDLPath=./ -o:test {test_dir}/test_ui.nim"
 
 task docs, "Build and serve documentation":
     run &"nim doc --project --index:on -o:{docs_dir} nsdl.nim"

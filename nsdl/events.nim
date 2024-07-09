@@ -5,189 +5,183 @@ from surface import Surface
 export keyboard
 
 type
-    MouseButton* = distinct uint8
-    MouseID*     = distinct uint32
-    Cursor*      = distinct pointer
-
     SystemCursor* {.size: sizeof(cint).} = enum
-        Arrow
-        IBeam
-        Wait
-        Crosshair
-        WaitArrow
-        SizeNWSE
-        SizeNESW
-        SizeWE
-        SizeNS
-        SizeAll
-        No
-        Hand
-        WindowTopLeft
-        WindowTop
-        WindowTopRight
-        WindowRight
-        WindowBottomRight
-        WindowBottom
-        WindowBottomLeft
-        WindowLeft
+        scArrow
+        scIBeam
+        scWait
+        scCrosshair
+        scWaitArrow
+        scSizeNWSE
+        scSizeNESW
+        scSizeWE
+        scSizeNS
+        scSizeAll
+        scNo
+        scHand
+        scWindowTopLeft
+        scWindowTop
+        scWindowTopRight
+        scWindowRight
+        scWindowBottomRight
+        scWindowBottom
+        scWindowBottomLeft
+        scWindowLeft
 
     MouseWheelDirection* {.size: sizeof(cint).} = enum
-        Normal
-        Flipped
+        mwdNormal
+        mwdFlipped
 
     MouseButtonKind* {.size: sizeof(uint8).} = enum
-        Left   = 1
-        Middle = 2
-        Right  = 3
-        X1     = 4
-        X2     = 5
+        mbLeft   = 1
+        mbMiddle = 2
+        mbRight  = 3
+        mbX1     = 4
+        mbX2     = 5
 
     # Hard-coded unlike the SDL version which calculates it based off of MouseButtonKind values
     # assigning values to the enum seems to break the bitset
     MouseButtonFlag* {.size: sizeof(uint32).} = enum
-        Left
-        Middle
-        Right
-        X1
-        X2
+        mbLeft
+        mbMiddle
+        mbRight
+        mbX1
+        mbX2
     MouseButtonMask* = set[MouseButtonFlag]
-
-converter to_button_mask*(mask: SomeInteger): MouseButtonMask =
-    cast[MouseButtonMask](mask)
-
-#[ -------------------------------------------------------------------- ]#
 
 type
     Timestamp*   = distinct uint64
     KeyboardID*  = distinct uint32
+    MouseButton* = distinct uint8
+    MouseID*     = distinct uint32
+    Cursor*      = distinct pointer
 
     EventKind* {.size: sizeof(cint).} = enum
-        First = 0x0
-        Quit = 0x100
-        Terminating
-        LowMemory
-        WillEnterBackground
-        DidEnterBackground
-        WillEnterForeground
-        DidEnterForeground
-        LocaleChanged
-        SystemThemeChanged
+        eFirst = 0x0
+        eQuit = 0x100
+        eTerminating
+        eLowMemory
+        eWillEnterBackground
+        eDidEnterBackground
+        eWillEnterForeground
+        eDidEnterForeground
+        eLocaleChanged
+        eSystemThemeChanged
 
-        DisplayOrientation = 0x151
-        DisplayAdded
-        DisplayRemoved
-        DisplayMoved
-        DisplayContentScaleChanged
-        DisplayHDRStateChanged
+        eDisplayOrientation = 0x151
+        eDisplayAdded
+        eDisplayRemoved
+        eDisplayMoved
+        eDisplayContentScaleChanged
+        eDisplayHDRStateChanged
 
-        WindowShown = 0x202
-        WindowHidden
-        WindowExposed
-        WindowMoved
-        WindowResized
-        WindowPixelSizeChanged
-        WindowMinimized
-        WindowMaximized
-        WindowRestored
-        WindowMouseEnter
-        WindowMouseLeave
-        WindowFocusGained
-        WindowFocusLost
-        WindowCloseRequested
-        WindowTakeFocus
-        WindowHitTest
-        WindowICCProfChanged
-        WindowDisplayChanged
-        WindowDisplayScaleChanged
-        WindowOccluded
-        WindowEnterFullscreen
-        WindowLeaveFullscreen
-        WindowDestroyed
-        WindowPenEnter
-        WindowPenLeave
+        eWindowShown = 0x202
+        eWindowHidden
+        eWindowExposed
+        eWindowMoved
+        eWindowResized
+        eWindowPixelSizeChanged
+        eWindowMinimized
+        eWindowMaximized
+        eWindowRestored
+        eWindowMouseEnter
+        eWindowMouseLeave
+        eWindowFocusGained
+        eWindowFocusLost
+        eWindowCloseRequested
+        eWindowTakeFocus
+        eWindowHitTest
+        eWindowICCProfChanged
+        eWindowDisplayChanged
+        eWindowDisplayScaleChanged
+        eWindowOccluded
+        eWindowEnterFullscreen
+        eWindowLeaveFullscreen
+        eWindowDestroyed
+        eWindowPenEnter
+        eWindowPenLeave
 
-        KeyDown = 0x300
-        KeyUp
-        TextEditing
-        TextInput
-        KeymapChanged
-        KeyboardAdded
-        KeyboardRemoved
+        eKeyDown = 0x300
+        eKeyUp
+        eTextEditing
+        eTextInput
+        eKeymapChanged
+        eKeyboardAdded
+        eKeyboardRemoved
 
-        MouseMotion = 0x400
-        MouseButtonDownOWN
-        MouseButtonUp
-        MouseWheel
-        MouseAdded
-        MouseRemoved
+        eMouseMotion = 0x400
+        eMouseButtonDownOWN
+        eMouseButtonUp
+        eMouseWheel
+        eMouseAdded
+        eMouseRemoved
 
-        JoystickAxisMotion = 0x600
-        JoystickBallMotion
-        JoystickHatMotion
-        JoystickButtonDown
-        JoystickButtonUp
-        JoystickAdded
-        JoystickRemoved
-        JoystickBatteryUpdated
-        JoystickUpdateComplete
+        eJoystickAxisMotion = 0x600
+        eJoystickBallMotion
+        eJoystickHatMotion
+        eJoystickButtonDown
+        eJoystickButtonUp
+        eJoystickAdded
+        eJoystickRemoved
+        eJoystickBatteryUpdated
+        eJoystickUpdateComplete
 
-        GamepadAxisMotion = 0x650
-        GamepadButtonDown
-        GamepadButtonUp
-        GamepadAdded
-        GamepadRemoved
-        GamepadRemapped
-        GamepadTouchpadDown
-        GamepadTouchpadMotion
-        GamepadTouchpadUp
-        GamepadSensorUpdate
-        GamepadUpdateComplete
-        GamepadSteamHandleUpdated
+        eGamepadAxisMotion = 0x650
+        eGamepadButtonDown
+        eGamepadButtonUp
+        eGamepadAdded
+        eGamepadRemoved
+        eGamepadRemapped
+        eGamepadTouchpadDown
+        eGamepadTouchpadMotion
+        eGamepadTouchpadUp
+        eGamepadSensorUpdate
+        eGamepadUpdateComplete
+        eGamepadSteamHandleUpdated
 
-        FingerDown = 0x700
-        FingerUp
-        FingerMotion
+        eFingerDown = 0x700
+        eFingerUp
+        eFingerMotion
 
-        ClipboardUpdate = 0x900
+        eClipboardUpdate = 0x900
 
-        DropFile = 0x1000
-        DropText
-        DropBegin
-        DropComplete
-        DropPosition
+        eDropFile = 0x1000
+        eDropText
+        eDropBegin
+        eDropComplete
+        eDropPosition
 
-        AudioDeviceAdded = 0x1100
-        AudioDeviceRemoved
-        AudioDeviceFormatChanged
+        eAudioDeviceAdded = 0x1100
+        eAudioDeviceRemoved
+        eAudioDeviceFormatChanged
 
-        SensorUpdate = 0x1200
+        eSensorUpdate = 0x1200
 
-        PenDown = 0x1300
-        PenUp
-        PenMotion
-        PenButtonDown
-        PenButtonUp
+        ePenDown = 0x1300
+        ePenUp
+        ePenMotion
+        ePenButtonDown
+        ePenButtonUp
 
-        CameraDeviceAdded = 0x1400
-        CameraDeviceRemoved
-        CameraDeviceApproved
-        CameraDeviceDenied
+        eCameraDeviceAdded = 0x1400
+        eCameraDeviceRemoved
+        eCameraDeviceApproved
+        eCameraDeviceDenied
 
-        RenderTargetsReset = 0x2000
-        RenderDeviceReset
+        eRenderTargetsReset = 0x2000
+        eRenderDeviceReset
 
-        PollSentinel = 0x7F00
-        User = 0x8000
-        UserMax = high uint32 # To allow custom events
+        ePollSentinel = 0x7F00
+        eUser = 0x8000
+        eUserMax = high uint32 # To allow custom events
 
     EventState* {.size: sizeof(cint).} = enum
-        Released = 0
-        Pressed  = 1
+        esReleased
+        esPressed
 
     EventAction* {.size: sizeof(cint).} = enum
-        Add
-        Peek
-        Get
+        eaAdd
+        eaPeek
+        eaGet
 
     CustomEvent* = distinct uint32
 
@@ -212,7 +206,7 @@ type
         data2*    : int32
 
     KeyboardDeviceEvent* = object
-        kind*: EventKind
+        kind*   : EventKind
         reserved: uint32
         time*   : Timestamp
         kb_id*  : KeyboardID
@@ -223,10 +217,12 @@ type
         time*     : Timestamp
         window_id*: WindowID
         kb_id*    : KeyboardID
-        state*    : uint8
-        repeat*   : bool
-        _         : uint16
-        keysym*   : Keysym
+        code*     : ScanCode
+        key*      : KeyCode
+        modi*     : KeyMod
+        raw*      : uint16
+        state* {.bitsize: 8.}: EventState
+        repeat*: uint8
 
     TextEditingEvent* = object
         kind*     : EventKind
@@ -295,7 +291,7 @@ type
         display*  : DisplayEvent
         window*   : WindowEvent
         kdevice*  : KeyboardDeviceEvent
-        key*      : KeyboardEvent
+        kb*       : KeyboardEvent
         edit*     : TextEditingEvent
         text*     : TextInputEvent
         mdevice*  : MouseDeviceEvent
@@ -390,7 +386,7 @@ proc push_event*(event: Event) =
 
 proc get_mouse_state*(): tuple[buttons: MouseButtonMask; x, y: int] =
     var x, y: cfloat
-    result.buttons = get_mouse_state(x.addr, y.addr)
+    result.buttons = cast[MouseButtonMask](get_mouse_state(x.addr, y.addr))
     result.x = int x
     result.y = int y
 

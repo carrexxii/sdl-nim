@@ -1,22 +1,21 @@
-import std/[strformat, options]
+import std/[strformat, options, sugar]
 import nsdl, nsdl/ttf, nsdl/ui
-from std/sugar import `=>`
 
 const
     WinW = 1280
     WinH = 800
     FontName = "fantasque"
 
-echo fmt"Nim version    : {NimVersion}"
-echo fmt"SDL version    : {sdl_version()}"
-echo fmt"SDL_ttf version: {ttf_version()}"
+echo &"Nim version    : {NimVersion}"
+echo &"SDL version    : {sdl_version()}"
+echo &"SDL_ttf version: {ttf_version()}"
 
-init(Video or Events, should_init_ttf = true)
+nsdl.init ifVideo or ifEvents, should_init_ttf = true
 
-let (window, renderer) = create_window_and_renderer("SDL UI Tests", WinW, WinH, Resizeable)
+let (window, renderer) = create_window_and_renderer("SDL UI Tests", WinW, WinH, wfResizeable)
 renderer.set_draw_colour Olive
 
-let font = open_font fmt"tests/fonts/{FontName}.ttf"
+let font = open_font &"tests/fonts/{FontName}.ttf"
 font.set_size 16
 
 var ui_ctx = ui.create_context(renderer, font)
@@ -37,11 +36,11 @@ var running = true
 while running:
     for event in get_events():
         case event.kind
-        of Quit:
+        of eQuit:
           running = false
-        of KeyDown:
-            case event.key.keysym.sym
-            of Key_Escape: running = false
+        of eKeyDown:
+            case event.kb.key
+            of kcEscape: running = false
             else: discard
         else: discard
 
@@ -57,3 +56,4 @@ while running:
 close font
 destroy window
 nsdl.quit()
+

@@ -128,7 +128,10 @@ proc get_window_properties*(window: Window): uint32                             
 proc get_texture_properties*(texture: Texture): uint32                                   {.importc: "SDL_GetTextureProperties".}
 {.pop.}
 
+#[ -------------------------------------------------------------------- ]#
+
 {.push inline.}
+
 proc get_properties*(window: Window): PropertyID {.raises: SDLError.} =
     let prop = get_window_properties window
     if prop == 0:
@@ -156,5 +159,6 @@ proc get_x11_window_number*(window: Window): int64 {.raises: SDLError.} =
 proc get_texture_number*(texture: Texture): int64 {.raises: SDLError.} =
     check_err -1, "Failed to get texture number":
         get_number_property(get_properties texture, TextureOpenGLTextureNumber, -1)
+
 {.pop.}
 

@@ -1,44 +1,39 @@
+import common, bitgen
 from std/unicode import Rune, `$`
-from io      import Stream
-from pixels  import Colour
-from surface import Surface
-import common
+from io          import Stream
+from pixels      import Colour
+from surface     import Surface
 
 # TODO: default colours
 
 const DefaultFontSize = 16
 
+type FontStyle = distinct uint32
+FontStyle.gen_bit_ops fsBold, fsItalic, fsUnderline, fsStrikethrough
+const fsNormal* = FontStyle 0
+
 type
     UnicodeBOM* {.size: sizeof(cint).} = enum
-        Native  = 0xFEFF
-        Swapped = 0xFFFE
+        uboNative  = 0xFEFF
+        uboSwapped = 0xFFFE
 
-    FontStyle* {.size: sizeof(cint).} = enum
-        Normal        = 0x00
-        Bold          = 0x01
-        Italic        = 0x02
-        Underline     = 0x04
-        Strikethrough = 0x08
-func `or`*(a, b: FontStyle): FontStyle = a or b
-
-type
     Hinting* {.size: sizeof(cint).} = enum
-        Normal
-        Light
-        Mono
-        None
-        LightSubpixel
+        hNormal
+        hLight
+        hMono
+        hNone
+        hLightSubpixel
 
     Align* {.size: sizeof(cint).} = enum
-        Left
-        Center
-        Right
+        aLeft
+        aCenter
+        aRight
 
     Direction* {.size: sizeof(cint).} = enum
-        LTR
-        RTL
-        TTB
-        BTT
+        dLTR
+        dRTL
+        dTTB
+        dBTT
 
 type Font* = distinct pointer
 
@@ -50,57 +45,60 @@ using
     font  : Font
 
 {.push dynlib: SDLTTFLib.}
-proc byte_swapped_unicode*(swapped: bool)                                                                 {.importc: "TTF_ByteSwappedUNICODE"           .}
-proc init*(): cint                                                                                        {.importc: "TTF_Init"                         .}
-proc quit*()                                                                                              {.importc: "TTF_Quit"                         .}
-proc was_init*(): cint                                                                                    {.importc: "TTF_WasInit"                      .}
-proc set_font_size*(font; pt_size: cint): cint                                                            {.importc: "TTF_SetFontSize"                  .}
-proc open_font*(file; pt_size: cint): pointer                                                             {.importc: "TTF_OpenFont"                     .}
-proc open_font_index*(file; pt_size: cint; index: clong): pointer                                         {.importc: "TTF_OpenFontIndex"                .}
-proc open_font_io*(stream; close_io: bool; pt_size: cint): pointer                                        {.importc: "TTF_OpenFontIO"                   .}
-proc open_font_index_io*(stream; close_io: bool; pt_size: cint; index: clong): pointer                    {.importc: "TTF_OpenFontIndexIO"              .}
-proc open_font_dpi*(file; pt_size: cint; hdpi, vdpi: cuint): pointer                                      {.importc: "TTF_OpenFontDPI"                  .}
-proc open_font_index_dpi*(file; pt_size: cint; index: clong; hdpi, vdpi: cuint): pointer                  {.importc: "TTF_OpenFontIndexDPI"             .}
-proc open_font_dpi_io*(stream; close_io: bool; pt_size: cint; hdpi, vdpi: cuint): pointer                 {.importc: "TTF_OpenFontDPIIO"                .}
-proc open_font_index_dpi_io*(stream; close_io: bool; pt_size: cint; i: clong; hdpi, vdpi: cuint): pointer {.importc: "TTF_OpenFontIndexDPIIO"           .}
-proc close_font*(font)                                                                                    {.importc: "TTF_CloseFont"                    .}
-proc set_font_size_dpi*(font; pt_size: cint; hdpi, vdpi: cuint): cint                                     {.importc: "TTF_SetFontSizeDPI"               .}
-proc get_font_style*(font): cint                                                                          {.importc: "TTF_GetFontStyle"                 .}
-proc set_font_style*(font; style: cint)                                                                   {.importc: "TTF_SetFontStyle"                 .}
-proc get_font_outline*(font): cint                                                                        {.importc: "TTF_GetFontOutline"               .}
-proc set_font_outline*(font; outline: cint)                                                               {.importc: "TTF_SetFontOutline"               .}
-proc get_font_hinting*(font): cint                                                                        {.importc: "TTF_GetFontHinting"               .}
-proc set_font_hinting*(font; hinting: cint)                                                               {.importc: "TTF_SetFontHinting"               .}
-proc get_font_wrapped_align*(font): cint                                                                  {.importc: "TTF_GetFontWrappedAlign"          .}
-proc set_font_wrapped_align*(font; align: cint)                                                           {.importc: "TTF_SetFontWrappedAlign"          .}
-proc get_font_kerning*(font): cint                                                                        {.importc: "TTF_GetFontKerning"               .}
-proc set_font_kerning*(font; allowed: cint)                                                               {.importc: "TTF_SetFontKerning"               .}
-proc get_font_kerning_size_glyphs*(font; prev_ch, ch: uint16): cint                                       {.importc: "TTF_GetFontKerningSizeGlyphs"     .}
-proc get_font_kerning_size_glyphs32*(font; prev_ch, ch: uint32): cint                                     {.importc: "TTF_GetFontKerningSizeGlyphs32"   .}
-proc get_font_sdf*(font): bool                                                                            {.importc: "TTF_GetFontSDF"                   .}
-proc set_font_sdf*(font; on_off: bool): cint                                                              {.importc: "TTF_SetFontSDF"                   .}
-proc set_font_direction*(font; direction: Direction): cint                                                {.importc: "TTF_SetFontDirection"             .}
-proc set_font_script_name*(font; script: cstring): cint                                                   {.importc: "TTF_SetFontScriptName"            .}
-proc set_font_language*(font; language: cstring): cint                                                    {.importc: "TTF_SetFontLanguage"              .}
-proc font_height*(font): cint                                                                             {.importc: "TTF_FontHeight"                   .}
-proc font_ascent*(font): cint                                                                             {.importc: "TTF_FontAscent"                   .}
-proc font_descent*(font): cint                                                                            {.importc: "TTF_FontDescent"                  .}
-proc font_line_skip*(font): cint                                                                          {.importc: "TTF_FontLineSkip"                 .}
-proc font_faces*(font): clong                                                                             {.importc: "TTF_FontFaces"                    .}
-proc font_faces_is_fixed_width*(font): cint                                                               {.importc: "TTF_FontFaceIsFixedWidth"         .}
-proc font_face_family_name*(font): cstring                                                                {.importc: "TTF_FontFaceFamilyName"           .}
-proc font_face_style_name*(font): cstring                                                                 {.importc: "TTF_FontFaceStyleName"            .}
-proc is_font_scalable*(font): bool                                                                        {.importc: "TTF_IsFontScalable"               .}
-proc glyph_is_provided*(font; ch: uint16): cint                                                           {.importc: "TTF_GlyphIsProvided"              .}
-proc glyph_is_provided32*(font; ch: uint32): cint                                                         {.importc: "TTF_GlyphIsProvided32"            .}
-proc glyph_metrics*(font; ch: uint16; minx, maxx, miny, maxy, advance: ptr cint): cint                    {.importc: "TTF_GlyphMetrics"                 .}
-proc glyph_metrics32*(font; ch: uint32; minx, maxx, miny, maxy, advance: ptr cint): cint                  {.importc: "TTF_GlyphMetrics32"               .}
-proc size_text*(font; text: cstring; w, h: ptr cint): cint                                                {.importc: "TTF_SizeText"                     .}
-proc size_utf8*(font; text: cstring; w, h: ptr cint): cint                                                {.importc: "TTF_SizeUTF8"                     .}
-proc size_unicode*(font; text: ptr uint16; w, h: ptr cint): cint                                          {.importc: "TTF_SizeUNICODE"                  .}
-proc measure_text*(font; text: cstring; measure_width: cint; extent, count: ptr cint): cint               {.importc: "TTF_MeasureText"                  .}
-proc measure_utf8*(font; text: cstring; measure_width: cint; extent, count: ptr cint): cint               {.importc: "TTF_MeasureUTF8"                  .}
-proc measure_unicode*(font; text: ptr uint16; measure_width: cint; exten, count: ptr cint): cint          {.importc: "TTF_MeasureUNICODE"               .}
+proc byte_swapped_unicode*(swapped: bool)                                                                 {.importc: "TTF_ByteSwappedUNICODE".}
+proc init*(): cint                                                                                        {.importc: "TTF_Init"              .}
+proc quit*()                                                                                              {.importc: "TTF_Quit"              .}
+proc was_init*(): cint                                                                                    {.importc: "TTF_WasInit"           .}
+proc set_font_size*(font; pt_size: cint): cint                                                            {.importc: "TTF_SetFontSize"       .}
+proc open_font*(file; pt_size: cint): pointer                                                             {.importc: "TTF_OpenFont"          .}
+proc open_font_index*(file; pt_size: cint; index: clong): pointer                                         {.importc: "TTF_OpenFontIndex"     .}
+proc open_font_io*(stream; close_io: bool; pt_size: cint): pointer                                        {.importc: "TTF_OpenFontIO"        .}
+proc open_font_index_io*(stream; close_io: bool; pt_size: cint; index: clong): pointer                    {.importc: "TTF_OpenFontIndexIO"   .}
+proc open_font_dpi*(file; pt_size: cint; hdpi, vdpi: cuint): pointer                                      {.importc: "TTF_OpenFontDPI"       .}
+proc open_font_index_dpi*(file; pt_size: cint; index: clong; hdpi, vdpi: cuint): pointer                  {.importc: "TTF_OpenFontIndexDPI"  .}
+proc open_font_dpi_io*(stream; close_io: bool; pt_size: cint; hdpi, vdpi: cuint): pointer                 {.importc: "TTF_OpenFontDPIIO"     .}
+proc open_font_index_dpi_io*(stream; close_io: bool; pt_size: cint; i: clong; hdpi, vdpi: cuint): pointer {.importc: "TTF_OpenFontIndexDPIIO".}
+proc close_font*(font)                                                                                    {.importc: "TTF_CloseFont"         .}
+
+proc set_font_size_dpi*(font; pt_size: cint; hdpi, vdpi: cuint): cint {.importc: "TTF_SetFontSizeDPI"            .}
+proc get_font_style*(font): cint                                      {.importc: "TTF_GetFontStyle"              .}
+proc set_font_style*(font; style: cint)                               {.importc: "TTF_SetFontStyle"              .}
+proc get_font_outline*(font): cint                                    {.importc: "TTF_GetFontOutline"            .}
+proc set_font_outline*(font; outline: cint)                           {.importc: "TTF_SetFontOutline"            .}
+proc get_font_hinting*(font): cint                                    {.importc: "TTF_GetFontHinting"            .}
+proc set_font_hinting*(font; hinting: cint)                           {.importc: "TTF_SetFontHinting"            .}
+proc get_font_wrapped_align*(font): cint                              {.importc: "TTF_GetFontWrappedAlign"       .}
+proc set_font_wrapped_align*(font; align: cint)                       {.importc: "TTF_SetFontWrappedAlign"       .}
+proc get_font_kerning*(font): cint                                    {.importc: "TTF_GetFontKerning"            .}
+proc set_font_kerning*(font; allowed: cint)                           {.importc: "TTF_SetFontKerning"            .}
+proc get_font_kerning_size_glyphs*(font; prev_ch, ch: uint16): cint   {.importc: "TTF_GetFontKerningSizeGlyphs"  .}
+proc get_font_kerning_size_glyphs32*(font; prev_ch, ch: uint32): cint {.importc: "TTF_GetFontKerningSizeGlyphs32".}
+proc get_font_sdf*(font): bool                                        {.importc: "TTF_GetFontSDF"                .}
+proc set_font_sdf*(font; on_off: bool): cint                          {.importc: "TTF_SetFontSDF"                .}
+proc set_font_direction*(font; direction: Direction): cint            {.importc: "TTF_SetFontDirection"          .}
+proc set_font_script_name*(font; script: cstring): cint               {.importc: "TTF_SetFontScriptName"         .}
+proc set_font_language*(font; language: cstring): cint                {.importc: "TTF_SetFontLanguage"           .}
+
+proc font_height*(font): cint                                                                    {.importc: "TTF_FontHeight"          .}
+proc font_ascent*(font): cint                                                                    {.importc: "TTF_FontAscent"          .}
+proc font_descent*(font): cint                                                                   {.importc: "TTF_FontDescent"         .}
+proc font_line_skip*(font): cint                                                                 {.importc: "TTF_FontLineSkip"        .}
+proc font_faces*(font): clong                                                                    {.importc: "TTF_FontFaces"           .}
+proc font_faces_is_fixed_width*(font): cint                                                      {.importc: "TTF_FontFaceIsFixedWidth".}
+proc font_face_family_name*(font): cstring                                                       {.importc: "TTF_FontFaceFamilyName"  .}
+proc font_face_style_name*(font): cstring                                                        {.importc: "TTF_FontFaceStyleName"   .}
+proc is_font_scalable*(font): bool                                                               {.importc: "TTF_IsFontScalable"      .}
+proc glyph_is_provided*(font; ch: uint16): cint                                                  {.importc: "TTF_GlyphIsProvided"     .}
+proc glyph_is_provided32*(font; ch: uint32): cint                                                {.importc: "TTF_GlyphIsProvided32"   .}
+proc glyph_metrics*(font; ch: uint16; minx, maxx, miny, maxy, advance: ptr cint): cint           {.importc: "TTF_GlyphMetrics"        .}
+proc glyph_metrics32*(font; ch: uint32; minx, maxx, miny, maxy, advance: ptr cint): cint         {.importc: "TTF_GlyphMetrics32"      .}
+proc size_text*(font; text: cstring; w, h: ptr cint): cint                                       {.importc: "TTF_SizeText"            .}
+proc size_utf8*(font; text: cstring; w, h: ptr cint): cint                                       {.importc: "TTF_SizeUTF8"            .}
+proc size_unicode*(font; text: ptr uint16; w, h: ptr cint): cint                                 {.importc: "TTF_SizeUNICODE"         .}
+proc measure_text*(font; text: cstring; measure_width: cint; extent, count: ptr cint): cint      {.importc: "TTF_MeasureText"         .}
+proc measure_utf8*(font; text: cstring; measure_width: cint; extent, count: ptr cint): cint      {.importc: "TTF_MeasureUTF8"         .}
+proc measure_unicode*(font; text: ptr uint16; measure_width: cint; exten, count: ptr cint): cint {.importc: "TTF_MeasureUNICODE"      .}
+
 proc render_glyph_solid*(font; ch: uint16; fg: Colour): pointer                                           {.importc: "TTF_RenderGlyph_Solid"            .}
 proc render_glyph32_solid*(font; ch: uint32; fg: Colour): pointer                                         {.importc: "TTF_RenderGlyph32_Solid"          .}
 proc render_glyph_shaded*(font; ch: uint16; fg, bg: Colour): pointer                                      {.importc: "TTF_RenderGlyph_Shaded"           .}

@@ -1,1 +1,2 @@
 type Stream* = distinct pointer
+
