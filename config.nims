@@ -4,7 +4,7 @@ const
     SDLFlags    = "-DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_DISABLE_INSTALL=ON"
     SDLTTFFlags = "-DSDL3_ROOT=../sdl/build"
 
-let
+const
     src_dir   = "./src"
     lib_dir   = "./lib"
     build_dir = "./build"
@@ -65,8 +65,20 @@ task restore, "Fetch and build dependencies":
             for cmd in dep.cmds:
                 run cmd
 
+const ui_tests = ["test.nim", "test_ui.nim"].map_it(test_dir / it)
 task test, "Run the project's tests":
-    run &"nim c -r -p:. -d:NSDLPath=./ -o:test {test_dir}/test_ui.nim"
+    --hints:off
+    let files = (list_files test_dir).filter_it(
+        (it.ends_with ".nim") and
+        (it notin ui_tests)
+    )
+    for file in files:
+        echo &"Running tests for '{file}'"
+        run &"nim c -r --hints:off -p:. {file}"
+
+task test_ui, "Run the UI test programs":
+    for file in ui_tests:
+        run &"nim c -r -p:. -d:NSDLPath=./ -o:test {test_dir / file}"
 
 task docs, "Build and serve documentation":
     run &"nim doc --project --index:on -o:{docs_dir} nsdl.nim"

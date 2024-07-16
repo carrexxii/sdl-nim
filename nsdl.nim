@@ -34,7 +34,7 @@ proc harfbuzz_version*(): Version =
     get_harfbuzz_version(major.addr, minor.addr, patch.addr)
     version(major, minor, patch)
 
-import nsdl/events, nsdl/rect, nsdl/pixels, nsdl/properties, nsdl/surface, nsdl/video, nsdl/renderer, nsdl/opengl
-export      events,      rect,      pixels,      properties,      surface,      video,      renderer,      opengl
+import nsdl/[events, rect, pixels, properties, surface, video, renderer, opengl, timer]
+export       events, rect, pixels, properties, surface, video, renderer, opengl, timer
 export init
 
