@@ -62,9 +62,11 @@ using
 {.push dynlib: SDLLib.}
 proc create_window*(title: cstring, w, h: cint, flags: WindowFlag): pointer             {.importc: "SDL_CreateWindow"     .}
 proc create_popup_window*(parent: Window; x, y, w, h: cint; flags: WindowFlag): pointer {.importc: "SDL_CreatePopupWindow".}
-proc set_window_position*(window; x, y: cint)                                           {.importc: "SDL_SetWindowPosition".}
 proc destroy_window*(window)                                                            {.importc: "SDL_DestroyWindow"    .}
 proc quit*()                                                                            {.importc: "SDL_Quit"             .}
+
+proc set_window_position*(window; x, y: cint)        {.importc: "SDL_SetWindowPosition".}
+proc set_window_title*(window; title: cstring): cint {.importc: "SDL_SetWindowTitle"   .}
 
 proc get_num_video_drivers*(): cint                                                             {.importc: "SDL_GetNumVideoDrivers"             .}
 proc get_video_driver*(index: cint): cstring                                                    {.importc: "SDL_GetVideoDriver"                 .}
@@ -111,6 +113,11 @@ proc get_bounds*(d_id): Rect {.raises: SDLError.} =
 proc get_usable_bounds*(d_id): Rect {.raises: SDLError.} =
     check_err "Failed to get usable bounds for display":
         get_display_usable_bounds(d_id, result.addr)
+
+proc set_title*(window; title: string) =
+    let res = set_window_title(window, cstring title)
+    if res != 0:
+        echo red &"Error setting window title: '{get_error()}'"
 
 # TODO: The modes returned need to be free'd
 proc get_fullscreen_modes*(d_id): seq[DisplayMode] {.raises: SDLError.} =
@@ -305,7 +312,6 @@ proc destroy*(window) =
 #define SDL_PROP_WINDOW_X11_WINDOW_NUMBER                         "SDL.window.x11.window"
 
 # extern DECLSPEC SDL_WindowFlags SDLCALL SDL_GetWindowFlags(SDL_Window *window);
-# extern DECLSPEC int SDLCALL SDL_SetWindowTitle(SDL_Window *window, const char *title);
 # extern DECLSPEC const char *SDLCALL SDL_GetWindowTitle(SDL_Window *window);
 # extern DECLSPEC int SDLCALL SDL_SetWindowIcon(SDL_Window *window, SDL_Surface *icon);
 # extern DECLSPEC int SDLCALL SDL_SetWindowPosition(SDL_Window *window, int x, int y);

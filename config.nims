@@ -78,7 +78,7 @@ task test, "Run the project's tests":
 
 task test_ui, "Run the UI test programs":
     for file in ui_tests:
-        run &"nim c -r -p:. -d:NSDLPath=./ -o:test {test_dir / file}"
+        run &"nim c -r -p:. -d:NSDLPath=./ -o:test {file}"
 
 task docs, "Build and serve documentation":
     run &"nim doc --project --index:on -o:{docs_dir} nsdl.nim"

@@ -67,5 +67,8 @@ proc remove*(timer: TimerID) =
 func fps_to_ns*(fps: int): Nanoseconds =
     Nanoseconds (1 / fps * 1000_000_000)
 
+func ns_to_fps*(ns: Nanoseconds): float =
+    1 / ((float ns) / 1000_000_000)
+
 {.pop.}
 

@@ -31,14 +31,14 @@ type
         mwdNormal
         mwdFlipped
 
-    MouseButtonKind* {.size: sizeof(uint8).} = enum
+    MouseButton* {.size: sizeof(uint8).} = enum
         mbLeft   = 1
         mbMiddle = 2
         mbRight  = 3
         mbX1     = 4
         mbX2     = 5
 
-    # Hard-coded unlike the SDL version which calculates it based off of MouseButtonKind values
+    # Hard-coded unlike the SDL version which calculates it based off of MouseButton values
     # assigning values to the enum seems to break the bitset
     MouseButtonFlag* {.size: sizeof(uint32).} = enum
         mbLeft
@@ -49,11 +49,10 @@ type
     MouseButtonMask* = set[MouseButtonFlag]
 
 type
-    Timestamp*   = distinct uint64
-    KeyboardID*  = distinct uint32
-    MouseButton* = distinct uint8
-    MouseID*     = distinct uint32
-    Cursor*      = distinct pointer
+    Timestamp*  = distinct uint64
+    KeyboardID* = distinct uint32
+    MouseID*    = distinct uint32
+    Cursor*     = distinct pointer
 
     EventKind* {.size: sizeof(cint).} = enum
         eFirst = 0x0
@@ -109,7 +108,7 @@ type
         eKeyboardRemoved
 
         eMouseMotion = 0x400
-        eMouseButtonDownOWN
+        eMouseButtonDown
         eMouseButtonUp
         eMouseWheel
         eMouseAdded
