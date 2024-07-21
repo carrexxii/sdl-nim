@@ -111,6 +111,11 @@ const
     TextureOpenGLES2TextureTargetNumber* = PropertyName "SDL.texture.opengles2.target"
     TextureVulkanTextureNumber*          = PropertyName "SDL.texture.vulkan.texture"
 
+    SurfaceColourspaceNumber*      = PropertyName "SDL.surface.colorspace"
+    SurfaceSDRWhitePointFloat*     = PropertyName "SDL.surface.SDR_white_point"
+    SurfaceHDRHeadroomFloat*       = PropertyName "SDL.surface.HDR_headroom"
+    SurfaceTonemapGeneratorString* = PropertyName "SDL.surface.tonemap"
+
 type
     Property*   = distinct pointer
     PropertyID* = distinct uint32

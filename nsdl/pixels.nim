@@ -57,6 +57,9 @@ type
         pl2101010
         pl1010102
 
+    Colourspace* {.size: sizeof(cint).} = enum
+        xxx
+
 #[ -------------------------------------------------------------------- ]#
 
 template pixel_format*(kind: PixelKind; order: PixelOrder; layout: PackedLayout; bits, bytes: int): int =
@@ -68,14 +71,12 @@ template pixel_format*(kind: PixelKind; order: PixelOrder; layout: PackedLayout;
     (bytes      shl 0)
 
 # TODO
-type PixelFormat* {.size: sizeof(int32).} = enum
+type PixelFormatKind* {.size: sizeof(int32).} = enum
     pfUnknown
     pfARGB8888 = pixel_format(pkPacked32, poARGB, pl8888, 32, 4)
     pfRGBA8888 = pixel_format(pkPacked32, poRGBA, pl8888, 32, 4)
     pfABGR8888 = pixel_format(pkPacked32, poABGR, pl8888, 32, 4)
     pfBGRA8888 = pixel_format(pkPacked32, poBGRA, pl8888, 32, 4)
-
-# func `==`*(a, b: PixelFormat): bool = a == b
 
 type Pixel* = distinct uint32
 
@@ -103,6 +104,9 @@ func colour*(r, g, b: uint8; a: uint8 = 255): Colour =
     Colour(r: r, g: g, b: b, a: a)
 func fcolour*(r, g, b, a: SomeFloat): FColour =
     FColour(r: r, g: g, b: b, a: a)
+
+func `+`*[T: Colour | FColour](a, b: T): T = colour a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a
+func `-`*[T: Colour | FColour](a, b: T): T = colour a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a
 
 func fourcc*(a, b, c, d: uint8): uint32 =
     a shl 0  or
@@ -144,6 +148,23 @@ const
     FPurple*  = FColour(r: 0.5, g: 0.0, b: 0.5, a: 1.0)
     FTeal*    = FColour(r: 0.0, g: 0.5, b: 0.5, a: 1.0)
     FNavy*    = FColour(r: 0.0, g: 0.0, b: 0.5, a: 1.0)
+
+type
+    PixelFormat* = ptr PixelFormatObj
+    PixelFormatObj* = object
+        format*           : PixelFormatKind
+        palette*          : Palette
+        bits_per_pixel*   : uint8
+        bytes_per_pixel*  : uint8
+        _                 : array[2, uint8]
+        r_mask*, g_mask*  : uint32
+        b_mask*, a_mask*  : uint32
+        r_loss*, g_loss*  : uint8
+        b_loss*, a_loss*  : uint8
+        r_shift*, g_shift*: uint8
+        b_shift*, a_shift*: uint8
+        ref_count*        : cint
+        next*             : PixelFormat
 
 # TODO
 
@@ -463,29 +484,6 @@ const
 #     SDL_COLORSPACE_RGB_DEFAULT = SDL_COLORSPACE_SRGB,
 #     SDL_COLORSPACE_YUV_DEFAULT = SDL_COLORSPACE_JPEG
 # } SDL_Colorspace;
-
-# typedef struct SDL_PixelFormat
-# {
-#     SDL_PixelFormatEnum format;
-#     SDL_Palette *palette;
-#     Uint8 bits_per_pixel;
-#     Uint8 bytes_per_pixel;
-#     Uint8 padding[2];
-#     Uint32 Rmask;
-#     Uint32 Gmask;
-#     Uint32 Bmask;
-#     Uint32 Amask;
-#     Uint8 Rloss;
-#     Uint8 Gloss;
-#     Uint8 Bloss;
-#     Uint8 Aloss;
-#     Uint8 Rshift;
-#     Uint8 Gshift;
-#     Uint8 Bshift;
-#     Uint8 Ashift;
-#     int refcount;
-#     struct SDL_PixelFormat *next;
-# } SDL_PixelFormat;
 
 # extern DECLSPEC const char* SDLCALL SDL_GetPixelFormatName(SDL_PixelFormatEnum format);
 # extern DECLSPEC SDL_bool SDLCALL SDL_GetMasksForPixelFormatEnum(SDL_PixelFormatEnum format,

@@ -33,7 +33,7 @@ type
         name*                : cstring
         flags*               : RendererFlag
         texture_format_count*: int32
-        texture_formats*     : ptr UncheckedArray[PixelFormat]
+        texture_formats*     : ptr UncheckedArray[PixelFormatKind]
         max_texture_width*   : int32
         max_texture_height*  : int32
 
@@ -109,7 +109,7 @@ proc get_renderer_properties*(ren): PropertyID                                  
 proc get_renderer_output_size*(ren; w, h: ptr cint): cint                                  {.importc: "SDL_GetRenderOutputSize"       .}
 proc get_current_renderer_output_size*(ren; w, h: ptr cint): cint                          {.importc: "SDL_GetCurrentRenderOutputSize".}
 proc get_renderer_from_texture*(tex): pointer                                              {.importc: "SDL_GetRendererFromTexture"    .}
-proc create_texture*(ren; format: PixelFormat; access: TextureAccess; w, h: cint): pointer {.importc: "SDL_CreateTexture"             .}
+proc create_texture*(ren; format: PixelFormatKind; access: TextureAccess; w, h: cint): pointer {.importc: "SDL_CreateTexture"             .}
 proc create_texture_from_surface*(ren; surf): pointer                                      {.importc: "SDL_CreateTextureFromSurface"  .}
 proc set_render_scale*(ren; x, y: cfloat): cint                                            {.importc: "SDL_SetRenderScale"            .}
 proc get_render_scale*(ren; x, y: ptr cfloat): cint                                        {.importc: "SDL_GetRenderScale"            .}
@@ -192,7 +192,7 @@ proc get_current_output_size*(ren): tuple[x, y: int] {.raises: SDLError.} =
     result.x = x
     result.y = y
 
-proc create_texture*(ren; w, h: int; format: PixelFormat = pfRGBA8888; access: TextureAccess = taStatic): Texture {.raises: SDLError.} =
+proc create_texture*(ren; w, h: int; format: PixelFormatKind = pfRGBA8888; access: TextureAccess = taStatic): Texture {.raises: SDLError.} =
     check_ptr[Texture] "Failed to create texture":
         create_texture(ren, format, access, cint w, cint h)
 proc create_texture*(ren; surf): Texture {.raises: SDLError.} =
@@ -330,7 +330,7 @@ proc destroy*(ren) = destroy_renderer ren
 # extern DECLSPEC SDL_Texture *SDLCALL SDL_CreateTextureWithProperties(SDL_Renderer *renderer, SDL_PropertiesID props);
 # extern DECLSPEC SDL_PropertiesID SDLCALL SDL_GetTextureProperties(SDL_Texture *texture);
 
-# extern DECLSPEC int SDLCALL SDL_QueryTexture(SDL_Texture *texture, SDL_PixelFormatEnum *format, int *access, int *w, int *h);
+# extern DECLSPEC int SDLCALL SDL_QueryTexture(SDL_Texture *texture, SDL_PixelFormatKindEnum *format, int *access, int *w, int *h);
 # extern DECLSPEC int SDLCALL SDL_SetTextureColorMod(SDL_Texture *texture, Uint8 r, Uint8 g, Uint8 b);
 # extern DECLSPEC int SDLCALL SDL_SetTextureColorModFloat(SDL_Texture *texture, float r, float g, float b);
 # extern DECLSPEC int SDLCALL SDL_GetTextureColorMod(SDL_Texture *texture, Uint8 *r, Uint8 *g, Uint8 *b);

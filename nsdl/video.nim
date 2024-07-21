@@ -46,7 +46,7 @@ type
 
     DisplayMode* = object
         display_id*  : DisplayID
-        px_format*   : PixelFormat
+        px_format*   : PixelFormatKind
         w*, h*       : int32
         px_density*  : float32
         refresh_rate*: float32
@@ -93,7 +93,7 @@ proc get_window_display_scale*(window): float32                                 
 proc set_window_fullscreen_mode*(window; mode: ptr DisplayMode): int32                          {.importc: "SDL_SetWindowFullscreenMode"        .}
 proc get_window_fullscreen_mode*(window): ptr DisplayMode                                       {.importc: "SDL_GetWindowFullscreenMode"        .}
 proc get_window_icc_profile*(window; size: ptr csize_t): pointer                                {.importc: "SDL_GetWindowICCProfile"            .}
-proc get_window_pixel_format*(window): PixelFormat                                              {.importc: "SDL_GetWindowPixelFormat"           .}
+proc get_window_pixel_format*(window): PixelFormatKind                                              {.importc: "SDL_GetWindowPixelFormatKind"           .}
 {.pop.}
 
 #[ -------------------------------------------------------------------- ]#
@@ -156,7 +156,7 @@ proc get_display*(x, y, w, h: int): DisplayID =
     let rect = Rect(x: int32 x, y: int32 y, w: int32 w, h: int32 h)
     get_display_for_rect rect.addr
 
-proc get_pixel_format*(window): PixelFormat =
+proc get_pixel_format*(window): PixelFormatKind =
     result = get_window_pixel_format window
     if result == pfUnknown:
         echo red &"Error: failed to get pixel format for window: {get_error()}"
