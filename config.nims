@@ -14,13 +14,13 @@ const
     deps: seq[tuple[src, dst, tag: string; cmds: seq[string]]] = @[
         (src  : "https://github.com/libsdl-org/SDL/",
          dst  : lib_dir / "sdl",
-         tag  : "bf03dee86609fbed159543446a39584a3cee2141",
+         tag  : "",
          cmds : @[&"cmake -S . -B ./build {SDLFlags}",
                    "cmake --build ./build -j8",
                    "cp ./build/libSDL3.so* ../"]),
         (src  : "https://github.com/libsdl-org/SDL_ttf",
          dst  : lib_dir / "sdl_ttf",
-         tag  : "a8582e6c4141b7236533f3fd1a1b4ac30f548f33",
+         tag  : "",
          cmds : @[&"cmake -S . -B ./build {SDLTTFFlags}",
                    "cmake --build ./build -j8",
                    "mv ./build/libSDL3_ttf.so* ../"]),
@@ -67,7 +67,6 @@ task restore, "Fetch and build dependencies":
 
 const ui_tests = ["test.nim", "test_ui.nim"].map_it(test_dir / it)
 task test, "Run the project's tests":
-    --hints:off
     let files = (list_files test_dir).filter_it(
         (it.ends_with ".nim") and
         (it notin ui_tests)
@@ -81,10 +80,10 @@ task test_ui, "Run the UI test programs":
         run &"nim c -r -p:. -d:NSDLPath=./ -o:test {file}"
 
 task docs, "Build and serve documentation":
-    run &"nim doc --project --index:on -o:{docs_dir} nsdl.nim"
+    run &"nim doc --project --index:on -o:{docs_dir} sdl.nim"
 
 task info, "Print out information about the project":
-    echo green &"NSDL - Nim bindings for SDL"
+    echo green &"SDL bindings for Nim"
     if deps.len > 0:
         echo &"{deps.len} Dependencies:"
     for (i, dep) in enumerate deps:
@@ -98,4 +97,3 @@ task info, "Print out information about the project":
 
     echo ""
     run "cloc --vcs=git"
-

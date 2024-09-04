@@ -1,4 +1,4 @@
-import std/unittest, nsdl
+import std/unittest, sdl
 
 let
     x = 1'ms

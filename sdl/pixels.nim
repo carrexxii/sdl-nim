@@ -1,5 +1,3 @@
-import common
-
 type
     Alpha* {.size: sizeof(int32).} = enum
         aTransparent = 0
@@ -71,12 +69,12 @@ template pixel_format*(kind: PixelKind; order: PixelOrder; layout: PackedLayout;
     (bytes      shl 0)
 
 # TODO
-type PixelFormatKind* {.size: sizeof(int32).} = enum
-    pfUnknown
-    pfARGB8888 = pixel_format(pkPacked32, poARGB, pl8888, 32, 4)
-    pfRGBA8888 = pixel_format(pkPacked32, poRGBA, pl8888, 32, 4)
-    pfABGR8888 = pixel_format(pkPacked32, poABGR, pl8888, 32, 4)
-    pfBGRA8888 = pixel_format(pkPacked32, poBGRA, pl8888, 32, 4)
+type PixelFormat* {.size: sizeof(int32).} = enum
+    pxFmtUnknown
+    pxFmtArgb8 = pixel_format(pkPacked32, poARGB, pl8888, 32, 4)
+    pxFmtRgba8 = pixel_format(pkPacked32, poRGBA, pl8888, 32, 4)
+    pxFmtAbgr8 = pixel_format(pkPacked32, poABGR, pl8888, 32, 4)
+    pxFmtBgra8 = pixel_format(pkPacked32, poBGRA, pl8888, 32, 4)
 
 type Pixel* = distinct uint32
 
@@ -96,7 +94,7 @@ type
 
     Palette* = object
         colour_count*: int32
-        colours*     : Colour
+        colours*     : ptr UncheckedArray[Colour]
         version*     : uint32
         ref_count*   : int32
 
@@ -149,22 +147,21 @@ const
     FTeal*    = FColour(r: 0.0, g: 0.5, b: 0.5, a: 1.0)
     FNavy*    = FColour(r: 0.0, g: 0.0, b: 0.5, a: 1.0)
 
-type
-    PixelFormat* = ptr PixelFormatObj
-    PixelFormatObj* = object
-        format*           : PixelFormatKind
-        palette*          : Palette
-        bits_per_pixel*   : uint8
-        bytes_per_pixel*  : uint8
-        _                 : array[2, uint8]
-        r_mask*, g_mask*  : uint32
-        b_mask*, a_mask*  : uint32
-        r_loss*, g_loss*  : uint8
-        b_loss*, a_loss*  : uint8
-        r_shift*, g_shift*: uint8
-        b_shift*, a_shift*: uint8
-        ref_count*        : cint
-        next*             : PixelFormat
+# type
+#     PixelFormat* = object
+#         format*           : PixelFormatKind
+#         palette*          : Palette
+#         bits_per_pixel*   : uint8
+#         bytes_per_pixel*  : uint8
+#         _                 : array[2, uint8]
+#         r_mask*, g_mask*  : uint32
+#         b_mask*, a_mask*  : uint32
+#         r_loss*, g_loss*  : uint8
+#         b_loss*, a_loss*  : uint8
+#         r_shift*, g_shift*: uint8
+#         b_shift*, a_shift*: uint8
+#         ref_count*        : cint
+#         next*             : ptr PixelFormat
 
 # TODO
 

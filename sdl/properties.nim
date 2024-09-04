@@ -1,5 +1,3 @@
-{.push raises: [].}
-
 import common
 
 type PropertyName* = distinct cstring
@@ -118,52 +116,33 @@ const
 
 type
     Property*   = distinct pointer
-    PropertyID* = distinct uint32
-func `$`*(x: PropertyID): string {.borrow.}
+    PropertyId* = distinct uint32
+func `$`*(x: PropertyId): string {.borrow.}
+
+const InvalidProperty* = PropertyId 0
 
 #[ -------------------------------------------------------------------- ]#
 
 from video    import Window
 from renderer import Texture
 
-{.push dynlib: SDLLib.}
-proc get_property*       (id: PropertyID; name: PropertyName; default: pointer): pointer {.importc: "SDL_GetProperty"         .}
-proc get_number_property*(id: PropertyID; name: PropertyName; default: int64  ): int64   {.importc: "SDL_GetNumberProperty"   .}
-proc get_window_properties*(window: Window): uint32                                      {.importc: "SDL_GetWindowProperties" .}
-proc get_texture_properties*(texture: Texture): uint32                                   {.importc: "SDL_GetTextureProperties".}
+{.push dynlib: SdlLib.}
+proc sdl_get_property*       (id: PropertyID; name: PropertyName; default: pointer): pointer {.importc: "SDL_GetProperty"         .}
+proc sdl_get_number_property*(id: PropertyID; name: PropertyName; default: int64  ): int64   {.importc: "SDL_GetNumberProperty"   .}
+proc sdl_get_window_properties*(window: Window): uint32                                      {.importc: "SDL_GetWindowProperties" .}
+proc sdl_get_texture_properties*(texture: Texture): uint32                                   {.importc: "SDL_GetTextureProperties".}
 {.pop.}
 
 #[ -------------------------------------------------------------------- ]#
 
 {.push inline.}
 
-proc get_properties*(window: Window): PropertyID {.raises: SDLError.} =
-    let prop = get_window_properties window
-    if prop == 0:
-        raise new_exception(SDLError, "Error: " & "Failed to get window properties" & " (" & $get_error() & ")")
+proc get_properties*(win: Window):  PropertyID = PropertyId sdl_get_window_properties(win)
+proc get_properties*(tex: Texture): PropertyID = PropertyId sdl_get_texture_properties(tex)
 
-    result = PropertyID prop
+proc get_x11_display_pointer*(win: Window): Property = Property sdl_get_property(get_properties(win), X11DisplayPointer, nil)
+proc get_x11_screen_number*(win: Window): int64 = sdl_get_number_property(get_properties(win), X11ScreenNumber, -1)
+proc get_x11_window_number*(win: Window): int64 = sdl_get_number_property(get_properties(win), X11WindowNumber, -1)
+proc get_texture_number*(tex: Texture):   int64 = sdl_get_number_property(get_properties(tex), TextureOpenGLTextureNumber, -1)
 
-proc get_properties*(texture: Texture): PropertyID {.raises: SDLError.} =
-    let prop = get_texture_properties texture
-    if prop == 0:
-        raise new_exception(SDLError, "Error: " & "Failed to get texture properties" & " (" & $get_error() & ")")
-
-    result = PropertyID prop
-
-proc get_x11_display_pointer*(window: Window): Property {.raises: SDLError.} =
-    check_ptr[Property] "Failed to get X11 display pointer":
-        get_property(get_properties window, X11DisplayPointer, nil)
-proc get_x11_screen_number*(window: Window): int64 {.raises: SDLError.} =
-    check_err -1, "Failed to get X11 screen number":
-        get_number_property(get_properties window, X11ScreenNumber, -1)
-proc get_x11_window_number*(window: Window): int64 {.raises: SDLError.} =
-    check_err -1, "Failed to get X11 window number":
-        get_number_property(get_properties window, X11WindowNumber, -1)
-
-proc get_texture_number*(texture: Texture): int64 {.raises: SDLError.} =
-    check_err -1, "Failed to get texture number":
-        get_number_property(get_properties texture, TextureOpenGLTextureNumber, -1)
-
-{.pop.}
-
+{.pop.} # inline

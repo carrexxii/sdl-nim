@@ -1,5 +1,5 @@
-import std/[strformat, options]
-import nsdl, nsdl/ttf
+import sdl, sdl/ttf
+from std/strformat import `&`
 
 const
     WinW = 1280
@@ -23,36 +23,41 @@ echo &"Nim version    : {NimVersion}"
 echo &"SDL version    : {sdl_version()}"
 echo &"SDL_ttf version: {ttf_version()}"
 
-nsdl.init ifVideo or ifEvents, should_init_ttf = true
+assert sdl.init(initVideo or initEvents), &"Failed to initialize SDL: {sdl.get_error()}"
+assert ttf.init()                       , &"Failed to initialize SDL_ttf: {sdl.get_error()}"
 
-let (window, renderer) = create_window_and_renderer("SDL Tests", WinW, WinH, wfResizeable)
-renderer.set_draw_colour Olive
+let (win, ren, win_err) = create_window_and_renderer("SDL Tests", WinW, WinH, winResizeable)
+assert win_err, &"Failed to create window and renderer: {sdl.get_error()}"
+ren.draw_colour = Olive
 
-let font = open_font &"tests/fonts/{FontName}.ttf"
-font.set_size 16
+let (font, font_err) = open_font &"tests/fonts/{FontName}.ttf"
+assert font_err, &"Failed to load font \"{FontName}\": {sdl.get_error()}"
+font.size = 16
 let fonth = font.height()
 
-let msg = font.render_lcd(&"Font: '{FontName}'\n\n" & TestText, Black, Olive, wrap_length = WinW - 200)
+let (msg, msg_err) = font.render_lcd(&"Font: '{FontName}'\n\n" & TestText, Black, Olive, wrap_len = WinW - 200)
+assert msg_err, "Failed to render message"
 
-let tex = renderer.create_texture msg
+let (tex, tex_err) = ren.create_texture msg
+echo repr (tex, tex_err)
+assert tex_err, "Failed to convert font surface to texture"
 
 var running = true
 while running:
-    for event in get_events():
+    for event in sdl.events():
         case event.kind
-        of eQuit:
+        of eventQuit:
           running = false
-        of eKeyDown:
+        of eventKeyDown:
             case event.kb.key
             of kcEscape: running = false
             else: discard
         else: discard
 
-    fill renderer
-    renderer.draw_texture tex, dst_rect = frect(100, 100, msg.w, msg.h)
-    present renderer
+    fill ren
+    ren.draw_texture tex, dst_rect = frect(100, 100, msg.w, msg.h)
+    ren.present()
 
-close font
-destroy window
-nsdl.quit()
-
+# close font
+# destroy win
+sdl.quit()
