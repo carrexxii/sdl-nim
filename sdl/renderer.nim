@@ -98,29 +98,26 @@ using
     tex      : Texture
 
 {.push dynlib: SdlLib.}
-proc sdl_get_num_render_drivers*(): cint                                                    {.importc: "SDL_GetNumRenderDrivers"       .}
-proc sdl_get_render_driver*(index: cint): cstring                                           {.importc: "SDL_GetRenderDriver"           .}
-proc sdl_create_renderer*(win; name: cstring; ren_flags): pointer                           {.importc: "SDL_CreateRenderer"            .}
-proc sdl_create_software_renderer*(surf): pointer                                           {.importc: "SDL_CreateSoftwareRenderer"    .}
-proc sdl_get_renderer*(win): pointer                                                        {.importc: "SDL_GetRenderer"               .}
-proc sdl_get_renderer_window*(ren): pointer                                                 {.importc: "SDL_GetRenderWindow"           .}
-proc sdl_get_renderer_name*(ren): cstring                                                   {.importc: "SDL_GetRendererName"           .}
-proc sdl_get_renderer_properties*(ren): PropertyID                                          {.importc: "SDL_GetRendererProperties"     .}
-proc sdl_get_renderer_output_size*(ren; w, h: ptr cint): SdlBool                            {.importc: "SDL_GetRenderOutputSize"       .}
-proc sdl_get_current_renderer_output_size*(ren; w, h: ptr cint): SdlBool                    {.importc: "SDL_GetCurrentRenderOutputSize".}
-proc sdl_get_renderer_from_texture*(tex): pointer                                           {.importc: "SDL_GetRendererFromTexture"    .}
-proc sdl_create_texture*(ren; fmt: PixelFormat; access: TextureAccess; w, h: cint): pointer {.importc: "SDL_CreateTexture"             .}
-proc sdl_create_texture_from_surface*(ren; surf): pointer                                   {.importc: "SDL_CreateTextureFromSurface"  .}
-proc sdl_set_render_scale*(ren; x, y: cfloat): SdlBool                                      {.importc: "SDL_SetRenderScale"            .}
-proc sdl_get_render_scale*(ren; x, y: ptr cfloat): SdlBool                                  {.importc: "SDL_GetRenderScale"            .}
-proc sdl_set_render_draw_colour*(ren; r, g, b, a: uint8): SdlBool                           {.importc: "SDL_SetRenderDrawColor"        .}
-proc sdl_get_render_draw_colour*(ren; r, g, b, a: ptr uint8): SdlBool                       {.importc: "SDL_GetRenderDrawColor"        .}
-proc sdl_set_render_draw_colour_float*(ren; r, g, b, a: cfloat): SdlBool                    {.importc: "SDL_SetRenderDrawColorFloat"   .}
-proc sdl_get_render_draw_colour_float*(ren; r, g, b, a: ptr cfloat): SdlBool                {.importc: "SDL_GetRenderDrawColorFloat"   .}
-proc sdl_set_render_colour_scale*(ren; scale: cfloat): SdlBool                              {.importc: "SDL_SetRenderColorScale"       .}
-proc sdl_get_render_colour_scale*(ren; scale: ptr cfloat): SdlBool                          {.importc: "SDL_GetRenderColorScale"       .}
-proc sdl_set_render_draw_blend_mode*(ren; mode: BlendMode): SdlBool                         {.importc: "SDL_SetRenderDrawBlendMode"    .}
-proc sdl_get_render_draw_blend_mode*(ren; mode: ptr BlendMode): SdlBool                     {.importc: "SDL_GetRenderDrawBlendMode"    .}
+proc sdl_get_num_render_drivers*(): cint                                     {.importc: "SDL_GetNumRenderDrivers"       .}
+proc sdl_get_render_driver*(index: cint): cstring                            {.importc: "SDL_GetRenderDriver"           .}
+proc sdl_create_renderer*(win; name: cstring; ren_flags): pointer            {.importc: "SDL_CreateRenderer"            .}
+proc sdl_create_software_renderer*(surf): pointer                            {.importc: "SDL_CreateSoftwareRenderer"    .}
+proc sdl_get_renderer*(win): pointer                                         {.importc: "SDL_GetRenderer"               .}
+proc sdl_get_renderer_window*(ren): pointer                                  {.importc: "SDL_GetRenderWindow"           .}
+proc sdl_get_renderer_name*(ren): cstring                                    {.importc: "SDL_GetRendererName"           .}
+proc sdl_get_renderer_properties*(ren): PropertyID                           {.importc: "SDL_GetRendererProperties"     .}
+proc sdl_get_renderer_output_size*(ren; w, h: ptr cint): SdlBool             {.importc: "SDL_GetRenderOutputSize"       .}
+proc sdl_get_current_renderer_output_size*(ren; w, h: ptr cint): SdlBool     {.importc: "SDL_GetCurrentRenderOutputSize".}
+proc sdl_set_render_scale*(ren; x, y: cfloat): SdlBool                       {.importc: "SDL_SetRenderScale"            .}
+proc sdl_get_render_scale*(ren; x, y: ptr cfloat): SdlBool                   {.importc: "SDL_GetRenderScale"            .}
+proc sdl_set_render_draw_colour*(ren; r, g, b, a: uint8): SdlBool            {.importc: "SDL_SetRenderDrawColor"        .}
+proc sdl_get_render_draw_colour*(ren; r, g, b, a: ptr uint8): SdlBool        {.importc: "SDL_GetRenderDrawColor"        .}
+proc sdl_set_render_draw_colour_float*(ren; r, g, b, a: cfloat): SdlBool     {.importc: "SDL_SetRenderDrawColorFloat"   .}
+proc sdl_get_render_draw_colour_float*(ren; r, g, b, a: ptr cfloat): SdlBool {.importc: "SDL_GetRenderDrawColorFloat"   .}
+proc sdl_set_render_colour_scale*(ren; scale: cfloat): SdlBool               {.importc: "SDL_SetRenderColorScale"       .}
+proc sdl_get_render_colour_scale*(ren; scale: ptr cfloat): SdlBool           {.importc: "SDL_GetRenderColorScale"       .}
+proc sdl_set_render_draw_blend_mode*(ren; mode: BlendMode): SdlBool          {.importc: "SDL_SetRenderDrawBlendMode"    .}
+proc sdl_get_render_draw_blend_mode*(ren; mode: ptr BlendMode): SdlBool      {.importc: "SDL_GetRenderDrawBlendMode"    .}
 
 proc sdl_render_clear*(ren): SdlBool                                     {.importc: "SDL_RenderClear"    .}
 proc sdl_render_point*(ren; x, y: cfloat): SdlBool                       {.importc: "SDL_RenderPoint"    .}
@@ -154,6 +151,12 @@ proc sdl_set_render_viewport*(ren; rect: ptr Rect): SdlBool {.importc: "SDL_SetR
 proc sdl_set_render_vsync*(ren; vsync: cint): SdlBool       {.importc: "SDL_SetRenderVSync"   .}
 proc sdl_get_render_vsync*(ren; vsync: ptr cint): SdlBool   {.importc: "SDL_GetRenderVSync"   .}
 proc sdl_set_render_target*(ren; tex): SdlBool              {.importc: "SDL_SetRenderTarget"  .}
+
+proc sdl_get_renderer_from_texture*(tex): pointer                                           {.importc: "SDL_GetRendererFromTexture"  .}
+proc sdl_create_texture*(ren; fmt: PixelFormat; access: TextureAccess; w, h: cint): pointer {.importc: "SDL_CreateTexture"           .}
+proc sdl_create_texture_from_surface*(ren; surf): pointer                                   {.importc: "SDL_CreateTextureFromSurface".}
+proc sdl_update_texture*(tex; rect: ptr Rect; pxs: pointer; pitch: cint): SdlBool           {.importc: "SDL_UpdateTexture"           .}
+proc sdl_set_texture_blend_mode*(tex; mode: BlendMode): SdlBool                             {.importc: "SDL_SetTextureBlendMode"     .}
 {.pop.}
 
 #[ -------------------------------------------------------------------- ]#
@@ -193,6 +196,13 @@ proc create_texture*(ren; surf): (Texture, bool) =
     result[0] = Texture tex
     result[1] = tex != nil
 
+proc update*(tex; pxs: pointer; x, y, w, h: int32; pitch: int32 = 4 * w): bool =
+    let rect = Rect(x: x, y: y, w: w, h: h)
+    sdl_update_texture tex, rect.addr, pxs, pitch
+
+proc update*(tex; pxs: pointer; pitch: int32): bool =
+    sdl_update_texture tex, nil, pxs, pitch
+
 proc vsync*(ren): int32                = assert sdl_get_render_vsync(ren, result.addr)
 proc scale*(ren): tuple[x, y: float32] = assert sdl_get_render_scale(ren, result.x.addr, result.y.addr)
 proc draw_colour*(ren): Colour         = assert sdl_get_render_draw_colour(ren, result.r.addr, result.g.addr, result.b.addr, result.a.addr)
@@ -207,6 +217,7 @@ proc `draw_colour=`*(ren; colour: Colour)  = assert sdl_set_render_draw_colour(r
 proc `draw_colour=`*(ren; colour: FColour) = assert sdl_set_render_draw_colour_float(ren, colour.r, colour.g, colour.b, colour.a)
 proc `colour_scale=`*(ren; scale: float32) = assert sdl_set_render_colour_scale(ren, scale)
 proc `blend_mode=`*(ren; mode: BlendMode)  = assert sdl_set_render_draw_blend_mode(ren, mode)
+proc `blend_mode=`*(tex; mode: BlendMode)  = assert sdl_set_texture_blend_mode(tex, mode)
 
 proc reset_target*(ren) = assert sdl_set_render_target(ren, cast[Texture](nil))
 proc clear*(ren)        = assert sdl_render_clear(ren)

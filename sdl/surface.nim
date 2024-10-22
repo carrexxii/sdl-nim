@@ -40,13 +40,13 @@ proc sdl_create_surface*(w, h: cint; fmt: PixelFormat): Surface                 
 proc sdl_create_surface_from*(pixels: pointer; w, h, pitch: cint; fmt: PixelFormat): Surface {.importc: "SDL_CreateSurfaceFrom"   .}
 proc sdl_destroy_surface*(surf)                                                              {.importc: "SDL_DestroySurface"      .}
 proc sdl_get_surface_properties*(surf): PropertyID                                           {.importc: "SDL_GetSurfaceProperties".}
-proc sdl_get_surface_palette*(surf; palette: ptr Palette): SdlBool                           {.importc: "SDL_SetSurfacePalette"   .}
+proc sdl_get_surface_palette*(surf; palette: ptr Palette): cbool                             {.importc: "SDL_SetSurfacePalette"   .}
 
 proc sdl_lock_surface*(surf): cint {.importc: "SDL_LockSurface"  .}
 proc sdl_unlock_surface*(surf)     {.importc: "SDL_UnlockSurface".}
 
-proc sdl_set_surface_colourspace*(surf; colourspace: Colourspace): SdlBool     {.importc: "SDL_SetSurfaceColorspace".}
-proc sdl_get_surface_colourspace*(surf; colourspace: ptr Colourspace): SdlBool {.importc: "SDL_GetSurfaceColorspace".}
+proc sdl_set_surface_colourspace*(surf; colourspace: Colourspace): cbool     {.importc: "SDL_SetSurfaceColorspace".}
+proc sdl_get_surface_colourspace*(surf; colourspace: ptr Colourspace): cbool {.importc: "SDL_GetSurfaceColorspace".}
 
 proc sdl_duplicate_surface*(surf): Surface                 {.importc: "SDL_DuplicateSurface".}
 proc sdl_convert_surface*(surf; fmt: PixelFormat): pointer {.importc: "SDL_ConvertSurface"  .}
