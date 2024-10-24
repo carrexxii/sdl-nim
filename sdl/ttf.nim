@@ -156,14 +156,14 @@ proc ttf_set_font_script*(font; script: cstring): cbool                   {.impo
 proc ttf_set_font_language*(font; lang_bcp47: cstring): cbool             {.importc: "TTF_SetFontLanguage" , discardable.}
 proc ttf_get_font_direction*(font): Direction                             {.importc: "TTF_GetFontDirection"             .}
 
-proc ttf_get_glyph_script*(ch: uint32; script: cstring; script_sz: csize_t): cbool                           {.importc: "TTF_GetGlyphScript"       .}
-proc ttf_get_glyph_image*(font; ch: uint32): ptr Surface                                                     {.importc: "TTF_GetGlyphImage"        .}
-proc ttf_get_glyph_image_for_index*(font; glyph_index: uint32): ptr Surface                                  {.importc: "TTF_GetGlyphImageForIndex".}
-proc ttf_get_glyph_metrics*(font; ch: uint32; min_x, max_x, min_y, max_y, adv: ptr cint): cbool              {.importc: "TTF_GetGlyphMetrics"      .}
-proc ttf_get_glyph_kerning*(font; prev_ch, ch: uint32; kerning: ptr cint): cbool                             {.importc: "TTF_GetGlyphKerning"      .}
-proc ttf_get_string_size*(font; text: cstring; len: csize_t; w, h: ptr cint): cbool                          {.importc: "TTF_GetStringSize"        .}
-proc ttf_get_string_size_wrapped*(font; text: cstring; len: csize_t; wrap_len: cint; w, h: ptr cint): cbool  {.importc: "TTF_GetStringSizeWrapped" .}
-proc ttf_measure_string*(font; text: cstring; len: csize_t; measure_w: cint; extent, count: ptr cint): cbool {.importc: "TTF_MeasureString"        .}
+proc ttf_get_glyph_script*(ch: uint32; script: cstring; script_sz: csize_t): cbool                           {.importc: "TTF_GetGlyphScript"       , discardable.}
+proc ttf_get_glyph_image*(font; ch: uint32): ptr Surface                                                     {.importc: "TTF_GetGlyphImage"                     .}
+proc ttf_get_glyph_image_for_index*(font; glyph_index: uint32): ptr Surface                                  {.importc: "TTF_GetGlyphImageForIndex"             .}
+proc ttf_get_glyph_metrics*(font; ch: uint32; min_x, max_x, min_y, max_y, adv: ptr cint): cbool              {.importc: "TTF_GetGlyphMetrics"      , discardable.}
+proc ttf_get_glyph_kerning*(font; prev_ch, ch: uint32; kerning: ptr cint): cbool                             {.importc: "TTF_GetGlyphKerning"      , discardable.}
+proc ttf_get_string_size*(font; text: cstring; len: csize_t; w, h: ptr cint): cbool                          {.importc: "TTF_GetStringSize"        , discardable.}
+proc ttf_get_string_size_wrapped*(font; text: cstring; len: csize_t; wrap_len: cint; w, h: ptr cint): cbool  {.importc: "TTF_GetStringSizeWrapped" , discardable.}
+proc ttf_measure_string*(font; text: cstring; len: csize_t; measure_w: cint; extent, count: ptr cint): cbool {.importc: "TTF_MeasureString"        , discardable.}
 
 proc ttf_render_text_shaded*(font; text: cstring; len: csize_t; fg, bg: Colour): ptr Surface                         {.importc: "TTF_RenderText_Shaded"         .}
 proc ttf_render_text_shaded_wrapped*(font; text: cstring; len: csize_t; fg, bg: Colour; wrap_len: cint): ptr Surface {.importc: "TTF_RenderText_Shaded_Wrapped" .}
@@ -178,7 +178,7 @@ proc ttf_render_glyph_lcd*(font; ch: uint32; fg, bg: Colour): ptr Surface       
 proc ttf_create_surface_text_engine*(): ptr TextEngine                                             {.importc: "TTF_CreateSurfaceTextEngine"  .}
 proc ttf_draw_surface_text*(text; x, y: cint; surface): cbool                                      {.importc: "TTF_DrawSurfaceText"          .}
 proc ttf_destroy_surface_text_engine*(engine)                                                      {.importc: "TTF_DestroySurfaceTextEngine" .}
-proc ttf_create_renderer_text_engine*(renderer: Renderer): ptr TextEngine                          {.importc: "TTF_CreateRendererTextEngine" .}
+proc ttf_create_renderer_text_engine*(renderer: ptr Renderer): ptr TextEngine                      {.importc: "TTF_CreateRendererTextEngine" .}
 proc ttf_draw_renderer_text*(text; x, y: cfloat): cbool                                            {.importc: "TTF_DrawRendererText"         .}
 proc ttf_destroy_renderer_text_engine*(engine)                                                     {.importc: "TTF_DestroyRendererTextEngine".}
 proc ttf_create_text*(engine; font; text: cstring; len: csize_t): ptr Text                         {.importc: "TTF_CreateText"               .}
@@ -244,6 +244,22 @@ proc dpi*(font): tuple[v, h: int] =
     ttf_get_font_style font, h.addr, v.addr
     (int h, int v)
 
+proc script*(ch: Rune; sz: int): cstring    = ttf_get_glyph_script uint32 ch, result, csize_t sz
+proc image*(font; ch: Rune): ptr Surface    = ttf_get_glyph_image           font, uint32 ch
+proc image*(font; idx: int): ptr Surface    = ttf_get_glyph_image_for_index font, idx
+proc size*(font; text: string): tuple[w, h: int32] =
+    ttf_get_string_size font, cstring text, text.len, result.w.addr, result.h,addr
+proc size*(font; text: string; wrap_len: int): tuple[w, h: int32] =
+    ttf_get_string_size font, cstring text, text.len, cint wrap_len, result.w.addr, result.h,addr
+proc measure*(font; text: string; max_w: int): tuple[w, count: int32] =
+    ttf_measure_string font, cstring text, text.len, cint max_w, result.w.addr, result.count.addr
+proc kerning*(font; prev_ch, ch: Rune): int =
+    var kerning: cint = 0
+    ttf_get_glyph_kerning font, uint32 prev_ch, uint32 ch, kerning.addr
+    result = kerning
+proc metrics*(font; ch: Rune): tuple[min_x, max_x, min_y, max_y, adv: cint] =
+    ttf_get_glyph_metrics font, uint32 ch, result.min_x.addr, result.max_x.addr, result.min_y.addr, result.max_y.addr, result.adv.addr
+
 proc `size=`*(font; pt_sz: float32)                            = ttf_set_font_size     font, cfloat pt_sz
 proc `size=`*(font; v: tuple[pt_sz: float32; hdpi, vdpi: int]) = ttf_set_font_size_dpi font, cfloat v.pt_sz, cint v.hdpi, cint v.vdpi
 proc `style=`*(font; style: FontStyle)                         = ttf_set_font_style    font, style
@@ -267,138 +283,66 @@ proc `wrap_align=`*(font; align: HorizontalAlignment) = font.wrap_alignment = al
 proc `dir=`*(font; dir: Direction)                    = font.direction      = dir
 proc `lang=`*(font; lang_bcp47: string)               = font.language       = lang_bcp47
 
-proc script*(ch: Rune; sz: int): cstring    = ttf_get_glyph_script uint32 ch, result, csize_t sz
-proc image*(font; ch: Rune): ptr Surface    = ttf_get_glyph_image           font, uint32 ch
-proc image*(font; idx: int): ptr Surface    = ttf_get_glyph_image_for_index font, idx
-proc kerning*(font; prev_ch, ch: Rune): int =
-    var kerning: cint = 0
-    ttf_get_glyph_kerning font, uint32 prev_ch, uint32 ch, kerning.addr
-    result = kerning
-proc metrics*(font; ch: Rune): tuple[min_x, max_x, min_y, max_y, adv: int32] =
-    ttf_get_glyph_metrics font, uint32 ch, result.min_x.addr, result.max_x.addr, result.min_y.addr, result.max_y.addr, result.adv.addr
-
-# proc ttf_get_string_size*(font; text: cstring; len: csize_t; w, h: ptr cint): cbool                          {.importc: "TTF_GetStringSize"        .}
-# proc ttf_get_string_size_wrapped*(font; text: cstring; len: csize_t; wrap_len: cint; w, h: ptr cint): cbool  {.importc: "TTF_GetStringSizeWrapped" .}
-# proc ttf_measure_string*(font; text: cstring; len: csize_t; measure_w: cint; extent, count: ptr cint): cbool {.importc: "TTF_MeasureString"        .}
-
-### ### ###
-
-proc set_size*(font; pt_sz: int32; hdpi, vdpi: uint32): bool {.discardable.} =
-    ttf_set_font_size_dpi font, pt_sz, hdpi, vdpi
-
-proc get_kerning_size*(font; prev_ch, ch: Rune): int32 =
-    ttf_get_font_kerning_size_glyphs32 font, uint32 prev_ch, uint32 ch
-
-proc style*(font): FontStyle = ttf_get_font_style font
-proc outline*(font): int32   = ttf_get_font_outline font
-proc hinting*(font): Hinting = ttf_get_font_hinting font
-proc align*(font): Align     = ttf_get_font_wrapped_align font
-proc kerning*(font): bool    = ttf_get_font_kerning font
-proc sdf*(font): bool        = ttf_get_font_sdf font
-
-proc `size=`*(font; pt_sz: int32)          = assert ttf_set_font_size(font, pt_sz)
-proc `style=`*(font; style: FontStyle)     = ttf_set_font_style font, style
-proc `outline=`*(font; outline: int32)     = ttf_set_font_outline font, outline
-proc `hinting=`*(font; hinting: Hinting)   = ttf_set_font_hinting font, hinting
-proc `align=`*(font; align: Align)         = ttf_set_font_wrapped_align font, align
-proc `kerning=`*(font; kerning: bool)      = ttf_set_font_kerning font, kerning
-proc `sdf=`*(font; on_off: bool)           = assert ttf_set_font_sdf(font, on_off)
-proc `dir=`*(font; dir: Direction)         = assert ttf_set_font_direction(font, dir)
-proc `script_name=`*(font; script: string) = assert ttf_set_font_script_name(font, cstring script)
-proc `language=`*(font; lang: string)      = assert ttf_set_font_language(font, cstring lang)
-
-proc height*(font): int32                     = ttf_font_height font
-proc ascent*(font): int32                     = ttf_font_ascent font
-proc descent*(font): int32                    = ttf_font_descent font
-proc line_skip*(font): int32                  = ttf_font_line_skip font
-proc faces*(font): int                        = ttf_font_faces font
-proc faces_is_fixed_width*(font): bool        = ttf_font_faces_is_fixed_width font
-proc face_family_name*(font): string          = $ttf_font_face_family_name(font)
-proc face_style_name*(font): string           = $ttf_font_face_style_name(font)
-proc is_scalable*(font): bool                 = ttf_is_font_scalable font
-proc glyph_is_provided*(font; ch: Rune): bool = ttf_glyph_is_provided32 font, uint32 ch
-
-proc `sz=`*(font; pt_sz: int32) = font.sz = pt_sz
-proc h*(font): int32 = font.height
-
-proc glyph_metrics*(font; ch: Rune): tuple[minx, maxx, miny, maxy, advance: int32] =
-    assert not ttf_glyph_metrics32(font, uint32 ch, result.minx.addr, result.maxx.addr,
-                                                    result.miny.addr, result.maxy.addr,
-                                   result.advance.addr)
-
-proc size*(font; text: string): tuple[w, h: int32] =
-    assert not ttf_size_utf8(font, cstring text, result.w.addr, result.h.addr)
-
-proc measure*(font; text: string; w: int32): tuple[count, extent: int32] =
-    assert not ttf_measure_utf8(font, cstring text, w, result.extent.addr, result.count.addr)
-
 using
-    text  : string
-    fg, bg: Colour
-    ch    : Rune
+    text    : string
+    ch      : Rune
+    bg, fg  : Colour
+    wrap_len: int
+proc render*(font; text; fg, bg): ptr Surface           = ttf_render_text_shaded         font, cstring text, text.len, fg, bg
+proc render*(font; text; fg, bg; wrap_len): ptr Surface = ttf_render_text_shaded_wrapped font, cstring text, text.len, fg, bg, cint wrap_len
+proc render*(font; ch; fg, bg): ptr Surface             = ttf_render_glyph_shaded        font, uint32 ch, text.len, fg, bg
 
-proc render*(font; ch; fg, bg): (Surface, bool) =
-    let surf = ttf_render_glyph32_shaded(font, uint32 ch, fg, bg)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc render*(font; text; fg): ptr Surface           = ttf_render_text_blended         font, cstring text, text.len, fg
+proc render*(font; text; fg; wrap_len): ptr Surface = ttf_render_text_blended_wrapped font, cstring text, text.len, fg, cint wrap_len
+proc render*(font; ch; fg): ptr Surface             = ttf_render_glyph_blended        font, uint32 ch, text.len, fg
 
-proc render*(font; ch; fg): (Surface, bool) =
-    let surf = ttf_render_glyph32_solid(font, uint32 ch, fg)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc render_lcd*(font; text; fg, bg): ptr Surface           = ttf_render_text_lcd         font, cstring text, text.len, fg, bg
+proc render_lcd*(font; text; fg, bg; wrap_len): ptr Surface = ttf_render_text_lcd_wrapped font, cstring text, text.len, fg, bg, cint wrap_len
+proc render_lcd*(font; ch; fg, bg): ptr Surface             = ttf_render_glyph_lcd        font, uint32 ch, text.len, fg, bg
 
-proc render_blended*(font; ch; fg): (Surface, bool) =
-    let surf = ttf_render_glyph32_blended(font, uint32 ch, fg)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+#~~~ Text Engine ~~~#
+using
+    engine: ptr TextEngine
+    text  : ptr Text
 
-proc render_lcd*(font; ch; fg, bg): (Surface, bool) =
-    let surf = ttf_render_glyph32_lcd(font, uint32 ch, fg, bg)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc create_text_engine*(): ptr TextEngine                  = ttf_create_surface_text_engine()
+proc create_text_engine*(ren: ptr Renderer): ptr TextEngine = ttf_create_renderer_text_engine ren
 
-proc render*(font; text; fg): (Surface, bool) =
-    let surf = ttf_render_utf8_solid(font, text, fg)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc destroy*(engine) = ttf_destroy_surface_text_engine  engine
+proc destroy*(engine) = ttf_destroy_renderer_text_engine engine
 
-proc render*(font; text; fg; wrap_len: int32): (Surface, bool) =
-    let surf = ttf_render_utf8_solid_wrapped(font, text, fg, uint32 wrap_len)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc create_text*(engine; font; text): ptr Text                = ttf_create_text         engine, font, cstring text, text.len
+proc create_text*(engine; font; text; wrap_len: int): ptr Text = ttf_create_text_wrapped engine, font, cstring text, text.len, cint wrap_len
 
-proc render*(font; text; fg, bg): (Surface, bool) =
-    let surf = ttf_render_utf8_shaded(font, text, fg, bg)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc draw*(text; x, y: int; surface): bool {.discardable.} = ttf_draw_surface_text  text, cint x, cint y, surface
+proc draw*(text; x, y: int): bool          {.discardable.} = ttf_draw_renderer_text text, cint x, cint y
 
-proc render*(font; text; fg, bg; wrap_len: int32): (Surface, bool) =
-    let surf = ttf_render_utf8_shaded_wrapped(font, text, fg, bg, uint32 wrap_len)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc properties*(text): PropertyId = ttf_get_text_properties text
+proc engine*(text): ptr TextEngine = ttf_get_text_engine     text
+proc font*(text): ptr Font         = ttf_get_text_font       text
+proc size*(text): tuple[w, h: int] =
+    var w, h: cint
+    assert ttf_get_text_size(text, w.addr, h,addr)
+    result = (w, h)
+proc wrapping*(text): tuple[enabled: bool; len: int] =
+    var enabled : cbool
+    var wrap_len: cint
+    assert ttf_get_text_wrapping(text, enabled.addr, wrap_len.addr)
+    result = (enabled, wrap_len)
 
-proc render_blended*(font; text; fg): (Surface, bool) =
-    let surf = ttf_render_utf8_blended(font, text, fg)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc `engine=`*(text; engine)              = assert ttf_set_text_engine(text, engine)
+proc `font=`*(text; font)                  = assert ttf_set_text_font(text, font)
+proc `text=`*(text; str: string)           = assert ttf_set_text_string(text, cstring str, str.len)
+proc `wrapping=`*(text; wrap: (bool, int)) = assert ttf_set_text_wrapping(text, wrap[0], cint wrap[1])
 
-proc render_blended*(font; text; fg; wrap_len: int32): (Surface, bool) =
-    let surf = ttf_render_utf8_blended_wrapped(font, text, fg, uint32 wrap_len)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc insert*(text; offset: int; str: string): bool {.discardable.} = ttf_insert_text_string text, cint offset, cstring str, str.len
+proc append*(text; str: string): bool              {.discardable.} = ttf_append_text_string text, cstring str, str.len
+proc delete*(text; offset, len: cint): bool        {.discardable.} = ttf_delete_text_string text, cint offset, cint len
+proc update*(text): bool                           {.discardable.} = ttf_update_text        text, cint offset, cint len
+proc destroy*(text) = ttf_destroy_text text
 
-proc render_lcd*(font; text; fg, bg): (Surface, bool) =
-    let surf = ttf_render_utf8_lcd(font, text, fg, bg)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
-
-proc render_lcd*(font; text; fg, bg; wrap_len: int32): (Surface, bool) =
-    let surf = ttf_render_utf8_lcd_wrapped(font, text, fg, bg, uint32 wrap_len)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+## Abbreviations ##
+proc props*(text): PropertyId    = text.properties
+proc sz*(text): tuple[w, h: int] = text.size
 
 {.pop.} # inline
-
-# SDL_COMPILE_TIME_ASSERT(TTF_TextEngine_SIZE,
-#     (sizeof(void *) == 4 && sizeof(TTF_TextEngine) == 16) ||
-#     (sizeof(void *) == 8 && sizeof(TTF_TextEngine) == 32));

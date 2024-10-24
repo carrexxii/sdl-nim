@@ -5,55 +5,6 @@ from surface import Surface
 export keyboard
 
 type
-    SystemCursor* {.size: sizeof(cint).} = enum
-        cursorArrow
-        cursorIBeam
-        cursorWait
-        cursorCrosshair
-        cursorWaitArrow
-        cursorSizeNWSE
-        cursorSizeNESW
-        cursorSizeWE
-        cursorSizeNS
-        cursorSizeAll
-        cursorNo
-        cursorHand
-        cursorWindowTopLeft
-        cursorWindowTop
-        cursorWindowTopRight
-        cursorWindowRight
-        cursorWindowBottomRight
-        cursorWindowBottom
-        cursorWindowBottomLeft
-        cursorWindowLeft
-
-    MouseWheelDirection* {.size: sizeof(cint).} = enum
-        dirNormal
-        dirFlipped
-
-    MouseButton* {.size: sizeof(uint8).} = enum
-        btnLeft   = 1
-        btnMiddle = 2
-        btnRight  = 3
-        btnX1     = 4
-        btnX2     = 5
-
-    # Hard-coded unlike the SDL version which calculates it based off of MouseButton values
-    # assigning values to the enum seems to break the bitset
-    MouseButtonFlag* {.size: sizeof(uint32).} = enum
-        btnLeft
-        btnMiddle
-        btnRight
-        btnX1
-        btnX2
-    MouseButtonMask* = set[MouseButtonFlag]
-
-type
-    Timestamp*  = distinct uint64
-    KeyboardId* = distinct uint32
-    MouseId*    = distinct uint32
-    Cursor*     = distinct pointer
-
     EventKind* {.size: sizeof(cint).} = enum
         eventFirst = 0x0
         eventQuit = 0x100
@@ -70,8 +21,9 @@ type
         eventDisplayAdded
         eventDisplayRemoved
         eventDisplayMoved
+        eventDisplayDesktopModeChanged
+        eventDisplayCurrentModeChanged
         eventDisplayContentScaleChanged
-        eventDisplayHDRStateChanged
 
         eventWindowShown = 0x202
         eventWindowHidden
@@ -79,6 +31,7 @@ type
         eventWindowMoved
         eventWindowResized
         eventWindowPixelSizeChanged
+        eventWindowMetalViewResized
         eventWindowMinimized
         eventWindowMaximized
         eventWindowRestored
@@ -87,17 +40,16 @@ type
         eventWindowFocusGained
         eventWindowFocusLost
         eventWindowCloseRequested
-        eventWindowTakeFocus
         eventWindowHitTest
         eventWindowICCProfChanged
         eventWindowDisplayChanged
         eventWindowDisplayScaleChanged
+        eventWindowSafeAreaChanged
         eventWindowOccluded
         eventWindowEnterFullscreen
         eventWindowLeaveFullscreen
         eventWindowDestroyed
-        eventWindowPenEnter
-        eventWindowPenLeave
+        eventWindowHdrStateChanged
 
         eventKeyDown = 0x300
         eventKeyUp
@@ -106,6 +58,7 @@ type
         eventKeymapChanged
         eventKeyboardAdded
         eventKeyboardRemoved
+        eventTextEditingCandidates
 
         eventMouseMotion = 0x400
         eventMouseButtonDown
@@ -155,11 +108,14 @@ type
 
         eventSensorUpdate = 0x1200
 
-        eventPenDown = 0x1300
+        eventPenProximityIn = 0x1300
+        eventPenProximityOut
+        eventPenDown
         eventPenUp
-        eventPenMotion
         eventPenButtonDown
         eventPenButtonUp
+        eventPenMotion
+        eventPenAxis
 
         eventCameraDeviceAdded = 0x1400
         eventCameraDeviceRemoved
@@ -170,8 +126,8 @@ type
         eventRenderDeviceReset
 
         eventPollSentinel = 0x7F00
-        eventUser = 0x8000
-        eventUserMax = high uint32 # To allow custom events
+        eventUser         = 0x8000
+        eventLast         = 0xFFFF # To allow custom events
 
     EventState* {.size: sizeof(cint).} = enum
         stateReleased
@@ -182,6 +138,54 @@ type
         actionPeek
         actionGet
 
+    SystemCursor* {.size: sizeof(cint).} = enum
+        cursorArrow
+        cursorIBeam
+        cursorWait
+        cursorCrosshair
+        cursorWaitArrow
+        cursorSizeNWSE
+        cursorSizeNESW
+        cursorSizeWE
+        cursorSizeNS
+        cursorSizeAll
+        cursorNo
+        cursorHand
+        cursorWindowTopLeft
+        cursorWindowTop
+        cursorWindowTopRight
+        cursorWindowRight
+        cursorWindowBottomRight
+        cursorWindowBottom
+        cursorWindowBottomLeft
+        cursorWindowLeft
+
+    MouseWheelDirection* {.size: sizeof(cint).} = enum
+        dirNormal
+        dirFlipped
+
+    MouseButton* {.size: sizeof(uint8).} = enum
+        btnLeft   = 1
+        btnMiddle = 2
+        btnRight  = 3
+        btnX1     = 4
+        btnX2     = 5
+
+    # Hard-coded unlike the SDL version which calculates it based off of MouseButton values
+    # assigning values to the enum seems to break the bitset
+    MouseButtonFlag* {.size: sizeof(uint32).} = enum
+        btnLeft
+        btnMiddle
+        btnRight
+        btnX1
+        btnX2
+    MouseButtonMask* = set[MouseButtonFlag]
+
+type
+    Timestamp*   = distinct uint64
+    KeyboardId*  = distinct uint32
+    MouseId*     = distinct uint32
+    Cursor*      = distinct pointer
     CustomEvent* = distinct uint32
 
     CommonEvent* = object
@@ -194,7 +198,8 @@ type
         _          : uint32
         time*      : Timestamp
         display_id*: DisplayId
-        data*      : int32
+        data1*     : int32
+        data2*     : int32
 
     WindowEvent* = object
         kind*  : EventKind
@@ -220,8 +225,8 @@ type
         key*   : KeyCode
         keymod*: KeyMod
         raw*   : uint16
-        state* {.bitsize: 8.}: EventState
-        repeat*: uint8
+        down*  : cbool
+        repeat*: cbool
 
     TextEditingEvent* = object
         kind*  : EventKind
@@ -252,9 +257,9 @@ type
         win_id*  : WindowId
         mouse_id*: MouseId
         state*   : uint32
-        x*, y*   : float32
-        x_rel*   : float32
-        y_rel*   : float32
+        x*, y*   : cfloat
+        x_rel*   : cfloat
+        y_rel*   : cfloat
 
     MouseButtonEvent* = object
         kind*    : EventKind
@@ -266,7 +271,7 @@ type
         state*   : uint8
         clicks*  : uint8
         pad2     : uint8
-        x*, y*   : float32
+        x*, y*   : cfloat
 
     MouseWheelEvent* = object
         kind*    : EventKind
@@ -274,10 +279,10 @@ type
         time*    : Timestamp
         win_id*  : WindowId
         mouse_id*: MouseId
-        x*, y*   : float32
+        x*, y*   : cfloat
         dir*     : MouseWheelDirection
-        mouse_x* : float32
-        mouse_y* : float32
+        mouse_x* : cfloat
+        mouse_y* : cfloat
 
     QuitEvent* = object
         kind*: EventKind
@@ -289,11 +294,12 @@ type
         common*   : CommonEvent
         display*  : DisplayEvent
         win*      : WindowEvent
-        kdevice*  : KeyboardDeviceEvent
+        kb_dev*   : KeyboardDeviceEvent
         kb*       : KeyboardEvent
         edit*     : TextEditingEvent
+        # edit_candidate*: TextEditingCandidateEvent
         text*     : TextInputEvent
-        mdevice*  : MouseDeviceEvent
+        mouse_dev*: MouseDeviceEvent
         motion*   : MouseMotionEvent
         button*   : MouseButtonEvent
         wheel*    : MouseWheelEvent
@@ -326,11 +332,30 @@ func `==`*[T, U: CustomEvent | SomeInteger](a: T; b: U): bool =
 
 #[ -------------------------------------------------------------------- ]#
 
+using
+    event : ptr Event
+    events: ptr UncheckedArray[Event]
+    filter: EventFilter
 {.push dynlib: SdlLib.}
-proc sdl_poll_event*(event: ptr Event): bool            {.importc: "SDL_PollEvent"          .}
-proc sdl_register_events*(count: cint): uint32          {.importc: "SDL_RegisterEvents"     .}
-proc sdl_allocate_event_memory*(size: csize_t): pointer {.importc: "SDL_AllocateEventMemory".}
-proc sdl_push_event*(event: ptr Event): cint            {.importc: "SDL_PushEvent"          .}
+proc sdl_pump_events*()                                                                          {.importc: "SDL_PumpEvents"        .}
+proc sdl_peep_events*(events; event_count: cint; action: EventAction; min, max: EventKind): cint {.importc: "SDL_PeepEvents"        .}
+proc sdl_has_event*(kind: EventKind): cbool                                                      {.importc: "SDL_HasEvent"          .}
+proc sdl_has_events*(min, max: EventKind): cbool                                                 {.importc: "SDL_HasEvents"         .}
+proc sdl_flush_event*(kind: EventKind)                                                           {.importc: "SDL_FlushEvent"        .}
+proc sdl_flush_events*(min, max: EventKind)                                                      {.importc: "SDL_FlushEvents"       .}
+proc sdl_poll_event*(event): cbool                                                               {.importc: "SDL_PollEvent"         .}
+proc sdl_wait_event*(event): cbool                                                               {.importc: "SDL_WaitEvent"         .}
+proc sdl_wait_event_timeout*(event; timeout_ms: int32): cbool                                    {.importc: "SDL_WaitEventTimeout"  .}
+proc sdl_push_event*(event): cbool                                                               {.importc: "SDL_PushEvent"         .}
+proc sdl_set_event_filter*(filter; user_data: pointer)                                           {.importc: "SDL_SetEventFilter"    .}
+proc sdl_get_event_filter*(filter: ptr EventFilter; user_data: ptr pointer): cbool               {.importc: "SDL_GetEventFilter"    .}
+proc sdl_add_event_watch*(filter; user_data: pointer): cbool                                     {.importc: "SDL_AddEventWatch"     .}
+proc sdl_remove_event_watch*(filter; user_data: pointer)                                         {.importc: "SDL_RemoveEventWatch"  .}
+proc sdl_filter_events*(filter; user_data: pointer)                                              {.importc: "SDL_FilterEvents"      .}
+proc sdl_set_event_enabled*(kind: EventKind; enabled: bool)                                      {.importc: "SDL_SetEventEnabled"   .}
+proc sdl_event_enabled*(kind: EventKind): cbool                                                  {.importc: "SDL_EventEnabled"      .}
+proc sdl_register_events*(count: cint): EventKind                                                {.importc: "SDL_RegisterEvents"    .}
+proc sdl_get_window_from_event*(event): ptr Window                                               {.importc: "SDL_GetWindowFromEvent".}
 
 proc sdl_has_mouse*(): bool                                                                {.importc: "SDL_HasMouse"             .}
 proc sdl_get_mice*(count: ptr cint): ptr MouseId                                           {.importc: "SDL_GetMice"              .}
@@ -376,44 +401,3 @@ proc mouse_state*(): tuple[btns: MouseButtonMask; x, y: float32] =
     result.btns = sdl_get_mouse_state(result.x.addr, result.y.addr)
 
 {.pop.} # inline
-
-# TODO:
-
-# typedef struct SDL_JoyAxisEvent
-# typedef struct SDL_JoyBallEvent
-# typedef struct SDL_JoyHatEvent
-# typedef struct SDL_JoyButtonEvent
-# typedef struct SDL_JoyDeviceEvent
-# typedef struct SDL_JoyBatteryEvent
-# typedef struct SDL_GamepadAxisEvent
-# typedef struct SDL_GamepadButtonEvent
-# typedef struct SDL_GamepadDeviceEvent
-# typedef struct SDL_GamepadTouchpadEvent
-# typedef struct SDL_GamepadSensorEvent
-# typedef struct SDL_AudioDeviceEvent
-# typedef struct SDL_CameraDeviceEvent
-# typedef struct SDL_TouchFingerEvent
-# typedef struct SDL_PenTipEvent
-# typedef struct SDL_PenMotionEvent
-# typedef struct SDL_PenButtonEvent
-# typedef struct SDL_DropEvent
-# typedef struct SDL_ClipboardEvent
-# typedef struct SDL_SensorEvent
-# typedef struct SDL_UserEventc
-
-# extern DECLSPEC void SDLCALL SDL_PumpEvents(void);
-# extern DECLSPEC int SDLCALL SDL_PeepEvents(SDL_Event *events, int numevents, SDL_EventAction action, Uint32 minType, Uint32 maxType);
-# extern DECLSPEC SDL_bool SDLCALL SDL_HasEvent(Uint32 type);
-# extern DECLSPEC SDL_bool SDLCALL SDL_HasEvents(Uint32 minType, Uint32 maxType);
-# extern DECLSPEC void SDLCALL SDL_FlushEvent(Uint32 type);
-# extern DECLSPEC void SDLCALL SDL_FlushEvents(Uint32 minType, Uint32 maxType);
-# extern DECLSPEC SDL_bool SDLCALL SDL_WaitEvent(SDL_Event *event);
-# extern DECLSPEC SDL_bool SDLCALL SDL_WaitEventTimeout(SDL_Event *event, Sint32 timeoutMS);
-# typedef int (SDLCALL *SDL_EventFilter)(void *userdata, SDL_Event *event);
-# extern DECLSPEC void SDLCALL SDL_SetEventFilter(SDL_EventFilter filter, void *userdata);
-# extern DECLSPEC SDL_bool SDLCALL SDL_GetEventFilter(SDL_EventFilter *filter, void **userdata);
-# extern DECLSPEC int SDLCALL SDL_AddEventWatch(SDL_EventFilter filter, void *userdata);
-# extern DECLSPEC void SDLCALL SDL_DelEventWatch(SDL_EventFilter filter, void *userdata);
-# extern DECLSPEC void SDLCALL SDL_FilterEvents(SDL_EventFilter filter, void *userdata);
-# extern DECLSPEC void SDLCALL SDL_SetEventEnabled(Uint32 type, SDL_bool enabled);
-# extern DECLSPEC SDL_bool SDLCALL SDL_EventEnabled(Uint32 type);

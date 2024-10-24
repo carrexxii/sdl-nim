@@ -137,12 +137,12 @@ proc sdl_get_texture_properties*(texture: Texture): uint32                      
 
 {.push inline.}
 
-proc get_properties*(win: Window):  PropertyID = PropertyId sdl_get_window_properties(win)
-proc get_properties*(tex: Texture): PropertyID = PropertyId sdl_get_texture_properties(tex)
+proc properties*(win: Window):  PropertyID = PropertyId sdl_get_window_properties(win)
+proc properties*(tex: Texture): PropertyID = PropertyId sdl_get_texture_properties(tex)
 
-proc get_x11_display_pointer*(win: Window): Property = Property sdl_get_property(get_properties(win), X11DisplayPointer, nil)
-proc get_x11_screen_number*(win: Window): int64 = sdl_get_number_property(get_properties(win), X11ScreenNumber, -1)
-proc get_x11_window_number*(win: Window): int64 = sdl_get_number_property(get_properties(win), X11WindowNumber, -1)
-proc get_texture_number*(tex: Texture):   int64 = sdl_get_number_property(get_properties(tex), TextureOpenGLTextureNumber, -1)
+proc x11_display_pointer*(win: Window): Property = Property sdl_get_property(get_properties(win), X11DisplayPointer, nil)
+proc x11_screen_number*(win: Window): int64 = sdl_get_number_property(get_properties(win), X11ScreenNumber, -1)
+proc x11_window_number*(win: Window): int64 = sdl_get_number_property(get_properties(win), X11WindowNumber, -1)
+proc texture_number*(tex: Texture):   int64 = sdl_get_number_property(get_properties(tex), TextureOpenGLTextureNumber, -1)
 
 {.pop.} # inline

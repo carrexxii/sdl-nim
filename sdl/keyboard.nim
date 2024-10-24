@@ -2,274 +2,299 @@ import common, bitgen
 from video import Window
 from rect  import Rect
 
-type ScanCode* = enum
-    scUnknown = 0
+const
+    TextInputKindNumber*             = cstring "SDL.textinput.type"
+    TextInputCapitalizationNumber*   = cstring "SDL.textinput.capitalization"
+    TextInputAutocorrectBoolean*     = cstring "SDL.textinput.autocorrect"
+    TextInputMultilineBoolean*       = cstring "SDL.textinput.multiline"
+    TextInputAndroidInputKindNumber* = cstring "SDL.textinput.android.inputtype"
 
-    scA = 4
-    scB = 5
-    scC = 6
-    scD = 7
-    scE = 8
-    scF = 9
-    scG = 10
-    scH = 11
-    scI = 12
-    scJ = 13
-    scK = 14
-    scL = 15
-    scM = 16
-    scN = 17
-    scO = 18
-    scP = 19
-    scQ = 20
-    scR = 21
-    scS = 22
-    scT = 23
-    scU = 24
-    scV = 25
-    scW = 26
-    scX = 27
-    scY = 28
-    scZ = 29
+type
+    ScanCode* = enum
+        scUnknown = 0
 
-    sc1 = 30
-    sc2 = 31
-    sc3 = 32
-    sc4 = 33
-    sc5 = 34
-    sc6 = 35
-    sc7 = 36
-    sc8 = 37
-    sc9 = 38
-    sc0 = 39
+        scA = 4
+        scB = 5
+        scC = 6
+        scD = 7
+        scE = 8
+        scF = 9
+        scG = 10
+        scH = 11
+        scI = 12
+        scJ = 13
+        scK = 14
+        scL = 15
+        scM = 16
+        scN = 17
+        scO = 18
+        scP = 19
+        scQ = 20
+        scR = 21
+        scS = 22
+        scT = 23
+        scU = 24
+        scV = 25
+        scW = 26
+        scX = 27
+        scY = 28
+        scZ = 29
 
-    scReturn    = 40
-    scEscape    = 41
-    scBackspace = 42
-    scTab       = 43
-    scSpace     = 44
+        sc1 = 30
+        sc2 = 31
+        sc3 = 32
+        sc4 = 33
+        sc5 = 34
+        sc6 = 35
+        sc7 = 36
+        sc8 = 37
+        sc9 = 38
+        sc0 = 39
 
-    scMinus        = 45
-    scEquals       = 46
-    scLeftBracket  = 47
-    scRightBracket = 48
-    scBackslash    = 49
-    scNonUSHash    = 50
-    scSemiColon    = 51
-    scApostrophe   = 52
-    scGrave        = 53
-    scComma        = 54
-    scPeriod       = 55
-    scSlash        = 56
+        scReturn    = 40
+        scEscape    = 41
+        scBackspace = 42
+        scTab       = 43
+        scSpace     = 44
 
-    scCapsLock = 57
+        scMinus        = 45
+        scEquals       = 46
+        scLeftBracket  = 47
+        scRightBracket = 48
+        scBackslash    = 49
+        scNonUSHash    = 50
+        scSemiColon    = 51
+        scApostrophe   = 52
+        scGrave        = 53
+        scComma        = 54
+        scPeriod       = 55
+        scSlash        = 56
 
-    scF1  = 58
-    scF2  = 59
-    scF3  = 60
-    scF4  = 61
-    scF5  = 62
-    scF6  = 63
-    scF7  = 64
-    scF8  = 65
-    scF9  = 66
-    scF10 = 67
-    scF11 = 68
-    scF12 = 69
+        scCapsLock = 57
 
-    scPrintScreen = 70
-    scScrollLock  = 71
-    scPause       = 72
-    scInsert      = 73
-    scHome        = 74
-    scPageUp      = 75
-    scDelete      = 76
-    scEnd         = 77
-    scPageDown    = 78
-    scRight       = 79
-    scLeft        = 80
-    scDown        = 81
-    scUp          = 82
+        scF1  = 58
+        scF2  = 59
+        scF3  = 60
+        scF4  = 61
+        scF5  = 62
+        scF6  = 63
+        scF7  = 64
+        scF8  = 65
+        scF9  = 66
+        scF10 = 67
+        scF11 = 68
+        scF12 = 69
 
-    scNumLockClear = 83
-    scKPDivide     = 84
-    scKPMultiply   = 85
-    scKPMinus      = 86
-    scKPPlus       = 87
-    scKPEnter      = 88
-    scKP1          = 89
-    scKP2          = 90
-    scKP3          = 91
-    scKP4          = 92
-    scKP5          = 93
-    scKP6          = 94
-    scKP7          = 95
-    scKP8          = 96
-    scKP9          = 97
-    scKP0          = 98
-    scKPPeriod     = 99
+        scPrintScreen = 70
+        scScrollLock  = 71
+        scPause       = 72
+        scInsert      = 73
+        scHome        = 74
+        scPageUp      = 75
+        scDelete      = 76
+        scEnd         = 77
+        scPageDown    = 78
+        scRight       = 79
+        scLeft        = 80
+        scDown        = 81
+        scUp          = 82
 
-    scNonUSBackSlash = 100
-    scApplication    = 101
-    scPower          = 102
-    scKPEquals       = 103
-    scF13            = 104
-    scF14            = 105
-    scF15            = 106
-    scF16            = 107
-    scF17            = 108
-    scF18            = 109
-    scF19            = 110
-    scF20            = 111
-    scF21            = 112
-    scF22            = 113
-    scF23            = 114
-    scF24            = 115
+        scNumLockClear = 83
+        scKpDivide     = 84
+        scKpMultiply   = 85
+        scKpMinus      = 86
+        scKpPlus       = 87
+        scKpEnter      = 88
+        scKp1          = 89
+        scKp2          = 90
+        scKp3          = 91
+        scKp4          = 92
+        scKp5          = 93
+        scKp6          = 94
+        scKp7          = 95
+        scKp8          = 96
+        scKp9          = 97
+        scKp0          = 98
+        scKpPeriod     = 99
 
-    scExecute    = 116
-    scHelp       = 117
-    scMenu       = 118
-    scSelect     = 119
-    scStop       = 120
-    scAgain      = 121
-    scUndo       = 122
-    scCut        = 123
-    scCopy       = 124
-    scPaste      = 125
-    scFind       = 126
-    scMute       = 127
-    scVolumeUp   = 128
-    scVolumeDown = 129
+        scNonUsBackSlash = 100
+        scApplication    = 101
+        scPower          = 102
+        scKpEquals       = 103
+        scF13            = 104
+        scF14            = 105
+        scF15            = 106
+        scF16            = 107
+        scF17            = 108
+        scF18            = 109
+        scF19            = 110
+        scF20            = 111
+        scF21            = 112
+        scF22            = 113
+        scF23            = 114
+        scF24            = 115
 
-    scKPComma = 133
+        scExecute    = 116
+        scHelp       = 117
+        scMenu       = 118
+        scSelect     = 119
+        scStop       = 120
+        scAgain      = 121
+        scUndo       = 122
+        scCut        = 123
+        scCopy       = 124
+        scPaste      = 125
+        scFind       = 126
+        scMute       = 127
+        scVolumeUp   = 128
+        scVolumeDown = 129
 
-    scInternational1 = 135
-    scInternational2 = 136
-    scInternational3 = 137
-    scInternational4 = 138
-    scInternational5 = 139
-    scInternational6 = 140
-    scInternational7 = 141
-    scInternational8 = 142
-    scInternational9 = 143
-    scLang1 = 144
-    scLang2 = 145
-    scLang3 = 146
-    scLang4 = 147
-    scLang5 = 148
-    scLang6 = 149
-    scLang7 = 150
-    scLang8 = 151
-    scLang9 = 152
+        scKPComma = 133
 
-    scAltErase   = 153
-    scSysReq     = 154
-    scCancel     = 155
-    scClear      = 156
-    scPrior      = 157
-    scReturn2    = 158
-    scSeperator  = 159
-    scOut        = 160
-    scOper       = 161
-    scClearAgain = 162
-    scCRSel      = 163
-    scEXSel      = 164
+        scInternational1 = 135
+        scInternational2 = 136
+        scInternational3 = 137
+        scInternational4 = 138
+        scInternational5 = 139
+        scInternational6 = 140
+        scInternational7 = 141
+        scInternational8 = 142
+        scInternational9 = 143
+        scLang1 = 144
+        scLang2 = 145
+        scLang3 = 146
+        scLang4 = 147
+        scLang5 = 148
+        scLang6 = 149
+        scLang7 = 150
+        scLang8 = 151
+        scLang9 = 152
 
-    scKP00               = 176
-    scKP000              = 177
-    scThousandsSeperator = 178
-    scDecimalSeperator   = 179
-    scCurrencyUnit       = 180
-    scCurrencySubunit    = 181
-    scKPLeftParen        = 182
-    scKPRightParen       = 183
-    scKPLeftBrace        = 184
-    scKPRightBrace       = 185
-    scKPTab              = 186
-    scKPBackspace        = 187
-    scKPA                = 188
-    scKPB                = 189
-    scKPC                = 190
-    scKPD                = 191
-    scKPE                = 192
-    scKPF                = 193
-    scKPXOR              = 194
-    scKPPower            = 195
-    scKPPercent          = 196
-    scKPLess             = 197
-    scKPGreater          = 198
-    scKPAmpersand        = 199
-    scKPDblAmpersand     = 200
-    scKPVerticalBar      = 201
-    scKPDblVerticalBar   = 202
-    scKPColon            = 203
-    scKPHash             = 204
-    scKPSpace            = 205
-    scKPAt               = 206
-    scKPExclam           = 207
-    scKPMemStore         = 208
-    scKPMemRecall        = 209
-    scKPMemClear         = 210
-    scKPMemAdd           = 211
-    scKPMemSubtract      = 212
-    scKPMemMultiply      = 213
-    scKPMemDivide        = 214
-    scKPPlusMinus        = 215
-    scKPClear            = 216
-    scKPClearEntry       = 217
-    scKPBinary           = 218
-    scKPOctal            = 219
-    scKPDecimal          = 220
-    scKPHexadecimal      = 221
+        scAltErase   = 153
+        scSysReq     = 154
+        scCancel     = 155
+        scClear      = 156
+        scPrior      = 157
+        scReturn2    = 158
+        scSeperator  = 159
+        scOut        = 160
+        scOper       = 161
+        scClearAgain = 162
+        scCRSel      = 163
+        scEXSel      = 164
 
-    scLCtrl  = 224
-    scLShift = 225
-    scLAlt   = 226
-    scLGUI   = 227
-    scRCtrl  = 228
-    scRShift = 229
-    scRAlt   = 230
-    scRGUI   = 231
+        scKp00               = 176
+        scKp000              = 177
+        scThousandsSeperator = 178
+        scDecimalSeperator   = 179
+        scCurrencyUnit       = 180
+        scCurrencySubunit    = 181
+        scKpLeftParen        = 182
+        scKpRightParen       = 183
+        scKpLeftBrace        = 184
+        scKpRightBrace       = 185
+        scKpTab              = 186
+        scKpBackspace        = 187
+        scKpA                = 188
+        scKpB                = 189
+        scKpC                = 190
+        scKpD                = 191
+        scKpE                = 192
+        scKpF                = 193
+        scKpXor              = 194
+        scKpPower            = 195
+        scKpPercent          = 196
+        scKpLess             = 197
+        scKpGreater          = 198
+        scKpAmpersand        = 199
+        scKpDblAmpersand     = 200
+        scKpVerticalBar      = 201
+        scKpDblVerticalBar   = 202
+        scKpColon            = 203
+        scKpHash             = 204
+        scKpSpace            = 205
+        scKpAt               = 206
+        scKpExclam           = 207
+        scKpMemStore         = 208
+        scKpMemRecall        = 209
+        scKpMemClear         = 210
+        scKpMemAdd           = 211
+        scKpMemSubtract      = 212
+        scKpMemMultiply      = 213
+        scKpMemDivide        = 214
+        scKpPlusMinus        = 215
+        scKpClear            = 216
+        scKpClearEntry       = 217
+        scKpBinary           = 218
+        scKpOctal            = 219
+        scKpDecimal          = 220
+        scKpHexadecimal      = 221
 
-    scMode = 257
+        scLCtrl  = 224
+        scLShift = 225
+        scLAlt   = 226
+        scLGui   = 227
+        scRCtrl  = 228
+        scRShift = 229
+        scRAlt   = 230
+        scRGui   = 231
 
-    scAudioNext   = 258
-    scAudioPrev   = 259
-    scAudioStop   = 260
-    scAudioPlay   = 261
-    scAudioMute   = 262
-    scMediaSelect = 263
-    scWWW         = 264
-    scMail        = 265
-    scCalculator  = 266
-    scComputer    = 267
-    scACSearch    = 268
-    scACHome      = 269
-    scACBack      = 270
-    scACForward   = 271
-    scACStop      = 272
-    scACRefresh   = 273
-    scACBookmarks = 274
+        scMode = 257
 
-    scBrightnessDown = 275
-    scBrightnessUp   = 276
-    scDisplaySwitch  = 277
-    scKbdIllumToggle = 278
-    scKbdIllumDown   = 279
-    scKbdIllumUp     = 280
-    scEject          = 281
-    scSleep          = 282
+        scAudioNext   = 258
+        scAudioPrev   = 259
+        scAudioStop   = 260
+        scAudioPlay   = 261
+        scAudioMute   = 262
+        scMediaSelect = 263
+        scWww         = 264
+        scMail        = 265
+        scCalculator  = 266
+        scComputer    = 267
+        scAcSearch    = 268
+        scAcHome      = 269
+        scAcBack      = 270
+        scAcForward   = 271
+        scAcStop      = 272
+        scAcRefresh   = 273
+        scAcBookmarks = 274
 
-    scApp1 = 283
-    scApp2 = 284
+        scBrightnessDown = 275
+        scBrightnessUp   = 276
+        scDisplaySwitch  = 277
+        scKbdIllumToggle = 278
+        scKbdIllumDown   = 279
+        scKbdIllumUp     = 280
+        scEject          = 281
+        scSleep          = 282
 
-    scAudioRewind      = 285
-    scAudioFastForward = 286
+        scApp1 = 283
+        scApp2 = 284
 
-    scSoftLeft  = 287
-    scSoftRight = 288
-    scCall      = 289
-    scEndCall   = 290
+        scAudioRewind      = 285
+        scAudioFastForward = 286
+
+        scSoftLeft  = 287
+        scSoftRight = 288
+        scCall      = 289
+        scEndCall   = 290
+
+    TextInputKind* {.size: sizeo(cint).} = enum
+        inputText
+        inputTextName
+        inputTextEmail
+        inputTextUsername
+        inputTextPasswordHidden
+        inputTextPasswordVisible
+        inputNumber
+        inputNumberPasswordHidden
+        inputNumberPasswordVisible
+
+    Capitalization* {.size: sizeof(cint).} = enum
+        capitalizeNone
+        capitalizeSentences
+        capitalizeWords
+        capitalizeLetters
 
 type KeyCode* = distinct uint32
 func `==`*(a, b: KeyCode): bool {.borrow.}
@@ -373,25 +398,25 @@ const
     kcDown*               = scancode_to_keycode(scDown)
     kcUp*                 = scancode_to_keycode(scUp)
     kcNumLockClear*       = scancode_to_keycode(scNumLockClear)
-    kcKPDivide*           = scancode_to_keycode(scKPDivide)
-    kcKPMultiply*         = scancode_to_keycode(scKPMultiply)
-    kcKPMinus*            = scancode_to_keycode(scKPMinus)
-    kcKPPlus*             = scancode_to_keycode(scKPPlus)
-    kcKPEnter*            = scancode_to_keycode(scKPEnter)
-    kcKP1*                = scancode_to_keycode(scKP1)
-    kcKP2*                = scancode_to_keycode(scKP2)
-    kcKP3*                = scancode_to_keycode(scKP3)
-    kcKP4*                = scancode_to_keycode(scKP4)
-    kcKP5*                = scancode_to_keycode(scKP5)
-    kcKP6*                = scancode_to_keycode(scKP6)
-    kcKP7*                = scancode_to_keycode(scKP7)
-    kcKP8*                = scancode_to_keycode(scKP8)
-    kcKP9*                = scancode_to_keycode(scKP9)
-    kcKP0*                = scancode_to_keycode(scKP0)
-    kcKPPeriod*           = scancode_to_keycode(scKPPeriod)
+    kcKpDivide*           = scancode_to_keycode(scKPDivide)
+    kcKpMultiply*         = scancode_to_keycode(scKPMultiply)
+    kcKpMinus*            = scancode_to_keycode(scKPMinus)
+    kcKpPlus*             = scancode_to_keycode(scKPPlus)
+    kcKpEnter*            = scancode_to_keycode(scKPEnter)
+    kcKp1*                = scancode_to_keycode(scKP1)
+    kcKp2*                = scancode_to_keycode(scKP2)
+    kcKp3*                = scancode_to_keycode(scKP3)
+    kcKp4*                = scancode_to_keycode(scKP4)
+    kcKp5*                = scancode_to_keycode(scKP5)
+    kcKp6*                = scancode_to_keycode(scKP6)
+    kcKp7*                = scancode_to_keycode(scKP7)
+    kcKp8*                = scancode_to_keycode(scKP8)
+    kcKp9*                = scancode_to_keycode(scKP9)
+    kcKp0*                = scancode_to_keycode(scKP0)
+    kcKpPeriod*           = scancode_to_keycode(scKPPeriod)
     kcApplication*        = scancode_to_keycode(scApplication)
     kcPower*              = scancode_to_keycode(scPower)
-    kcKPEquals*           = scancode_to_keycode(scKPEquals)
+    kcKpEquals*           = scancode_to_keycode(scKPEquals)
     kcF13*                = scancode_to_keycode(scF13)
     kcF14*                = scancode_to_keycode(scF14)
     kcF15*                = scancode_to_keycode(scF15)
@@ -429,62 +454,62 @@ const
     kcOut*                = scancode_to_keycode(scOut)
     kcOper*               = scancode_to_keycode(scOper)
     kcClearAgain*         = scancode_to_keycode(scClearAgain)
-    kcCRSel*              = scancode_to_keycode(scCRSel)
-    kcEXSel*              = scancode_to_keycode(scEXSel)
-    kcKP00*               = scancode_to_keycode(scKP00)
-    kcKP000*              = scancode_to_keycode(scKP000)
+    kcCrSel*              = scancode_to_keycode(scCRSel)
+    kcExSel*              = scancode_to_keycode(scEXSel)
+    kcKp00*               = scancode_to_keycode(scKP00)
+    kcKp000*              = scancode_to_keycode(scKP000)
     kcThousandsSeperator* = scancode_to_keycode(scThousandsSeperator)
     kcDecimalSeperator*   = scancode_to_keycode(scDecimalSeperator)
     kcCurrencyUnit*       = scancode_to_keycode(scCurrencyUnit)
     kcCurrencySubUnit*    = scancode_to_keycode(scCurrencySubUnit)
-    kcKPLeftParen*        = scancode_to_keycode(scKPLeftParen)
-    kcKPRightParen*       = scancode_to_keycode(scKPRightParen)
-    kcKPLeftBrace*        = scancode_to_keycode(scKPLeftBrace)
-    kcKPRightBrace*       = scancode_to_keycode(scKPRightBrace)
-    kcKPTab*              = scancode_to_keycode(scKPTab)
-    kcKPBackspace*        = scancode_to_keycode(scKPBackspace)
-    kcKPA*                = scancode_to_keycode(scKPA)
-    kcKPB*                = scancode_to_keycode(scKPB)
-    kcKPC*                = scancode_to_keycode(scKPC)
-    kcKPD*                = scancode_to_keycode(scKPD)
-    kcKPE*                = scancode_to_keycode(scKPE)
-    kcKPF*                = scancode_to_keycode(scKPF)
-    kcKPXOR*              = scancode_to_keycode(scKPXOR)
-    kcKPPower*            = scancode_to_keycode(scKPPower)
-    kcKPPercent*          = scancode_to_keycode(scKPPercent)
-    kcKPLess*             = scancode_to_keycode(scKPLess)
-    kcKPGreater*          = scancode_to_keycode(scKPGreater)
-    kcKPAmpersand*        = scancode_to_keycode(scKPAmpersand)
-    kcKPDblAmpersand*     = scancode_to_keycode(scKPDblAmpersand)
-    kcKPVerticalBar*      = scancode_to_keycode(scKPVerticalBar)
-    kcKPDblVerticalBar*   = scancode_to_keycode(scKPDblVerticalBar)
-    kcKPColon*            = scancode_to_keycode(scKPColon)
-    kcKPHash*             = scancode_to_keycode(scKPHash)
-    kcKPSpace*            = scancode_to_keycode(scKPSpace)
-    kcKPAt*               = scancode_to_keycode(scKPAt)
-    kcKPExclam*           = scancode_to_keycode(scKP_Exclam)
-    kcKPMemStore*         = scancode_to_keycode(scKPMemStore)
-    kcKPMemRecall*        = scancode_to_keycode(scKPMemRecall)
-    kcKPMemClear*         = scancode_to_keycode(scKPMemClear)
-    kcKPMemAdd*           = scancode_to_keycode(scKPMemAdd)
-    kcKPMemSubtract*      = scancode_to_keycode(scKPMemSubtract)
-    kcKPMemMultiply*      = scancode_to_keycode(scKPMemMultiply)
-    kcKPMemDivide*        = scancode_to_keycode(scKPMemDivide)
-    kcKPPlusMinus*        = scancode_to_keycode(scKPPlusMinus)
-    kcKPClear*            = scancode_to_keycode(scKPClear)
-    kcKPClearEntry*       = scancode_to_keycode(scKPClearEntry)
-    kcKPBinary*           = scancode_to_keycode(scKPBinary)
-    kcKPOctal*            = scancode_to_keycode(scKPOctal)
-    kcKPDecimal*          = scancode_to_keycode(scKPDecimal)
-    kcKPHexadecimal*      = scancode_to_keycode(scKPHexadecimal)
+    kcKpLeftParen*        = scancode_to_keycode(scKpLeftParen)
+    kcKpRightParen*       = scancode_to_keycode(scKpRightParen)
+    kcKpLeftBrace*        = scancode_to_keycode(scKpLeftBrace)
+    kcKpRightBrace*       = scancode_to_keycode(scKpRightBrace)
+    kcKpTab*              = scancode_to_keycode(scKpTab)
+    kcKpBackspace*        = scancode_to_keycode(scKpBackspace)
+    kcKpA*                = scancode_to_keycode(scKpA)
+    kcKpB*                = scancode_to_keycode(scKpB)
+    kcKpC*                = scancode_to_keycode(scKpC)
+    kcKpD*                = scancode_to_keycode(scKpD)
+    kcKpE*                = scancode_to_keycode(scKpE)
+    kcKpF*                = scancode_to_keycode(scKpF)
+    kcKpXor*              = scancode_to_keycode(scKpXOR)
+    kcKpPower*            = scancode_to_keycode(scKpPower)
+    kcKpPercent*          = scancode_to_keycode(scKpPercent)
+    kcKpLess*             = scancode_to_keycode(scKpLess)
+    kcKpGreater*          = scancode_to_keycode(scKpGreater)
+    kcKpAmpersand*        = scancode_to_keycode(scKpAmpersand)
+    kcKpDblAmpersand*     = scancode_to_keycode(scKpDblAmpersand)
+    kcKpVerticalBar*      = scancode_to_keycode(scKpVerticalBar)
+    kcKpDblVerticalBar*   = scancode_to_keycode(scKpDblVerticalBar)
+    kcKpColon*            = scancode_to_keycode(scKpColon)
+    kcKpHash*             = scancode_to_keycode(scKpHash)
+    kcKpSpace*            = scancode_to_keycode(scKpSpace)
+    kcKpAt*               = scancode_to_keycode(scKpAt)
+    kcKpExclam*           = scancode_to_keycode(scKp_Exclam)
+    kcKpMemStore*         = scancode_to_keycode(scKpMemStore)
+    kcKpMemRecall*        = scancode_to_keycode(scKpMemRecall)
+    kcKpMemClear*         = scancode_to_keycode(scKpMemClear)
+    kcKpMemAdd*           = scancode_to_keycode(scKpMemAdd)
+    kcKpMemSubtract*      = scancode_to_keycode(scKpMemSubtract)
+    kcKpMemMultiply*      = scancode_to_keycode(scKpMemMultiply)
+    kcKpMemDivide*        = scancode_to_keycode(scKpMemDivide)
+    kcKpPlusMinus*        = scancode_to_keycode(scKpPlusMinus)
+    kcKpClear*            = scancode_to_keycode(scKpClear)
+    kcKpClearEntry*       = scancode_to_keycode(scKpClearEntry)
+    kcKpBinary*           = scancode_to_keycode(scKpBinary)
+    kcKpOctal*            = scancode_to_keycode(scKpOctal)
+    kcKpDecimal*          = scancode_to_keycode(scKpDecimal)
+    kcKpHexadecimal*      = scancode_to_keycode(scKpHexadecimal)
     kcLCtrl*              = scancode_to_keycode(scLCtrl)
     kcLShift*             = scancode_to_keycode(scLShift)
     kcLAlt*               = scancode_to_keycode(scLAlt)
-    kcLGUI*               = scancode_to_keycode(scLGUI)
+    kcLGui*               = scancode_to_keycode(scLGui)
     kcRCtrl*              = scancode_to_keycode(scRCtrl)
     kcRShift*             = scancode_to_keycode(scRShift)
     kcRAlt*               = scancode_to_keycode(scRAlt)
-    kcRGUI*               = scancode_to_keycode(scRGUI)
+    kcRGui*               = scancode_to_keycode(scRGui)
     kcMode*               = scancode_to_keycode(scMode)
     kcAudioNext*          = scancode_to_keycode(scAudioNext)
     kcAudioPrev*          = scancode_to_keycode(scAudioPrev)
@@ -492,17 +517,17 @@ const
     kcAudioPlay*          = scancode_to_keycode(scAudioPlay)
     kcAudioMute*          = scancode_to_keycode(scAudioMute)
     kcMediaSelect*        = scancode_to_keycode(scMediaSelect)
-    kcWWW*                = scancode_to_keycode(scWWW)
+    kcWww*                = scancode_to_keycode(scWww)
     kcMail*               = scancode_to_keycode(scMail)
     kcCalculator*         = scancode_to_keycode(scCalculator)
     kcComputer*           = scancode_to_keycode(scComputer)
-    kcACSearch*           = scancode_to_keycode(scACSearch)
-    kcACHome*             = scancode_to_keycode(scACHome)
-    kcACBack*             = scancode_to_keycode(scACBack)
-    kcACForward*          = scancode_to_keycode(scACForward)
-    kcACStop*             = scancode_to_keycode(scACStop)
-    kcACRefresh*          = scancode_to_keycode(scACRefresh)
-    kcACBookmarks*        = scancode_to_keycode(scACBookmarks)
+    kcAcSearch*           = scancode_to_keycode(scAcSearch)
+    kcAcHome*             = scancode_to_keycode(scAcHome)
+    kcAcBack*             = scancode_to_keycode(scAcBack)
+    kcAcForward*          = scancode_to_keycode(scAcForward)
+    kcAcStop*             = scancode_to_keycode(scAcStop)
+    kcAcRefresh*          = scancode_to_keycode(scAcRefresh)
+    kcAcBookmarks*        = scancode_to_keycode(scAcBookmarks)
     kcBrightnessDown*     = scancode_to_keycode(scBrightnessDown)
     kcBrightnessUp*       = scancode_to_keycode(scBrightnessUp)
     kcDisplaySwitch*      = scancode_to_keycode(scDisplaySwitch)
@@ -530,41 +555,47 @@ KeyMod.gen_bit_ops(
 const modShift* = modLShift or modRShift
 const modCtrl*  = modLCtrl  or modRCtrl
 const modAlt*   = modLAlt   or modRAlt
-const modGUI*   = modLGUI   or modRGUI
+const modGUI*   = modLGui   or modRGui
 
 type
     KeyboardId* = distinct uint32
 
     Keysym* = object
-        scancode*: Scancode
-        sym*     : Keycode
-        keymod*  : Keymod
+        scancode*: ScanCode
+        sym*     : KeyCode
+        keymod*  : KeyMod
         _        : uint16
 
 #[ -------------------------------------------------------------------- ]#
 
+using
+    win: ptr Window
+
 {.push dynlib: SdlLib.}
-proc sdl_has_keyboard*(): bool                                                    {.importc: "SDL_HasKeyboard"             .}
-proc sdl_get_keyboards*(count: ptr cint): ptr UncheckedArray[KeyboardId]          {.importc: "SDL_GetKeyboards"            .}
-proc sdl_get_keyboard_instance_name*(instance_id: KeyboardID): cstring            {.importc: "SDL_GetKeyboardInstanceName" .}
-proc sdl_get_keyboard_focus*(): Window                                            {.importc: "SDL_GetKeyboardFocus"        .}
-proc sdl_get_keyboard_state*(key_count: ptr cint): ptr UncheckedArray[bool]       {.importc: "SDL_GetKeyboardState"        .}
-proc sdl_reset_keyboard*()                                                        {.importc: "SDL_ResetKeyboard"           .}
-proc sdl_get_mod_state*(): Keymod                                                 {.importc: "SDL_GetModState"             .}
-proc sdl_set_mod_state*(mod_state: Keymod)                                        {.importc: "SDL_SetModState"             .}
-proc sdl_get_key_from_scancode*(scancode: Scancode): Keycode                      {.importc: "SDL_GetKeyFromScancode"      .}
-proc sdl_get_scancode_from_key*(key: Keycode): Scancode                           {.importc: "SDL_GetScancodeFromKey"      .}
-proc sdl_get_scancode_name*(scancode: Scancode): cstring                          {.importc: "SDL_GetScancodeName"         .}
-proc sdl_get_scancode_from_name*(name: cstring): Scancode                         {.importc: "SDL_GetScancodeFromName"     .}
-proc sdl_get_key_name*(key: Keycode): cstring                                     {.importc: "SDL_GetKeyName"              .}
-proc sdl_get_key_from_name*(name: cstring): Keycode                               {.importc: "SDL_GetKeyFromName"          .}
-proc sdl_start_text_input*()                                                      {.importc: "SDL_StartTextInput"          .}
-proc sdl_text_input_active*(): bool                                               {.importc: "SDL_TextInputActive"         .}
-proc sdl_stop_text_input*()                                                       {.importc: "SDL_StopTextInput"           .}
-proc sdl_clear_composition*()                                                     {.importc: "SDL_ClearComposition"        .}
-proc sdl_set_text_input_area*(win: Window; rect: ptr Rect; cursor: cint): SdlBool {.importc: "SDL_SetTextInputArea"        .}
-proc sdl_has_screen_keyboard_support*(): bool                                     {.importc: "SDL_HasScreenKeyboardSupport".}
-proc sdl_screen_keyboard_shown*(win: Window): SdlBool                             {.importc: "SDL_ScreenKeyboardShown"     .}
+proc sdl_has_keyboard*(): cbool                                                               {.importc: "SDL_HasKeyboard"                 .}
+proc sdl_get_keyboards*(count: ptr cint): ptr UncheckedArray[KeyboardId]                      {.importc: "SDL_GetKeyboards"                .}
+proc sdl_get_keyboard_instance_name*(instance_id: KeyboardId): cstring                        {.importc: "SDL_GetKeyboardNameForID"        .}
+proc sdl_get_keyboard_focus*(): ptr Window                                                    {.importc: "SDL_GetKeyboardFocus"            .}
+proc sdl_get_keyboard_state*(key_count: ptr cint): ptr UncheckedArray[cbool]                  {.importc: "SDL_GetKeyboardState"            .}
+proc sdl_reset_keyboard*()                                                                    {.importc: "SDL_ResetKeyboard"               .}
+proc sdl_get_mod_state*(): KeyMod                                                             {.importc: "SDL_GetModState"                 .}
+proc sdl_set_mod_state*(mod_state: KeyMod)                                                    {.importc: "SDL_SetModState"                 .}
+proc sdl_get_key_from_scancode*(code: ScanCode; mod_state: KeyMod; key_event: cbool): KeyCode {.importc: "SDL_GetKeyFromScancode"          .}
+proc sdl_get_scancode_from_key*(key: KeyCode; mod_state: ptr KeyMod): ScanCode                {.importc: "SDL_GetScancodeFromKey"          .}
+proc sdl_set_scancode_name*(code: ScanCode; name: cstring): cbool                             {.importc: "SDL_SetScancodeName"             .}
+proc sdl_get_scancode_name*(code: ScanCode): cstring                                          {.importc: "SDL_GetScancodeName"             .}
+proc sdl_get_scancode_from_name*(name: cstring): ScanCode                                     {.importc: "SDL_GetScancodeFromName"         .}
+proc sdl_get_key_name*(key: KeyCode): cstring                                                 {.importc: "SDL_GetKeyName"                  .}
+proc sdl_get_key_from_name*(name: cstring): KeyCode                                           {.importc: "SDL_GetKeyFromName"              .}
+proc sdl_start_text_input*(win): cbool                                                        {.importc: "SDL_StartTextInput"              .}
+proc sdl_start_text_input_with_properties*(win; props: PropertyId): cbool                     {.importc: "SDL_StartTextInputWithProperties".}
+proc sdl_text_input_active*(win): cbool                                                       {.importc: "SDL_TextInputActive"             .}
+proc sdl_stop_text_input*(win): cbool                                                         {.importc: "SDL_StopTextInput"               .}
+proc sdl_clear_composition*(win): cbool                                                       {.importc: "SDL_ClearComposition"            .}
+proc sdl_set_text_input_area*(win; rect: ptr Rect; cursor: cint): cbool                       {.importc: "SDL_SetTextInputArea"            .}
+proc sdl_get_text_input_area*(win; rect: ptr Rect; cursor: ptr cint): cbool                   {.importc: "SDL_GetTextInputArea"            .}
+proc sdl_has_screen_keyboard_support*(): cbool                                                {.importc: "SDL_HasScreenKeyboardSupport"    .}
+proc sdl_screen_keyboard_shown*(win): cbool                                                   {.importc: "SDL_ScreenKeyboardShown"         .}
 {.pop.}
 
 #[ -------------------------------------------------------------------- ]#

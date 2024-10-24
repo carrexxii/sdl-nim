@@ -6,8 +6,8 @@ const SdlTtfLib* = Cwd / "../lib/libSDL3_ttf.so"
 
 type cbool* {.importc: "bool".} = object
 
-proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SDLLib.}
-proc cfree*(p: pointer)    {.importc: "free".}
+proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SdlLib.}
+proc cfree*(p: pointer)    {.importc: "free"                        .}
 
 converter `cbool -> bool`*(b: cbool): bool = 0 != cast[cint](b)
 converter `bool -> cbool`*(b: bool): cbool = {.emit: "(bool)b".}

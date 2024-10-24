@@ -11,12 +11,12 @@ func `or`*(a, b: RendererFlag): RendererFlag =
     RendererFlag (a.ord or b.ord)
 
 type
-    TextureAccess* {.size: sizeof(int32).} = enum
-        texAccessStatic
-        texAccessStreaming
-        texAccessTarget
+    TextureAccess* {.size: sizeof(cint).} = enum
+        texStatic
+        texStreaming
+        texTarget
 
-    LogicalPresent* {.size: sizeof(int32).} = enum
+    LogicalPresent* {.size: sizeof(cint).} = enum
         presentDisabled
         presentStretch
         presentLetterbox
@@ -24,8 +24,8 @@ type
         presentIntegerScale
 
 type
-    Renderer* = distinct pointer
-    Texture*  = distinct pointer
+    Renderer* = object
+    Texture*  = object
 
     RendererInfo* = object
         name*         : cstring
@@ -90,12 +90,12 @@ proc compose_custom_blendmode*(src_colour, dst_colour: BlendFactor; colour_op: B
 from properties import PropertyId
 
 using
-    ren      : Renderer
-    win      : Window
+    ren      : ptr Renderer
+    win      : ptr Window
     win_flags: WindowFlag
     ren_flags: RendererFlag
-    surf     : Surface
-    tex      : Texture
+    surf     : ptr Surface
+    tex      : ptr Texture
 
 {.push dynlib: SdlLib.}
 proc sdl_get_num_render_drivers*(): cint                                     {.importc: "SDL_GetNumRenderDrivers"       .}
