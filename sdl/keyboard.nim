@@ -1,4 +1,4 @@
-import common, bitgen
+import common, bitgen, properties
 from video import Window
 from rect  import Rect
 
@@ -279,7 +279,7 @@ type
         scCall      = 289
         scEndCall   = 290
 
-    TextInputKind* {.size: sizeo(cint).} = enum
+    TextInputKind* {.size: sizeof(cint).} = enum
         inputText
         inputTextName
         inputTextEmail
@@ -517,10 +517,6 @@ const
     kcAudioPlay*          = scancode_to_keycode(scAudioPlay)
     kcAudioMute*          = scancode_to_keycode(scAudioMute)
     kcMediaSelect*        = scancode_to_keycode(scMediaSelect)
-    kcWww*                = scancode_to_keycode(scWww)
-    kcMail*               = scancode_to_keycode(scMail)
-    kcCalculator*         = scancode_to_keycode(scCalculator)
-    kcComputer*           = scancode_to_keycode(scComputer)
     kcAcSearch*           = scancode_to_keycode(scAcSearch)
     kcAcHome*             = scancode_to_keycode(scAcHome)
     kcAcBack*             = scancode_to_keycode(scAcBack)
@@ -528,16 +524,8 @@ const
     kcAcStop*             = scancode_to_keycode(scAcStop)
     kcAcRefresh*          = scancode_to_keycode(scAcRefresh)
     kcAcBookmarks*        = scancode_to_keycode(scAcBookmarks)
-    kcBrightnessDown*     = scancode_to_keycode(scBrightnessDown)
-    kcBrightnessUp*       = scancode_to_keycode(scBrightnessUp)
-    kcDisplaySwitch*      = scancode_to_keycode(scDisplaySwitch)
-    kcKbdIllumToggle*     = scancode_to_keycode(scKbdIllumToggle)
-    kcKbdIllumDown*       = scancode_to_keycode(scKbdIllumDown)
-    kcKbdIllumUp*         = scancode_to_keycode(scKbdIllumUp)
     kcEject*              = scancode_to_keycode(scEject)
     kcSleep*              = scancode_to_keycode(scSleep)
-    kcApp1*               = scancode_to_keycode(scApp1)
-    kcApp2*               = scancode_to_keycode(scApp2)
     kcAudioRewind*        = scancode_to_keycode(scAudioRewind)
     kcAudioFastForward*   = scancode_to_keycode(scAudioFastForward)
     kcSoftLeft*           = scancode_to_keycode(scSoftLeft)
@@ -555,27 +543,20 @@ KeyMod.gen_bit_ops(
 const modShift* = modLShift or modRShift
 const modCtrl*  = modLCtrl  or modRCtrl
 const modAlt*   = modLAlt   or modRAlt
-const modGUI*   = modLGui   or modRGui
+const modGui*   = modLGui   or modRGui
+const modNone* = KeyMod 0
 
-type
-    KeyboardId* = distinct uint32
-
-    Keysym* = object
-        scancode*: ScanCode
-        sym*     : KeyCode
-        keymod*  : KeyMod
-        _        : uint16
+type KeyboardId* = distinct uint32
 
 #[ -------------------------------------------------------------------- ]#
 
-using
-    win: ptr Window
+using win: Window
 
 {.push dynlib: SdlLib.}
 proc sdl_has_keyboard*(): cbool                                                               {.importc: "SDL_HasKeyboard"                 .}
 proc sdl_get_keyboards*(count: ptr cint): ptr UncheckedArray[KeyboardId]                      {.importc: "SDL_GetKeyboards"                .}
 proc sdl_get_keyboard_instance_name*(instance_id: KeyboardId): cstring                        {.importc: "SDL_GetKeyboardNameForID"        .}
-proc sdl_get_keyboard_focus*(): ptr Window                                                    {.importc: "SDL_GetKeyboardFocus"            .}
+proc sdl_get_keyboard_focus*(): Window                                                        {.importc: "SDL_GetKeyboardFocus"            .}
 proc sdl_get_keyboard_state*(key_count: ptr cint): ptr UncheckedArray[cbool]                  {.importc: "SDL_GetKeyboardState"            .}
 proc sdl_reset_keyboard*()                                                                    {.importc: "SDL_ResetKeyboard"               .}
 proc sdl_get_mod_state*(): KeyMod                                                             {.importc: "SDL_GetModState"                 .}
@@ -608,16 +589,16 @@ proc keyboards*(): seq[KeyboardId] =
     for kb in to_open_array(kbs, 0, count - 1):
         result.add kb
 
-proc keyboard_state*(): tuple[count: int32; keys: ptr UncheckedArray[bool]] =
+proc keyboard_state*(): tuple[count: int32; keys: ptr UncheckedArray[cbool]] =
     result.keys = sdl_get_keyboard_state(result.count.addr)
 
 proc name*(id: KeyboardId): string = $sdl_get_keyboard_instance_name(id)
-proc key*(code: Scancode): Keycode = sdl_get_key_from_scancode code
-proc key*(name: string):   Keycode = sdl_get_key_from_name cstring name
-proc scancode*(key: Keycode): Scancode = sdl_get_scancode_from_key key
-proc scancode*(name: string): Scancode = sdl_get_scancode_from_name cstring name
-proc `$`*(code: Scancode): string = $sdl_get_scancode_name(code)
-proc `$`*(key: Keycode):   string = $sdl_get_key_name(key)
+proc key*(code: ScanCode; mod_state = modNone): KeyCode = sdl_get_key_from_scancode code, mod_state, true
+proc key*(name: string): KeyCode = sdl_get_key_from_name cstring name
+proc scancode*(key: KeyCode; mod_state = modNone): ScanCode = sdl_get_scancode_from_key key, (if mod_state == modNone: nil else: mod_state.addr)
+proc scancode*(name: string): ScanCode = sdl_get_scancode_from_name cstring name
+proc `$`*(code: ScanCode): string = $sdl_get_scancode_name(code)
+proc `$`*(key: KeyCode):   string = $sdl_get_key_name(key)
 
 proc set_text_input_area*(win: Window; rect: Rect; cursor: int32): bool {.discardable.} =
     sdl_set_text_input_area win, rect.addr, cursor

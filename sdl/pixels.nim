@@ -55,6 +55,7 @@ type
         pl2101010
         pl1010102
 
+    # TODO
     Colourspace* {.size: sizeof(cint).} = enum
         xxx
 
@@ -82,7 +83,7 @@ template pixel_flag*(px: Pixel)     = (px shr 28) and 0x0F
 template pixel_kind*(px: Pixel)     = (px shr 24) and 0x0F
 template pixel_order*(px: Pixel)    = (px shr 20) and 0x0F
 template pixel_layout*(px: Pixel)   = (px shr 16) and 0x0F
-template bits_per_pixel*(px: Pixel) = (px shr 8)  and 0xFF
+template bits_per_pixel*(px: Pixel) = (px shr 8 ) and 0xFF
 
 type
     Colour* = object

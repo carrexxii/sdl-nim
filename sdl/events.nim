@@ -138,54 +138,8 @@ type
         actionPeek
         actionGet
 
-    SystemCursor* {.size: sizeof(cint).} = enum
-        cursorArrow
-        cursorIBeam
-        cursorWait
-        cursorCrosshair
-        cursorWaitArrow
-        cursorSizeNWSE
-        cursorSizeNESW
-        cursorSizeWE
-        cursorSizeNS
-        cursorSizeAll
-        cursorNo
-        cursorHand
-        cursorWindowTopLeft
-        cursorWindowTop
-        cursorWindowTopRight
-        cursorWindowRight
-        cursorWindowBottomRight
-        cursorWindowBottom
-        cursorWindowBottomLeft
-        cursorWindowLeft
-
-    MouseWheelDirection* {.size: sizeof(cint).} = enum
-        dirNormal
-        dirFlipped
-
-    MouseButton* {.size: sizeof(uint8).} = enum
-        btnLeft   = 1
-        btnMiddle = 2
-        btnRight  = 3
-        btnX1     = 4
-        btnX2     = 5
-
-    # Hard-coded unlike the SDL version which calculates it based off of MouseButton values
-    # assigning values to the enum seems to break the bitset
-    MouseButtonFlag* {.size: sizeof(uint32).} = enum
-        btnLeft
-        btnMiddle
-        btnRight
-        btnX1
-        btnX2
-    MouseButtonMask* = set[MouseButtonFlag]
-
 type
     Timestamp*   = distinct uint64
-    KeyboardId*  = distinct uint32
-    MouseId*     = distinct uint32
-    Cursor*      = distinct pointer
     CustomEvent* = distinct uint32
 
     CommonEvent* = object
@@ -356,29 +310,6 @@ proc sdl_set_event_enabled*(kind: EventKind; enabled: bool)                     
 proc sdl_event_enabled*(kind: EventKind): cbool                                                  {.importc: "SDL_EventEnabled"      .}
 proc sdl_register_events*(count: cint): EventKind                                                {.importc: "SDL_RegisterEvents"    .}
 proc sdl_get_window_from_event*(event): ptr Window                                               {.importc: "SDL_GetWindowFromEvent".}
-
-proc sdl_has_mouse*(): bool                                                                {.importc: "SDL_HasMouse"             .}
-proc sdl_get_mice*(count: ptr cint): ptr MouseId                                           {.importc: "SDL_GetMice"              .}
-proc sdl_get_mouse_instance_name*(id: MouseId): cstring                                    {.importc: "SDL_GetMouseInstanceName" .}
-proc sdl_get_mouse_focus*(): Window                                                        {.importc: "SDL_GetMouseFocus"        .}
-proc sdl_get_mouse_state*(x, y: ptr cfloat): MouseButtonMask                               {.importc: "SDL_GetMouseState"        .}
-proc sdl_get_global_mouse_state*(x, y: ptr cfloat): uint32                                 {.importc: "SDL_GetGlobalMouseState"  .}
-proc sdl_get_relative_mouse_state*(x, y: ptr cfloat): uint32                               {.importc: "SDL_GetRelativeMouseState".}
-proc sdl_warp_mouse_in_window*(window: Window; x, y: cfloat)                               {.importc: "SDL_WarpMouseInWindow"    .}
-proc sdl_warp_mouse_global*(x, y: cfloat): cint                                            {.importc: "SDL_WarpMouseGlobal"      .}
-proc sdl_set_relative_mouse_mode*(enabled: bool): cint                                     {.importc: "SDL_SetRelativeMouseMode" .}
-proc sdl_capture_mouse*(enabled: bool): cint                                               {.importc: "SDL_CaptureMouse"         .}
-proc sdl_get_relative_mouse_mode*(): bool                                                  {.importc: "SDL_GetRelativeMouseMode" .}
-proc sdl_create_cursor*(data: ptr UncheckedArray[uint8]; w, h, hot_x, hot_y: cint): Cursor {.importc: "SDL_CreateCursor"         .}
-proc sdl_create_colour_cursor*(surf: Surface; hot_x, hot_y: cint): Cursor                  {.importc: "SDL_CreateColorCursor"    .}
-proc sdl_create_system_cursor*(id: SystemCursor): Cursor                                   {.importc: "SDL_CreateSystemCursor"   .}
-proc sdl_set_cursor*(cursor: Cursor): cint                                                 {.importc: "SDL_SetCursor"            .}
-proc sdl_get_cursor*(): Cursor                                                             {.importc: "SDL_GetCursor"            .}
-proc sdl_get_default_cursor*(): Cursor                                                     {.importc: "SDL_GetDefaultCursor"     .}
-proc sdl_destroy_cursor*(cursor: Cursor)                                                   {.importc: "SDL_DestroyCursor"        .}
-proc sdl_show_cursor*(): cint                                                              {.importc: "SDL_DestroyCursor"        .}
-proc sdl_hide_cursor*(): cint                                                              {.importc: "SDL_ShowCursor"           .}
-proc sdl_cursor_visible*(): bool                                                           {.importc: "SDL_CursorVisible"        .}
 {.pop.}
 
 {.push inline.}

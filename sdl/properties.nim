@@ -5,28 +5,28 @@ const
     ShapePointer*                         = PropertyName "SDL.window.shape"
     AndroidWindowPointer*                 = PropertyName "SDL.window.android.window"
     AndroidSurfacePointer*                = PropertyName "SDL.window.android.surface"
-    UIKitWindowPointer*                   = PropertyName "SDL.window.uikit.window"
-    UIKitMetalViewTagNumber*              = PropertyName "SDL.window.uikit.metal_view_tag"
-    KMSDeviceIndexNumber*                 = PropertyName "SDL.window.kmsdrm.dev_index"
-    KMSDRMFDNumber*                       = PropertyName "SDL.window.kmsdrm.drm_fd"
-    KMSGBMDevicePointer*                  = PropertyName "SDL.window.kmsdrm.gbm_dev"
+    UiKitWindowPointer*                   = PropertyName "SDL.window.uikit.window"
+    UiKitMetalViewTagNumber*              = PropertyName "SDL.window.uikit.metal_view_tag"
+    KmsDeviceIndexNumber*                 = PropertyName "SDL.window.kmsdrm.dev_index"
+    KmsDrmFdNumber*                       = PropertyName "SDL.window.kmsdrm.drm_fd"
+    KmsGbmDevicePointer*                  = PropertyName "SDL.window.kmsdrm.gbm_dev"
     CocoaWindowPointer*                   = PropertyName "SDL.window.cocoa.window"
     CocoaMetalViewTagNumber*              = PropertyName "SDL.window.cocoa.metal_view_tag"
     VivanteDisplayPointer*                = PropertyName "SDL.window.vivante.display"
     VivanteWindowPointer*                 = PropertyName "SDL.window.vivante.window"
     VivanteSurfacePointer*                = PropertyName "SDL.window.vivante.surface"
-    WinRTWindowPointer*                   = PropertyName "SDL.window.winrt.window"
-    Win32HWNDPointer*                     = PropertyName "SDL.window.win32.hwnd"
-    Win32HDCPointer*                      = PropertyName "SDL.window.win32.hdc"
+    WinRtWindowPointer*                   = PropertyName "SDL.window.winrt.window"
+    Win32HwndPointer*                     = PropertyName "SDL.window.win32.hwnd"
+    Win32HdcPointer*                      = PropertyName "SDL.window.win32.hdc"
     Win32InstancePointer*                 = PropertyName "SDL.window.win32.instance"
     WaylandDisplayPointer*                = PropertyName "SDL.window.wayland.display"
     WaylandSurfacePointer*                = PropertyName "SDL.window.wayland.surface"
-    WaylandEGLWindowPointer*              = PropertyName "SDL.window.wayland.egl_window"
-    WaylandXDGSurfacePointer*             = PropertyName "SDL.window.wayland.xdg_surface"
-    WaylandXDGToplevelPointer*            = PropertyName "SDL.window.wayland.xdg_toplevel"
-    WaylandXDGToplevelExportHandleString* = PropertyName "SDL.window.wayland.xdg_toplevel_export_handle"
-    WaylandXDGPopupPointer*               = PropertyName "SDL.window.wayland.xdg_popup"
-    WaylandXDGPositionerPointer*          = PropertyName "SDL.window.wayland.xdg_positioner"
+    WaylandEglWindowPointer*              = PropertyName "SDL.window.wayland.egl_window"
+    WaylandXdgSurfacePointer*             = PropertyName "SDL.window.wayland.xdg_surface"
+    WaylandXdgToplevelPointer*            = PropertyName "SDL.window.wayland.xdg_toplevel"
+    WaylandXdgToplevelExportHandleString* = PropertyName "SDL.window.wayland.xdg_toplevel_export_handle"
+    WaylandXdgPopupPointer*               = PropertyName "SDL.window.wayland.xdg_popup"
+    WaylandXdgPositionerPointer*          = PropertyName "SDL.window.wayland.xdg_positioner"
     X11DisplayPointer*                    = PropertyName "SDL.window.x11.display"
     X11ScreenNumber*                      = PropertyName "SDL.window.x11.screen"
     X11WindowNumber*                      = PropertyName "SDL.window.x11.window"
@@ -47,9 +47,9 @@ const
     RendererWindowPointer*                        = PropertyName "SDL.renderer.window"
     RendererSurfacePointer*                       = PropertyName "SDL.renderer.surface"
     RendererOutputColourspaceNumber*              = PropertyName "SDL.renderer.output_colorspace"
-    RendererHDREnabledBoolean*                    = PropertyName "SDL.renderer.HDR_enabled"
-    RendererSDRWhitePointFloat*                   = PropertyName "SDL.renderer.SDR_white_point"
-    RendererHDRHeadroomFloat*                     = PropertyName "SDL.renderer.HDR_headroom"
+    RendererHdrEnabledBoolean*                    = PropertyName "SDL.renderer.HDR_enabled"
+    RendererSdrWhitePointFloat*                   = PropertyName "SDL.renderer.SDR_white_point"
+    RendererHdrHeadroomFloat*                     = PropertyName "SDL.renderer.HDR_headroom"
     RendererD3D9DevicePointer*                    = PropertyName "SDL.renderer.d3d9.device"
     RendererD3D11DevicePointer*                   = PropertyName "SDL.renderer.d3d11.device"
     RendererD3D12DevicePointer*                   = PropertyName "SDL.renderer.d3d12.device"
@@ -67,8 +67,8 @@ const
     TextureCreateAccessNumber*             = PropertyName "access"
     TextureCreateWidthNumber*              = PropertyName "width"
     TextureCreateHeightNumber*             = PropertyName "height"
-    TextureCreateSDRWhitePointFloat*       = PropertyName "SDR_white_point"
-    TextureCreateHDRHeadroomFloat*         = PropertyName "HDR_headroom"
+    TextureCreateSdrWhitePointFloat*       = PropertyName "SDR_white_point"
+    TextureCreateHdrHeadroomFloat*         = PropertyName "HDR_headroom"
     TextureCreateD3D11TexturePointer*      = PropertyName "d3d11.texture"
     TextureCreateD3D11TextureUPointer*     = PropertyName "d3d11.texture_u"
     TextureCreateD3D11TextureVPointer*     = PropertyName "d3d11.texture_v"
@@ -76,19 +76,19 @@ const
     TextureCreateD3D12TextureUPointer*     = PropertyName "d3d12.texture_u"
     TextureCreateD3D12TextureVPointer*     = PropertyName "d3d12.texture_v"
     TextureCreateMetalPixelbufferPointer*  = PropertyName "metal.pixelbuffer"
-    TextureCreateOpenGLTextureNumber*      = PropertyName "opengl.texture"
-    TextureCreateOpenGLTextureUVNumber*    = PropertyName "opengl.texture_uv"
-    TextureCreateOpenGLTextureUNumber*     = PropertyName "opengl.texture_u"
-    TextureCreateOpenGLTextureVNumber*     = PropertyName "opengl.texture_v"
-    TextureCreateOpenGLES2TextureNumber*   = PropertyName "opengles2.texture"
-    TextureCreateOpenGLES2TextureUVNumber* = PropertyName "opengles2.texture_uv"
-    TextureCreateOpenGLES2TextureUNumber*  = PropertyName "opengles2.texture_u"
-    TextureCreateOpenGLES2TextureVNumber*  = PropertyName "opengles2.texture_v"
+    TextureCreateOpenGlTextureNumber*      = PropertyName "opengl.texture"
+    TextureCreateOpenGlTextureUVNumber*    = PropertyName "opengl.texture_uv"
+    TextureCreateOpenGlTextureUNumber*     = PropertyName "opengl.texture_u"
+    TextureCreateOpenGlTextureVNumber*     = PropertyName "opengl.texture_v"
+    TextureCreateOpenGles2TextureNumber*   = PropertyName "opengles2.texture"
+    TextureCreateOpenGles2TextureUvNumber* = PropertyName "opengles2.texture_uv"
+    TextureCreateOpenGles2TextureUNumber*  = PropertyName "opengles2.texture_u"
+    TextureCreateOpenGles2TextureVNumber*  = PropertyName "opengles2.texture_v"
     TextureCreateVulkanTextureNumber*      = PropertyName "vulkan.texture"
 
     TextureColourspaceNumber*            = PropertyName "SDL.texture.colorspace"
-    TextureSDRWhitePointFloat*           = PropertyName "SDL.texture.SDR_white_point"
-    TextureHDRHeadroomFloat*             = PropertyName "SDL.texture.HDR_headroom"
+    TextureSdrWhitePointFloat*           = PropertyName "SDL.texture.SDR_white_point"
+    TextureHdrHeadroomFloat*             = PropertyName "SDL.texture.HDR_headroom"
     TextureD3D11TexturePointer*          = PropertyName "SDL.texture.d3d11.texture"
     TextureD3D11TextureUPointer*         = PropertyName "SDL.texture.d3d11.texture_u"
     TextureD3D11TextureVPointer*         = PropertyName "SDL.texture.d3d11.texture_v"
@@ -102,16 +102,16 @@ const
     TextureOpenGLTextureTargetNumber*    = PropertyName "SDL.texture.opengl.target"
     TextureOpenGLTexWFloat*              = PropertyName "SDL.texture.opengl.tex_w"
     TextureOpenGLTexHFloat*              = PropertyName "SDL.texture.opengl.tex_h"
-    TextureOpenGLES2TextureNumber*       = PropertyName "SDL.texture.opengles2.texture"
-    TextureOpenGLES2TextureUVNumber*     = PropertyName "SDL.texture.opengles2.texture_uv"
-    TextureOpenGLES2TextureUNumber*      = PropertyName "SDL.texture.opengles2.texture_u"
-    TextureOpenGLES2TextureVNumber*      = PropertyName "SDL.texture.opengles2.texture_v"
-    TextureOpenGLES2TextureTargetNumber* = PropertyName "SDL.texture.opengles2.target"
+    TextureOpenGles2TextureNumber*       = PropertyName "SDL.texture.opengles2.texture"
+    TextureOpenGles2TextureUvNumber*     = PropertyName "SDL.texture.opengles2.texture_uv"
+    TextureOpenGles2TextureUNumber*      = PropertyName "SDL.texture.opengles2.texture_u"
+    TextureOpenGles2TextureVNumber*      = PropertyName "SDL.texture.opengles2.texture_v"
+    TextureOpenGles2TextureTargetNumber* = PropertyName "SDL.texture.opengles2.target"
     TextureVulkanTextureNumber*          = PropertyName "SDL.texture.vulkan.texture"
 
     SurfaceColourspaceNumber*      = PropertyName "SDL.surface.colorspace"
-    SurfaceSDRWhitePointFloat*     = PropertyName "SDL.surface.SDR_white_point"
-    SurfaceHDRHeadroomFloat*       = PropertyName "SDL.surface.HDR_headroom"
+    SurfaceSdrWhitePointFloat*     = PropertyName "SDL.surface.SDR_white_point"
+    SurfaceHdrHeadroomFloat*       = PropertyName "SDL.surface.HDR_headroom"
     SurfaceTonemapGeneratorString* = PropertyName "SDL.surface.tonemap"
 
 type
@@ -123,26 +123,25 @@ const InvalidProperty* = PropertyId 0
 
 #[ -------------------------------------------------------------------- ]#
 
-from video    import Window
-from renderer import Texture
+from video import Window
+
+using
+    id  : PropertyId
+    name: PropertyName
+    win : ptr Window
 
 {.push dynlib: SdlLib.}
-proc sdl_get_property*       (id: PropertyID; name: PropertyName; default: pointer): pointer {.importc: "SDL_GetProperty"         .}
-proc sdl_get_number_property*(id: PropertyID; name: PropertyName; default: int64  ): int64   {.importc: "SDL_GetNumberProperty"   .}
-proc sdl_get_window_properties*(window: Window): uint32                                      {.importc: "SDL_GetWindowProperties" .}
-proc sdl_get_texture_properties*(texture: Texture): uint32                                   {.importc: "SDL_GetTextureProperties".}
+proc sdl_get_property*       (id; name; default: pointer): pointer {.importc: "SDL_GetProperty"        .}
+proc sdl_get_number_property*(id; name; default: int64  ): int64   {.importc: "SDL_GetNumberProperty"  .}
+proc sdl_get_window_properties*(win): uint32                       {.importc: "SDL_GetWindowProperties".}
 {.pop.}
 
 #[ -------------------------------------------------------------------- ]#
 
 {.push inline.}
+proc properties*(win): PropertyId = PropertyId sdl_get_window_properties(win)
 
-proc properties*(win: Window):  PropertyID = PropertyId sdl_get_window_properties(win)
-proc properties*(tex: Texture): PropertyID = PropertyId sdl_get_texture_properties(tex)
-
-proc x11_display_pointer*(win: Window): Property = Property sdl_get_property(get_properties(win), X11DisplayPointer, nil)
-proc x11_screen_number*(win: Window): int64 = sdl_get_number_property(get_properties(win), X11ScreenNumber, -1)
-proc x11_window_number*(win: Window): int64 = sdl_get_number_property(get_properties(win), X11WindowNumber, -1)
-proc texture_number*(tex: Texture):   int64 = sdl_get_number_property(get_properties(tex), TextureOpenGLTextureNumber, -1)
-
-{.pop.} # inline
+proc x11_screen_number*(win): int64 = sdl_get_number_property properties(win), X11ScreenNumber, -1
+proc x11_window_number*(win): int64 = sdl_get_number_property properties(win), X11WindowNumber, -1
+proc x11_display_pointer*(win): Property = Property sdl_get_property(properties(win), X11DisplayPointer, nil)
+{.pop.}
