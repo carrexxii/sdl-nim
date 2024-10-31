@@ -1,3 +1,5 @@
+import common
+
 type
     SystemCursor* {.size: sizeof(cint).} = enum
         cursorDefault
@@ -49,6 +51,9 @@ type
         _: pointer
 
 #[ -------------------------------------------------------------------- ]#
+
+import surface
+from video import Window
 
 using win: Window
 

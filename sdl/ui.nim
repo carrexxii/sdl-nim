@@ -1,9 +1,9 @@
 import
     std/options,
-    common, rect, pixels, renderer, events, ttf
+    common, rect, pixels, renderer, events, mouse, ttf
 
 type
-    CallbackFn* = UIObject -> void
+    CallbackFn* = proc(obj: UIObject)
 
     UIDirection* = enum
         Horizontal
@@ -28,40 +28,40 @@ type
     UIObjectKind* = enum
         Button
     UIObject* = ref object
-        rect*   : Rect
+        rect*   : FRect
         z*      : int
         hovered*: bool
         clicked*: bool
         case kind*: UIObjectKind
         of Button:
-            cb*       : UIObject -> void
+            cb*       : proc(obj: UIObject)
             has_text* : bool
             text*     : Texture
-            text_rect*: Rect
+            text_rect*: FRect
 
     UIPanel* = ref object
         ctx*    : UIContext
         hovered*: bool
         clicked*: bool
-        rect*   : Rect
+        rect*   : FRect
         z*      : int
         objs*   : seq[UIObject]
 
     UIContext* = ref object
         renderer*: Renderer
         theme*   : UIThemeSet
-        rect*    : Rect
+        rect*    : FRect
         panels*  : seq[UIPanel]
         font*    : Font
 
-func create_context*(renderer: Renderer; font: Font; theme = UIThemeSet(); rect = Rect()): UIContext =
-    assert(ttf.was_init() != 0, "UI needs TTF initialized")
-    font.set_size theme.font_size
+func create_context*(renderer: Renderer; font: Font; theme = UIThemeSet(); rect = FRect()): UIContext =
+    assert ttf.was_init(), "UI needs TTF initialized"
+    font.size = theme.font_size
 
-    var ui_rect: Rect
+    var ui_rect: FRect
     if rect.w == 0 or rect.h == 0:
-        let (w, h) = get_output_size renderer
-        ui_rect = rect(0, 0, w, h)
+        let (w, h) = renderer.sz
+        ui_rect = frect(0, 0, w, h)
     else:
         ui_rect = rect
 
@@ -73,26 +73,26 @@ func create_context*(renderer: Renderer; font: Font; theme = UIThemeSet(); rect 
         font    : font,
     )
 
-proc add_panel*(ctx: var UIContext; x, y, w, h: Natural): UIPanel =
+proc add_panel*(ctx: var UIContext; x, y, w, h: SomeNumber): UIPanel =
     result = UIPanel(
         ctx : ctx,
-        rect: rect(x, y, w, h),
+        rect: frect(x, y, w, h),
         z   : ctx.panels.len,
         objs: @[],
     )
     ctx.panels.add result
 
-proc add_object*(panel: var UIPanel; kind: UIObjectKind; x, y, w, h: int; text = ""; cb: CallbackFn = nil; z = -1): UIObject =
+proc add_object*(panel: var UIPanel; kind: UIObjectKind; x, y, w, h: float32; text = ""; cb: CallbackFn = nil; z = -1): UIObject =
     let ctx  = panel.ctx
     let objz = if z == -1: panel.z else: z
     case kind
     of Button:
         if text != "":
-            let text_surf = ctx.font.render_blended(text, ctx.theme.font)
+            let text_surf = ctx.font.render(text, ctx.theme.font)
             let text_tex  = ctx.renderer.create_texture text_surf
             let (tw, th)  = ctx.font.size text
-            let trect = rect(w/2 - tw/2, h/2 - th/2, float tw, float th)
-            result = UIObject(kind: kind, rect: rect(x, y, w, h), z: objz, cb: cb,
+            let trect = frect(w/2 - tw/2, h/2 - th/2, float32 tw, float32 th)
+            result = UIObject(kind: kind, rect: frect(x, y, w, h), z: objz, cb: cb,
                               has_text: true, text_rect: trect, text: text_tex)
 
     panel.objs.add result
@@ -102,12 +102,12 @@ proc add_object*(panel: var UIPanel; dir: UIDirection = Vertical; padding = 5; t
     assert(panel.objs.len > 0, "Automatic positioning requires at least one previous object")
     let
         last = panel.objs[panel.objs.len - 1]
-        x = if dir == Horizontal: last.rect.x + last.rect.w + padding else: last.rect.x
-        y = if dir == Vertical  : last.rect.y + last.rect.h + padding else: last.rect.y
+        x = if dir == Horizontal: last.rect.x + last.rect.w + float32 padding else: last.rect.x
+        y = if dir == Vertical  : last.rect.y + last.rect.h + float32 padding else: last.rect.y
     panel.add_object(last.kind, x, y, last.rect.w, last.rect.h, text, cb, z)
 
 ## Automatic positioning for a list of objects
-proc add_objects*(panel: var UIPanel; kind: UIObjectKind; x, y, w, h: int; objs: openArray[tuple[text: string, cb: CallbackFn]]; dir: UIDirection = Vertical; padding = 5; z = -1) =
+proc add_objects*(panel: var UIPanel; kind: UIObjectKind; x, y, w, h: float32; objs: openArray[tuple[text: string, cb: CallbackFn]]; dir: UIDirection = Vertical; padding = 5; z = -1) =
     discard panel.add_object(kind, x, y, w, h, text = objs[0].text, cb = objs[0].cb, z = z)
     for obj in objs[1..^1]:
         discard panel.add_object(dir, padding, obj.text, obj.cb, z)
@@ -120,8 +120,8 @@ proc update*(ctx: UIContext) =
     if ctx.panels.len < 1 or ctx.panels[0].objs.len < 1:
         return
 
-    let (btns, mx, my) = get_mouse_state()
-    let lmb_state   = mbLeft in btns
+    let (btns, mx, my) = mouse_state()
+    let lmb_state   = btnLeft in btns
     let lmb_changed = lmb_state != lmb_prev
 
     var no_panel_hit = true
@@ -164,21 +164,21 @@ proc update*(ctx: UIContext) =
     lmb_prev = lmb_state
 
 proc draw*(ctx: UIContext) =
-    template get_colour(obj, cset): Colour =
+    template colour(obj, cset): Colour =
         if   obj.clicked: cset.clicked
         elif obj.hovered: cset.hovered
         else: cset.default
 
     let ren = ctx.renderer
     for panel in ctx.panels:
-        let colour = panel.get_colour ctx.theme.panel
-        ren.set_draw_colour colour
+        let colour = panel.colour ctx.theme.panel
+        ren.draw_colour = colour
         ren.draw_fill_rect panel.rect
         for obj in panel.objs:
             # Clipping
             let w = if obj.rect.x + obj.rect.w > panel.rect.w: panel.rect.w - obj.rect.x else: obj.rect.w
             let h = if obj.rect.y + obj.rect.h > panel.rect.h: panel.rect.h - obj.rect.y else: obj.rect.h
-            ren.set_draw_colour (obj.get_colour ctx.theme.button)
+            ren.draw_colour = (obj.colour ctx.theme.button)
             ren.draw_fill_rect frect(panel.rect.x + obj.rect.x, panel.rect.y + obj.rect.y, w, h)
 
             case obj.kind
@@ -191,6 +191,6 @@ proc draw*(ctx: UIContext) =
                     ty = panel.rect.y + obj.rect.y + obj.text_rect.y
                     tw = if obj.text_rect.x + obj.text_rect.w > w: w - obj.text_rect.x else: obj.text_rect.w
                     th = if obj.text_rect.y + obj.text_rect.h > h: h - obj.text_rect.y else: obj.text_rect.h
-                ren.draw_texture(obj.text, dst_rect = frect(tx, ty, tw, th),
-                                           src_rect = frect(0 , 0 , tw, th))
+                ren.draw_texture(obj.text, dst_rect = frect(tx   , ty, tw, th),
+                                           src_rect = frect(0'f32, 0 , tw, th))
 

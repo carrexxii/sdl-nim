@@ -1,4 +1,4 @@
-import common, keyboard
+import common, keyboard, mouse
 from video   import Window, WindowID, DisplayID
 from surface import Surface
 
@@ -141,6 +141,8 @@ type
 type
     Timestamp*   = distinct uint64
     CustomEvent* = distinct uint32
+
+    EventFilter* = proc(user_data: pointer; event: ptr Event): bool
 
     CommonEvent* = object
         kind*: uint32
@@ -290,6 +292,7 @@ using
     event : ptr Event
     events: ptr UncheckedArray[Event]
     filter: EventFilter
+
 {.push dynlib: SdlLib.}
 proc sdl_pump_events*()                                                                          {.importc: "SDL_PumpEvents"        .}
 proc sdl_peep_events*(events; event_count: cint; action: EventAction; min, max: EventKind): cint {.importc: "SDL_PeepEvents"        .}
@@ -322,9 +325,7 @@ iterator events*(): Event =
 proc register_event*(): CustomEvent =
     CustomEvent sdl_register_events(1)
 
-proc push_event*(event: Event): bool =
-    let err = sdl_push_event(event.addr)
-    err > 0
+proc push_event*(event: Event): bool = sdl_push_event(event.addr)
 
 #~ Mouse ~#
 

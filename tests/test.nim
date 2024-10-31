@@ -20,31 +20,30 @@ Boxes: ─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏ ┐ ┑ �
 Maths: ∀ ∁ ∂ ∃ ∄ ∅ ∆ ∇ ∈ ∉ ∊ ∋ ∌ ∍ ∎ ∏ ∐ ∑ − ∓ ∔ ∕ ∖ ∗ ∘ ∙ √ ∛ ∜ ∝ ∞ ∟ ∠ ∡ ∢ ∣ ∤ ∥ ∦ ∧ ∨ ∩ ∪ ∫ ∬ ∭ ∮ ∯ ∰ ∱ ∲ ∳ ∴ ∵ ∶ ∷ ∸ ∹ ∺ ∻ ∼ ∽ ∾ ∿ ≀ ≁ ≂ ≃ ≄ ≅ ≆ ≇ ≈ ≉ ≊ ≋ ≌ ≍ ≎ ≏ ≐ ≑ ≒ ≓ ≔ ≕ ≖ ≗ ≘ ≙ ≚ ≛ ≜ ≝ ≞ ≟ ≠ ≡ ≢ ≣ ≤ ≥ ≦ ≧ ≨ ≩ ≪ ≫ ≬ ≭ ≮ ≯ ≰ ≱ ≲ ≳ ≴ ≵ ≶ ≷ ≸ ≹ ≺ ≻ ≼ ≽ ≾"""
 
 echo &"Nim version    : {NimVersion}"
-echo &"SDL version    : {sdl_version()}"
-echo &"SDL_ttf version: {ttf_version()}"
+echo &"SDL version    : {sdl.version()}"
+echo &"SDL_ttf version: {ttf.version()}"
 
-assert sdl.init(initVideo or initEvents), &"Failed to initialize SDL: {sdl.get_error()}"
-assert ttf.init()                       , &"Failed to initialize SDL_ttf: {sdl.get_error()}"
+assert init(initVideo or initEvents), &"Failed to initialize SDL: {sdl.get_error()}"
+assert ttf.init()                   , &"Failed to initialize SDL_ttf: {sdl.get_error()}"
 
-let (win, ren, win_err) = create_window_and_renderer("SDL Tests", WinW, WinH, winResizeable)
-assert win_err, &"Failed to create window and renderer: {sdl.get_error()}"
+let (win, ren) = create_window_and_renderer("SDL Tests", WinW, WinH, winResizeable)
+assert (win != nil or ren != nil), &"Failed to create window and renderer: {sdl.get_error()}"
 ren.draw_colour = Olive
 
-let (font, font_err) = open_font &"tests/fonts/{FontName}.ttf"
-assert font_err, &"Failed to load font \"{FontName}\": {sdl.get_error()}"
+let font = open_font &"tests/fonts/{FontName}.ttf"
+assert font != nil, &"Failed to load font \"{FontName}\": {sdl.get_error()}"
 font.size = 16
-let fonth = font.height()
+let font_h = font.height()
 
-let (msg, msg_err) = font.render_lcd(&"Font: '{FontName}'\n\n" & TestText, Black, Olive, wrap_len = WinW - 200)
-assert msg_err, "Failed to render message"
+let msg = font.render_lcd(&"Font: '{FontName}'\n\n" & TestText, Black, Olive, wrap_len = WinW - 200)
+assert msg != nil, "Failed to render message"
 
-let (tex, tex_err) = ren.create_texture msg
-echo repr (tex, tex_err)
-assert tex_err, "Failed to convert font surface to texture"
+let tex = ren.create_texture msg
+assert tex != nil, "Failed to convert font surface to texture"
 
 var running = true
 while running:
-    for event in sdl.events():
+    for event in events():
         case event.kind
         of eventQuit:
           running = false

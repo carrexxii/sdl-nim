@@ -42,6 +42,9 @@ type
         colour*   : FColour
         tex_coord*: FPoint
 
+converter `Renderer -> pointer`*(ren: Renderer): pointer = cast[pointer](ren)
+converter `Texture -> pointer`*(tex: Texture)  : pointer = cast[pointer](tex)
+
 func vertex*(x, y, r, g, b, a, u, v: float32 = 0.0): Vertex =
     Vertex(pos      : FPoint(x: x, y: y),
            colour   : FColour(r: r, g: g, b: b, a: a),
@@ -143,11 +146,11 @@ proc sdl_render_geometry_raw_float*(ren; tex;
                                     colours: ptr FColour; colour_stride: cint;
                                     uvs    : ptr cfloat ; uv_stride    : cint;
                                     vert_count: cint; inds: pointer; idx_count: cint; inds_sz: cint): cbool {.importc: "SDL_RenderGeometryRawFloat".}
-proc sdl_render_read_pixels*(ren; rect: ptr Rect): pointer {.importc: "SDL_RenderReadPixels"             .} # TODO: this needs to be free'd
-proc sdl_render_present*(ren): cbool                       {.importc: "SDL_RenderPresent"   , discardable.}
-proc sdl_destroy_texture*(tex)                             {.importc: "SDL_DestroyTexture"               .}
-proc sdl_destroy_renderer*(ren)                            {.importc: "SDL_DestroyRenderer"              .}
-proc sdl_flush_renderer*(ren): cbool                       {.importc: "SDL_FlushRenderer"   , discardable.}
+proc sdl_render_read_pixels*(ren; rect: ptr Rect): pointer {.importc: "SDL_RenderReadPixels".} # TODO: this needs to be free'd
+proc sdl_render_present*(ren): cbool                       {.importc: "SDL_RenderPresent"   .}
+proc sdl_destroy_texture*(tex)                             {.importc: "SDL_DestroyTexture"  .}
+proc sdl_destroy_renderer*(ren)                            {.importc: "SDL_DestroyRenderer" .}
+proc sdl_flush_renderer*(ren): cbool                       {.importc: "SDL_FlushRenderer"   .}
 
 proc sdl_set_render_viewport*(ren; rect: ptr Rect): cbool {.importc: "SDL_SetRenderViewport".}
 proc sdl_set_render_vsync*(ren; vsync: cint): cbool       {.importc: "SDL_SetRenderVSync"   .}
@@ -181,14 +184,14 @@ proc create_renderer*(win; name = ""; flags = renPresentVSync): Renderer =
     let name = if name != "": cstring name else: nil
     sdl_create_renderer win, name, flags
 
-proc create_window_and_renderer*(title: string; w, h: int; win_flags = winNone): (Window, Renderer, bool) =
-    result[2] = sdl_create_window_and_renderer(cstring title, cint w, cint h, win_flags, result[0].addr, result[1].addr)
+proc create_window_and_renderer*(title: string; w, h: int; win_flags = winNone): (Window, Renderer) =
+    assert sdl_create_window_and_renderer(cstring title, cint w, cint h, win_flags, result[0].addr, result[1].addr)
 
 proc name*(ren): cstring =
     sdl_get_renderer_name ren
 
 proc sz*(ren): tuple[x, y: int32] =
-    assert not sdl_get_renderer_output_size(ren, result.x.addr, result.y.addr)
+    assert sdl_get_renderer_output_size(ren, result.x.addr, result.y.addr)
 
 proc create_texture*(ren; w, h: int; fmt = pxFmtRgba8; access = texAccessStatic): Texture =
     sdl_create_texture ren, fmt, access, cint w, cint h

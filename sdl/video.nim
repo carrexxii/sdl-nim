@@ -51,6 +51,8 @@ type
         refresh_rate*: float32
         driver_data* : pointer
 
+converter `Window -> pointer`*(win: Window): pointer = cast[pointer](win)
+
 #[ -------------------------------------------------------------------- ]#
 
 from properties import PropertyID

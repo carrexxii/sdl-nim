@@ -1,10 +1,10 @@
-import common, bitgen, io, pixels, rect, properties, surface, renderer
+import common, init, bitgen, io, pixels, rect, properties, surface, renderer
 from std/unicode import Rune, `$`
 
 # TODO: default colours
 
 const
-    DefaultFontSize = 16'i32
+    DefaultFontSize = 16
 
     PropFontCreateFilenameString*           = cstring "SDL_ttf.font.create.filename"
     PropFontCreateIoStreamPointer*          = cstring "SDL_ttf.font.create.iostream"
@@ -57,37 +57,43 @@ type
     TextLayout* = object
         _: pointer
 
-    Text* = object
+    Text* = ptr TextObj
+    TextObj* = object
         text*     : cstring
         colour*   : FColour
         ln_count* : cint
         ref_count*: cint
         _         : ptr TextData
 
-    Substring* = object
+    Substring* = ptr SubstringObj
+    SubstringObj* = object
         offset*     : cint
         len*        : cint
         ln_idx*     : cint
         cluster_idx*: cint
         rect*       : Rect
 
-    FillOperation* = object
+    FillOperation* = ptr FillOperationObj
+    FillOperationObj* = object
         cmd* : DrawCommand
         rect*: Rect
 
-    CopyOperation* = object
+    CopyOperation* = ptr CopyOperationObj
+    CopyOperationObj* = object
         cmd*        : DrawCommand
         text_offset*: cint
         glyph_index*: uint32
         src*, dst*  : Rect
         _           : pointer
 
-    DrawOperation* {.union.} = object
+    DrawOperation* = ptr DrawOperationObj
+    DrawOperationObj* {.union.} = object
         cmd* : DrawCommand
         fill*: FillOperation
         copy*: CopyOperation
 
-    TextData* = object
+    TextData* = ptr TextDataObj
+    TextDataObj* = object
         font*               : Font
         needs_layout_update*: cbool
         layout*             : ptr TextLayout
@@ -106,17 +112,24 @@ type
         create_text* : proc(user_data: pointer; text: ptr Text): cbool
         destroy_text*: proc(user_data: pointer; text: ptr Text)
 
+converter `Font -> pointer`*(font: Font): pointer = cast[pointer](font)
+converter `TextLayout -> pointer`*(tlay: TextLayout): pointer = cast[pointer](tlay)
+
 #[ -------------------------------------------------------------------- ]#
 
 using
     font   : Font
     engine : TextEngine
-    text   : ptr Text
-    surface: ptr Surface
+    text   : Text
+    surface: Surface
 
 {.push dynlib: SdlTtfLib.}
+proc ttf_version*(): Version                                  {.importc: "TTF_Version"           .}
+proc ttf_get_freetype_version*(major, minor, patch: ptr cint) {.importc: "TTF_GetFreeTypeVersion".}
+proc ttf_get_harfbuzz_version*(major, minor, patch: ptr cint) {.importc: "TTF_GetHarfBuzzVersion".}
+
 proc ttf_init*(): cbool                                      {.importc: "TTF_Init"                  .}
-proc ttf_open_font*(file: cstring; pt_sz: cint): Font        {.importc: "TTF_OpenFont"              .}
+proc ttf_open_font*(file: cstring; pt_sz: cfloat): Font      {.importc: "TTF_OpenFont"              .}
 proc ttf_open_font_with_properties*(props: PropertyId): Font {.importc: "TTF_OpenFontWithProperties".}
 proc ttf_get_font_properties*(font): PropertyId              {.importc: "TTF_GetFontProperties"     .}
 proc ttf_close_font*(font)                                   {.importc: "TTF_CloseFont"             .}
@@ -155,23 +168,23 @@ proc ttf_set_font_language*(font; lang_bcp47: cstring): cbool             {.impo
 proc ttf_get_font_direction*(font): Direction                             {.importc: "TTF_GetFontDirection"    .}
 
 proc ttf_get_glyph_script*(ch: uint32; script: cstring; script_sz: csize_t): cbool                           {.importc: "TTF_GetGlyphScript"       .}
-proc ttf_get_glyph_image*(font; ch: uint32): ptr Surface                                                     {.importc: "TTF_GetGlyphImage"        .}
-proc ttf_get_glyph_image_for_index*(font; glyph_index: uint32): ptr Surface                                  {.importc: "TTF_GetGlyphImageForIndex".}
+proc ttf_get_glyph_image*(font; ch: uint32): Surface                                                         {.importc: "TTF_GetGlyphImage"        .}
+proc ttf_get_glyph_image_for_index*(font; glyph_index: uint32): Surface                                      {.importc: "TTF_GetGlyphImageForIndex".}
 proc ttf_get_glyph_metrics*(font; ch: uint32; min_x, max_x, min_y, max_y, adv: ptr cint): cbool              {.importc: "TTF_GetGlyphMetrics"      .}
 proc ttf_get_glyph_kerning*(font; prev_ch, ch: uint32; kerning: ptr cint): cbool                             {.importc: "TTF_GetGlyphKerning"      .}
 proc ttf_get_string_size*(font; text: cstring; len: csize_t; w, h: ptr cint): cbool                          {.importc: "TTF_GetStringSize"        .}
 proc ttf_get_string_size_wrapped*(font; text: cstring; len: csize_t; wrap_len: cint; w, h: ptr cint): cbool  {.importc: "TTF_GetStringSizeWrapped" .}
 proc ttf_measure_string*(font; text: cstring; len: csize_t; measure_w: cint; extent, count: ptr cint): cbool {.importc: "TTF_MeasureString"        .}
 
-proc ttf_render_text_shaded*(font; text: cstring; len: csize_t; fg, bg: Colour): ptr Surface                         {.importc: "TTF_RenderText_Shaded"         .}
-proc ttf_render_text_shaded_wrapped*(font; text: cstring; len: csize_t; fg, bg: Colour; wrap_len: cint): ptr Surface {.importc: "TTF_RenderText_Shaded_Wrapped" .}
-proc ttf_render_glyph_shaded*(font; ch: uint32; fg, bg: Colour): ptr Surface                                         {.importc: "TTF_RenderGlyph_Shaded"        .}
-proc ttf_render_text_blended*(font; text: cstring; len: csize_t; fg: Colour): ptr Surface                            {.importc: "TTF_RenderText_Blended"        .}
-proc ttf_render_text_blended_wrapped*(font; text: cstring; len: csize_t; fg: Colour; wrap_len: cint): ptr Surface    {.importc: "TTF_RenderText_Blended_Wrapped".}
-proc ttf_render_glyph_blended*(font; ch: uint32; fg: Colour): ptr Surface                                            {.importc: "TTF_RenderGlyph_Blended"       .}
-proc ttf_render_text_lcd*(font; text: cstring; len: csize_t; fg, bg: Colour): ptr Surface                            {.importc: "TTF_RenderText_LCD"            .}
-proc ttf_render_text_lcd_wrapped*(font; text: cstring; len: csize_t; fg, bg: Colour; wrap_len: cint): ptr Surface    {.importc: "TTF_RenderText_LCD_Wrapped"    .}
-proc ttf_render_glyph_lcd*(font; ch: uint32; fg, bg: Colour): ptr Surface                                            {.importc: "TTF_RenderGlyph_LCD"           .}
+proc ttf_render_text_shaded*(font; text: cstring; len: csize_t; fg, bg: Colour): Surface                         {.importc: "TTF_RenderText_Shaded"         .}
+proc ttf_render_text_shaded_wrapped*(font; text: cstring; len: csize_t; fg, bg: Colour; wrap_len: cint): Surface {.importc: "TTF_RenderText_Shaded_Wrapped" .}
+proc ttf_render_glyph_shaded*(font; ch: uint32; fg, bg: Colour): Surface                                         {.importc: "TTF_RenderGlyph_Shaded"        .}
+proc ttf_render_text_blended*(font; text: cstring; len: csize_t; fg: Colour): Surface                            {.importc: "TTF_RenderText_Blended"        .}
+proc ttf_render_text_blended_wrapped*(font; text: cstring; len: csize_t; fg: Colour; wrap_len: cint): Surface    {.importc: "TTF_RenderText_Blended_Wrapped".}
+proc ttf_render_glyph_blended*(font; ch: uint32; fg: Colour): Surface                                            {.importc: "TTF_RenderGlyph_Blended"       .}
+proc ttf_render_text_lcd*(font; text: cstring; len: csize_t; fg, bg: Colour): Surface                            {.importc: "TTF_RenderText_LCD"            .}
+proc ttf_render_text_lcd_wrapped*(font; text: cstring; len: csize_t; fg, bg: Colour; wrap_len: cint): Surface    {.importc: "TTF_RenderText_LCD_Wrapped"    .}
+proc ttf_render_glyph_lcd*(font; ch: uint32; fg, bg: Colour): Surface                                            {.importc: "TTF_RenderGlyph_LCD"           .}
 
 proc ttf_create_surface_text_engine*(): TextEngine                                                 {.importc: "TTF_CreateSurfaceTextEngine"  .}
 proc ttf_draw_surface_text*(text; x, y: cint; surface): cbool                                      {.importc: "TTF_DrawSurfaceText"          .}
@@ -206,14 +219,30 @@ proc ttf_get_text_substring_for_point*(text; x, y: cint; substr: ptr Substring):
 
 {.push inline.}
 
+proc version*(): Version =
+    ttf_version()
+
+proc freetype_version*(): Version =
+    var major, minor, patch: cint
+    ttf_get_freetype_version major.addr, minor.addr, patch.addr
+    version major, minor, patch
+
+proc harfbuzz_version*(): Version =
+    var major, minor, patch: cint
+    ttf_get_harfbuzz_version major.addr, minor.addr, patch.addr
+    version major, minor, patch
+
 proc `=destroy`*(font) =
     ttf_close_font font
 
 proc init*(): bool =
     ttf_init()
 
+proc was_init*(): bool =
+    ttf_was_init() > 0
+
 proc open_font*(path: string; pt_sz = DefaultFontSize): Font =
-    ttf_open_font cstring path, cint pt_sz
+    ttf_open_font cstring path, cfloat pt_sz
 
 proc close*(font) = ttf_close_font font
 
@@ -242,9 +271,9 @@ proc dpi*(font): tuple[v, h: int] =
     assert ttf_get_font_dpi(font, h.addr, v.addr)
     (int h, int v)
 
-proc script*(ch: Rune; sz: int): cstring    = assert ttf_get_glyph_script(uint32 ch, result, csize_t sz)
-proc image*(font; ch: Rune): ptr Surface    = ttf_get_glyph_image           font, uint32 ch
-proc image*(font; idx: int): ptr Surface    = ttf_get_glyph_image_for_index font, uint32 idx
+proc script*(ch: Rune; sz: int): cstring = assert ttf_get_glyph_script(uint32 ch, result, csize_t sz)
+proc image*(font; ch: Rune): Surface     = ttf_get_glyph_image           font, uint32 ch
+proc image*(font; idx: int): Surface     = ttf_get_glyph_image_for_index font, uint32 idx
 proc size*(font; text: string): tuple[w, h: int] =
     var w, h: cint
     assert ttf_get_string_size(font, cstring text, csize_t text.len, w.addr, h.addr)
@@ -266,7 +295,7 @@ proc metrics*(font; ch: Rune): tuple[min_x, max_x, min_y, max_y, adv: int] =
     assert ttf_get_glyph_metrics(font, uint32 ch, min_x.addr, max_x.addr, min_y.addr, max_y.addr, adv.addr)
     (min_x, max_x, min_y, max_y, adv)
 
-proc `size=`*(font; pt_sz: float32)                            = assert ttf_set_font_size(font, cfloat pt_sz)
+proc `size=`*(font; pt_sz: SomeNumber)                         = assert ttf_set_font_size(font, cfloat pt_sz)
 proc `size=`*(font; v: tuple[pt_sz: float32; hdpi, vdpi: int]) = assert ttf_set_font_size_dpi(font, cfloat v.pt_sz, cint v.hdpi, cint v.vdpi)
 proc `style=`*(font; style: FontStyle)                         = ttf_set_font_style font, style
 
@@ -285,6 +314,7 @@ proc sz*(font): float32                     = font.size
 proc dir*(font): Direction                  = font.direction
 proc wrap_align*(font): HorizontalAlignment = font.wrap_alignment
 
+proc `sz=`*(font; pt_sz: SomeNumber)                  = font.size = pt_sz
 proc `wrap_align=`*(font; align: HorizontalAlignment) = font.wrap_alignment = align
 proc `dir=`*(font; dir: Direction)                    = font.direction      = dir
 proc `lang=`*(font; lang_bcp47: string)               = font.language       = lang_bcp47
@@ -294,22 +324,22 @@ using
     ch      : Rune
     bg, fg  : Colour
     wrap_len: int
-proc render*(font; text; fg, bg): ptr Surface           = ttf_render_text_shaded         font, cstring text, csize_t text.len, fg, bg
-proc render*(font; text; fg, bg; wrap_len): ptr Surface = ttf_render_text_shaded_wrapped font, cstring text, csize_t text.len, fg, bg, cint wrap_len
-proc render*(font; ch; fg, bg): ptr Surface             = ttf_render_glyph_shaded        font, uint32 ch, fg, bg
+proc render*(font; text; fg, bg): Surface           = ttf_render_text_shaded         font, cstring text, csize_t text.len, fg, bg
+proc render*(font; text; fg, bg; wrap_len): Surface = ttf_render_text_shaded_wrapped font, cstring text, csize_t text.len, fg, bg, cint wrap_len
+proc render*(font; ch; fg, bg): Surface             = ttf_render_glyph_shaded        font, uint32 ch, fg, bg
 
-proc render*(font; text; fg): ptr Surface           = ttf_render_text_blended         font, cstring text, csize_t text.len, fg
-proc render*(font; text; fg; wrap_len): ptr Surface = ttf_render_text_blended_wrapped font, cstring text, csize_t text.len, fg, cint wrap_len
-proc render*(font; ch; fg): ptr Surface             = ttf_render_glyph_blended        font, uint32 ch, fg
+proc render*(font; text; fg): Surface           = ttf_render_text_blended         font, cstring text, csize_t text.len, fg
+proc render*(font; text; fg; wrap_len): Surface = ttf_render_text_blended_wrapped font, cstring text, csize_t text.len, fg, cint wrap_len
+proc render*(font; ch; fg): Surface             = ttf_render_glyph_blended        font, uint32 ch, fg
 
-proc render_lcd*(font; text; fg, bg): ptr Surface           = ttf_render_text_lcd         font, cstring text, csize_t text.len, fg, bg
-proc render_lcd*(font; text; fg, bg; wrap_len): ptr Surface = ttf_render_text_lcd_wrapped font, cstring text, csize_t text.len, fg, bg, cint wrap_len
-proc render_lcd*(font; ch; fg, bg): ptr Surface             = ttf_render_glyph_lcd        font, uint32 ch, fg, bg
+proc render_lcd*(font; text; fg, bg): Surface           = ttf_render_text_lcd         font, cstring text, csize_t text.len, fg, bg
+proc render_lcd*(font; text; fg, bg; wrap_len): Surface = ttf_render_text_lcd_wrapped font, cstring text, csize_t text.len, fg, bg, cint wrap_len
+proc render_lcd*(font; ch; fg, bg): Surface             = ttf_render_glyph_lcd        font, uint32 ch, fg, bg
 
 #~~~ Text Engine ~~~#
 using
     engine: TextEngine
-    text  : ptr Text
+    text  : Text
 
 proc create_text_engine*(): TextEngine                  = ttf_create_surface_text_engine()
 proc create_text_engine*(ren: ptr Renderer): TextEngine = ttf_create_renderer_text_engine ren

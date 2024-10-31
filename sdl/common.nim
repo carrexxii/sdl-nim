@@ -4,7 +4,10 @@ const Cwd = current_source_path.parent_dir()
 const SdlLib*    = Cwd / "../lib/libSDL3.so"
 const SdlTtfLib* = Cwd / "../lib/libSDL3_ttf.so"
 
-type cbool* {.importc: "bool".} = object
+type
+    Version* = distinct cint
+
+    cbool* {.importc: "bool".} = object
 
 proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SdlLib.}
 proc cfree*(p: pointer)    {.importc: "free"                        .}

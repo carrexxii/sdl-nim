@@ -46,7 +46,7 @@ proc sdl_delay_ns*(ns: Nanoseconds)                {.importc: "SDL_DelayNS"     
 
 proc sdl_add_timer*(interval: Milliseconds; callback: TimerCallback; user_data: pointer): TimerId   {.importc: "SDL_AddTimer"   .}
 proc sdl_add_timer_ns*(interval: Nanoseconds; callback: TimerCallback; user_data: pointer): TimerId {.importc: "SDL_AddTimerNS" .}
-proc sdl_remove_timer*(timer: TimerID): SdlBool                                                     {.importc: "SDL_RemoveTimer".}
+proc sdl_remove_timer*(timer: TimerID): cbool                                                       {.importc: "SDL_RemoveTimer".}
 {.pop.}
 
 {.push inline.}

@@ -13,14 +13,13 @@ type
 
 {.push inline.}
 
-template point*(x, y: SomeNumber = 0): Point     =  Point(x: int32   x, y: int32   y)
-template fpoint*(x, y: SomeNumber = 0.0): FPoint = FPoint(x: float32 x, y: float32 y)
+func point*(x, y: SomeNumber = 0): Point     =  Point(x: int32   x, y: int32   y)
+func fpoint*(x, y: SomeNumber = 0.0): FPoint = FPoint(x: float32 x, y: float32 y)
 
-template rect*(x, y, w, h: SomeNumber = 0): Rect     =  Rect(x: cint    x, y: cint    y, w: cint    w, h: cint    h)
-template frect*(x, y, w, h: SomeNumber = 0.0): FRect = FRect(x: float32 x, y: float32 y, w: float32 w, h: float32 h)
-
-func rect*(r: FRect): Rect  = rect  r.x, r.y, r.w, r.h
-func frect*(r: Rect): FRect = frect r.x, r.y, r.w, r.h
+func  rect*(x, y, w, h: SomeNumber = 0)  : Rect  =  Rect(x: cint    x, y: cint    y, w: cint    w, h: cint    h)
+func frect*(x, y, w, h: SomeNumber = 0.0): FRect = FRect(x: float32 x, y: float32 y, w: float32 w, h: float32 h)
+func  rect*(r: FRect): Rect  =  rect(r.x, r.y, r.w, r.h)
+func frect*(r: Rect) : FRect = frect(r.x, r.y, r.w, r.h)
 
 func in_rect*(pt: Point | FPoint; r: Rect | FRect): bool =
     (pt.x >= r.x) and (pt.x < r.x + r.w) and
