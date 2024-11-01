@@ -9,6 +9,8 @@ type
 
     cbool* {.importc: "bool".} = object
 
+    FunctionPointer* = proc() {.cdecl.}
+
 proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SdlLib.}
 proc cfree*(p: pointer)    {.importc: "free"                        .}
 

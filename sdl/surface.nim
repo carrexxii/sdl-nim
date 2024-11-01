@@ -1,7 +1,7 @@
 import common, bitgen, pixels, rect
 
 type SurfaceFlag* = distinct uint32
-SurfaceFlag.gen_bit_ops surfPreAlloc, surfRleAccel, surfDontFree, surfSimdAligned, surfSurfaceUsesProperties
+SurfaceFlag.gen_bit_ops surfacePreAlloc, surfaceRleAccel, surfaceDontFree, surfaceSimdAligned, surfaceUsesProperties
 
 type
     FlipMode* {.size: sizeof(cint).} = enum
@@ -29,7 +29,7 @@ type
         _         : pointer
 
 func must_lock*(surf: Surface): bool =
-    (surf.flags and surfRleAccel) != SurfaceFlag 0
+    (surf.flags and surfaceRleAccel) != SurfaceFlag 0
 
 #[ -------------------------------------------------------------------- ]#
 
@@ -77,4 +77,4 @@ proc convert*(surf: Surface; fmt: PixelFormat; destroy_after = true): (Surface, 
     result[0] = cast[ptr Surface](new_surf)[]
     result[1] = new_surf == nil
 
-{.pop.} # inline
+{.pop.}
