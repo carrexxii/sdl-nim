@@ -114,6 +114,24 @@ const
     SurfaceHdrHeadroomFloat*       = PropertyName "SDL.surface.HDR_headroom"
     SurfaceTonemapGeneratorString* = PropertyName "SDL.surface.tonemap"
 
+    GpuCreateTextureD3D12ClearRFloat*       = "SDL.gpu.createtexture.d3d12.clear.r"
+    GpuCreateTextureD3D12ClearGFloat*       = "SDL.gpu.createtexture.d3d12.clear.g"
+    GpuCreateTextureD3D12ClearBFloat*       = "SDL.gpu.createtexture.d3d12.clear.b"
+    GpuCreateTextureD3D12ClearAFloat*       = "SDL.gpu.createtexture.d3d12.clear.a"
+    GpuCreateTextureD3D12ClearDepthFloat*   = "SDL.gpu.createtexture.d3d12.clear.depth"
+    GpuCreateTextureD3D12ClearStencilUint8* = "SDL.gpu.createtexture.d3d12.clear.stencil"
+
+    GpuDeviceCreateDebugModeBool*           = "SDL.gpu.device.create.debugmode"
+    GpuDeviceCreatePreferLowPowerBool*      = "SDL.gpu.device.create.preferlowpower"
+    GpuDeviceCreateNameString*              = "SDL.gpu.device.create.name"
+    GpuDeviceCreateShadersPrivateBool*      = "SDL.gpu.device.create.shaders.private"
+    GpuDeviceCreateShadersSpirVBool*        = "SDL.gpu.device.create.shaders.spirv"
+    GpuDeviceCreateShadersDxBcBool*         = "SDL.gpu.device.create.shaders.dxbc"
+    GpuDeviceCreateShadersDxIlBool*         = "SDL.gpu.device.create.shaders.dxil"
+    GpuDeviceCreateShadersMslBool*          = "SDL.gpu.device.create.shaders.msl"
+    GpuDeviceCreateShadersMetalLib*         = "SDL.gpu.device.create.shaders.metallib"
+    GpuDeviceCreateD3D12SemanticNameString* = "SDL.gpu.device.create.d3d12.semantic"
+
 type
     Property*   = distinct pointer
     PropertyId* = distinct uint32
