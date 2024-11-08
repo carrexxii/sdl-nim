@@ -38,7 +38,7 @@ while running:
     for event in events():
         case event.kind
         of eventQuit:
-          running = false
+            running = false
         of eventKeyDown:
             case event.kb.key
             of kcEscape: running = false

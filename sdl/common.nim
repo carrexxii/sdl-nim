@@ -1,15 +1,12 @@
 from std/os import `/`, parent_dir
 
-const Cwd = current_source_path.parent_dir()
-const SdlLib*    = Cwd / "../lib/libSDL3.so"
-const SdlTtfLib* = Cwd / "../lib/libSDL3_ttf.so"
+const
+    Cwd = current_source_path.parent_dir()
+    SdlLib*            = Cwd / "../lib/libSDL3.so"
+    SdlTtfLib*         = Cwd / "../lib/libSDL3_ttf.so"
+    SdlShadercrossLib* = Cwd / "../lib/libSDL3Shadercross.so"
 
 type
-    cbool* {.importc: "bool".} = object
-
-    OpaquePointer* = object
-        _: pointer
-
     FunctionPointer* = proc() {.cdecl.}
 
     Version* = distinct cint
@@ -17,7 +14,5 @@ type
 proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SdlLib.}
 proc cfree*(p: pointer)    {.importc: "free"                        .}
 
-converter `OpaquePointer -> pointer`*(p: OpaquePointer): pointer = cast[pointer](p)
-
-converter `cbool -> bool`*(b: cbool): bool = 0 != cast[cint](b)
-converter `bool -> cbool`*(b: bool): cbool = {.emit: "(bool)b".}
+# converter `OpaquePointer -> pointer`*(p: OpaquePointer): pointer = cast[pointer](p)
+# func `$`*(p: OpaquePointer): string = $cast[uint](p)

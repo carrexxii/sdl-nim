@@ -1,8 +1,9 @@
 import std/[os, strformat, strutils, sequtils, enumerate]
 
 const
-    SDLFlags    = "-DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_DISABLE_INSTALL=ON"
-    SDLTTFFlags = "-DSDL3_ROOT=../sdl/build"
+    SdlFlags = "-DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_DISABLE_INSTALL=ON"
+    SdlTtfFlags = "-DSDL3_ROOT=../sdl/build"
+    SdlShadercrossFlags = "-DSDLGPUSHADERCROSS_SHARED=ON -DSDL3_DIR=../sdl/build"
 
 const
     src_dir   = "./src"
@@ -15,15 +16,21 @@ const
         (src  : "https://github.com/libsdl-org/SDL/",
          dst  : lib_dir / "sdl",
          tag  : "1ca45c58912aaa2c02e0f143d36d7f171e5afbb5",
-         cmds : @[&"cmake -S . -B ./build {SDLFlags}",
+         cmds : @[&"cmake -S . -B ./build {SdlFlags}",
                    "cmake --build ./build -j8",
                    "cp ./build/libSDL3.so* ../"]),
         (src  : "https://github.com/libsdl-org/SDL_ttf",
          dst  : lib_dir / "sdl_ttf",
          tag  : "3d8391c300a7eed34b93a0bf9a6154f74a561e2c",
-         cmds : @[&"cmake -S . -B ./build {SDLTTFFlags}",
+         cmds : @[&"cmake -S . -B ./build {SdlTtfFlags}",
                    "cmake --build ./build -j8",
                    "mv ./build/libSDL3_ttf.so* ../"]),
+        (src  : "https://github.com/libsdl-org/SDL_gpu_shadercross",
+         dst  : lib_dir / "sdl_gpu_shadercross",
+         tag  : "5f9d3c39380dbad3ddb055b88b0756a21bac4646",
+         cmds : @[&"cmake -S . -B ./build {SdlShadercrossFlags}",
+                   "cmake --build ./build -j8",
+                   "mv ./build/libSDL3_gpu_shadercross.so.0.0.0 ../libSDL3_gpu_shadercross.so"]),
     ]
 
 #[ -------------------------------------------------------------------- ]#
@@ -78,6 +85,13 @@ task test, "Run the project's tests":
 task test_ui, "Run the UI test programs":
     for file in ui_tests:
         run &"nim c -r -p:. -d:NSDLPath=./ -o:test {file}"
+
+task test_gpu, "Run the GPU test programs":
+    let shaders = list_files(test_dir / "shaders").filter_it(not it.ends_with ".spv")
+    for shader in shaders:
+        run &"""glslangValidator {shader} -V -S vert -o {shader.replace(".glsl", ".vert.spv")} --quiet -DVERTEX"""
+        run &"""glslangValidator {shader} -V -S frag -o {shader.replace(".glsl", ".frag.spv")} --quiet -DFRAGMENT"""
+    run &"nim c -r -p:. -d:NSDLPath=./ -o:test {test_dir}/test_gpu.nim"
 
 task docs, "Build and serve documentation":
     run &"nim doc --project --index:on -o:{docs_dir} sdl.nim"

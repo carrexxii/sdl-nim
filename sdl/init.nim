@@ -33,15 +33,15 @@ func `$`*(v: Version): string =
     &"{v.major}.{v.minor}.{v.micro}"
 
 {.push dynlib: SdlLib.}
-proc sdl_get_version*(): Version                                             {.importc: "SDL_GetVersion"            .}
-proc sdl_init*(flags: InitFlag): cbool                                       {.importc: "SDL_Init"                  .}
-proc sdl_init_subsystem*(flags: InitFlag): cbool                             {.importc: "SDL_InitSubSystem"         .}
-proc sdl_quit_subsystem*(flags: InitFlag)                                    {.importc: "SDL_QuitSubSystem"         .}
-proc sdl_was_init*(flags: InitFlag): InitFlag                                {.importc: "SDL_WasInit"               .}
-proc sdl_quit*()                                                             {.importc: "SDL_Quit"                  .}
-proc sdl_set_app_metadata*(app_name, app_version, app_ident: cstring): cbool {.importc: "SDL_SetAppMetadata"        .}
-proc sdl_set_app_metadata_property*(name, val: cstring): cbool               {.importc: "SDL_SetAppMetadataProperty".}
-proc sdl_get_app_metadata_property*(name: cstring): cstring                  {.importc: "SDL_GetAppMetadataProperty".}
+proc sdl_get_version*(): Version                                            {.importc: "SDL_GetVersion"            .}
+proc sdl_init*(flags: InitFlag): bool                                       {.importc: "SDL_Init"                  .}
+proc sdl_init_subsystem*(flags: InitFlag): bool                             {.importc: "SDL_InitSubSystem"         .}
+proc sdl_quit_subsystem*(flags: InitFlag)                                   {.importc: "SDL_QuitSubSystem"         .}
+proc sdl_was_init*(flags: InitFlag): InitFlag                               {.importc: "SDL_WasInit"               .}
+proc sdl_quit*()                                                            {.importc: "SDL_Quit"                  .}
+proc sdl_set_app_metadata*(app_name, app_version, app_ident: cstring): bool {.importc: "SDL_SetAppMetadata"        .}
+proc sdl_set_app_metadata_property*(name, val: cstring): bool               {.importc: "SDL_SetAppMetadataProperty".}
+proc sdl_get_app_metadata_property*(name: cstring): cstring                 {.importc: "SDL_GetAppMetadataProperty".}
 {.pop.}
 
 {.push inline.}

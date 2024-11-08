@@ -181,8 +181,8 @@ type
         key*   : KeyCode
         keymod*: KeyMod
         raw*   : uint16
-        down*  : cbool
-        repeat*: cbool
+        down*  : bool
+        repeat*: bool
 
     TextEditingEvent* = object
         kind*  : EventKind
@@ -296,21 +296,21 @@ using
 {.push dynlib: SdlLib.}
 proc sdl_pump_events*()                                                                          {.importc: "SDL_PumpEvents"        .}
 proc sdl_peep_events*(events; event_count: cint; action: EventAction; min, max: EventKind): cint {.importc: "SDL_PeepEvents"        .}
-proc sdl_has_event*(kind: EventKind): cbool                                                      {.importc: "SDL_HasEvent"          .}
-proc sdl_has_events*(min, max: EventKind): cbool                                                 {.importc: "SDL_HasEvents"         .}
+proc sdl_has_event*(kind: EventKind): bool                                                       {.importc: "SDL_HasEvent"          .}
+proc sdl_has_events*(min, max: EventKind): bool                                                  {.importc: "SDL_HasEvents"         .}
 proc sdl_flush_event*(kind: EventKind)                                                           {.importc: "SDL_FlushEvent"        .}
 proc sdl_flush_events*(min, max: EventKind)                                                      {.importc: "SDL_FlushEvents"       .}
-proc sdl_poll_event*(event): cbool                                                               {.importc: "SDL_PollEvent"         .}
-proc sdl_wait_event*(event): cbool                                                               {.importc: "SDL_WaitEvent"         .}
-proc sdl_wait_event_timeout*(event; timeout_ms: int32): cbool                                    {.importc: "SDL_WaitEventTimeout"  .}
-proc sdl_push_event*(event): cbool                                                               {.importc: "SDL_PushEvent"         .}
+proc sdl_poll_event*(event): bool                                                                {.importc: "SDL_PollEvent"         .}
+proc sdl_wait_event*(event): bool                                                                {.importc: "SDL_WaitEvent"         .}
+proc sdl_wait_event_timeout*(event; timeout_ms: int32): bool                                     {.importc: "SDL_WaitEventTimeout"  .}
+proc sdl_push_event*(event): bool                                                                {.importc: "SDL_PushEvent"         .}
 proc sdl_set_event_filter*(filter; user_data: pointer)                                           {.importc: "SDL_SetEventFilter"    .}
-proc sdl_get_event_filter*(filter: ptr EventFilter; user_data: ptr pointer): cbool               {.importc: "SDL_GetEventFilter"    .}
-proc sdl_add_event_watch*(filter; user_data: pointer): cbool                                     {.importc: "SDL_AddEventWatch"     .}
+proc sdl_get_event_filter*(filter: ptr EventFilter; user_data: ptr pointer): bool                {.importc: "SDL_GetEventFilter"    .}
+proc sdl_add_event_watch*(filter; user_data: pointer): bool                                      {.importc: "SDL_AddEventWatch"     .}
 proc sdl_remove_event_watch*(filter; user_data: pointer)                                         {.importc: "SDL_RemoveEventWatch"  .}
 proc sdl_filter_events*(filter; user_data: pointer)                                              {.importc: "SDL_FilterEvents"      .}
 proc sdl_set_event_enabled*(kind: EventKind; enabled: bool)                                      {.importc: "SDL_SetEventEnabled"   .}
-proc sdl_event_enabled*(kind: EventKind): cbool                                                  {.importc: "SDL_EventEnabled"      .}
+proc sdl_event_enabled*(kind: EventKind): bool                                                   {.importc: "SDL_EventEnabled"      .}
 proc sdl_register_events*(count: cint): EventKind                                                {.importc: "SDL_RegisterEvents"    .}
 proc sdl_get_window_from_event*(event): ptr Window                                               {.importc: "SDL_GetWindowFromEvent".}
 {.pop.}

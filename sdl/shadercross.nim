@@ -44,7 +44,7 @@ proc sdl_shadercross_compile_compute_pipeline_from_hlsl(dev; ci: ptr ComputePipe
 
 proc get_spirv_formats*(): ShaderFormatFlag = sdl_shadercross_get_spirv_shader_formats()
 
-proc compile*(dev; ci: ShaderCreateInfo): Shader          = sdl_shadercross_compile_graphics_shader_from_spirv  dev, ci.addr
-proc compile*(dev; ci: ComputePipelineCreateInfo): Shader = sdl_shadercross_compile_compute_pipeline_from_spirv dev, ci.addr
+proc compile*(dev; ci: ShaderCreateInfo): Shader                   = sdl_shadercross_compile_graphics_shader_from_spirv  dev, ci.addr
+proc compile*(dev; ci: ComputePipelineCreateInfo): ComputePipeline = sdl_shadercross_compile_compute_pipeline_from_spirv dev, ci.addr
 
 {.pop.}

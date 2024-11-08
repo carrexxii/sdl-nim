@@ -553,30 +553,30 @@ type KeyboardId* = distinct uint32
 using win: Window
 
 {.push dynlib: SdlLib.}
-proc sdl_has_keyboard*(): cbool                                                               {.importc: "SDL_HasKeyboard"                 .}
-proc sdl_get_keyboards*(count: ptr cint): ptr UncheckedArray[KeyboardId]                      {.importc: "SDL_GetKeyboards"                .}
-proc sdl_get_keyboard_instance_name*(instance_id: KeyboardId): cstring                        {.importc: "SDL_GetKeyboardNameForID"        .}
-proc sdl_get_keyboard_focus*(): Window                                                        {.importc: "SDL_GetKeyboardFocus"            .}
-proc sdl_get_keyboard_state*(key_count: ptr cint): ptr UncheckedArray[cbool]                  {.importc: "SDL_GetKeyboardState"            .}
-proc sdl_reset_keyboard*()                                                                    {.importc: "SDL_ResetKeyboard"               .}
-proc sdl_get_mod_state*(): KeyMod                                                             {.importc: "SDL_GetModState"                 .}
-proc sdl_set_mod_state*(mod_state: KeyMod)                                                    {.importc: "SDL_SetModState"                 .}
-proc sdl_get_key_from_scancode*(code: ScanCode; mod_state: KeyMod; key_event: cbool): KeyCode {.importc: "SDL_GetKeyFromScancode"          .}
-proc sdl_get_scancode_from_key*(key: KeyCode; mod_state: ptr KeyMod): ScanCode                {.importc: "SDL_GetScancodeFromKey"          .}
-proc sdl_set_scancode_name*(code: ScanCode; name: cstring): cbool                             {.importc: "SDL_SetScancodeName"             .}
-proc sdl_get_scancode_name*(code: ScanCode): cstring                                          {.importc: "SDL_GetScancodeName"             .}
-proc sdl_get_scancode_from_name*(name: cstring): ScanCode                                     {.importc: "SDL_GetScancodeFromName"         .}
-proc sdl_get_key_name*(key: KeyCode): cstring                                                 {.importc: "SDL_GetKeyName"                  .}
-proc sdl_get_key_from_name*(name: cstring): KeyCode                                           {.importc: "SDL_GetKeyFromName"              .}
-proc sdl_start_text_input*(win): cbool                                                        {.importc: "SDL_StartTextInput"              .}
-proc sdl_start_text_input_with_properties*(win; props: PropertyId): cbool                     {.importc: "SDL_StartTextInputWithProperties".}
-proc sdl_text_input_active*(win): cbool                                                       {.importc: "SDL_TextInputActive"             .}
-proc sdl_stop_text_input*(win): cbool                                                         {.importc: "SDL_StopTextInput"               .}
-proc sdl_clear_composition*(win): cbool                                                       {.importc: "SDL_ClearComposition"            .}
-proc sdl_set_text_input_area*(win; rect: ptr Rect; cursor: cint): cbool                       {.importc: "SDL_SetTextInputArea"            .}
-proc sdl_get_text_input_area*(win; rect: ptr Rect; cursor: ptr cint): cbool                   {.importc: "SDL_GetTextInputArea"            .}
-proc sdl_has_screen_keyboard_support*(): cbool                                                {.importc: "SDL_HasScreenKeyboardSupport"    .}
-proc sdl_screen_keyboard_shown*(win): cbool                                                   {.importc: "SDL_ScreenKeyboardShown"         .}
+proc sdl_has_keyboard*(): bool                                                               {.importc: "SDL_HasKeyboard"                 .}
+proc sdl_get_keyboards*(count: ptr cint): ptr UncheckedArray[KeyboardId]                     {.importc: "SDL_GetKeyboards"                .}
+proc sdl_get_keyboard_instance_name*(instance_id: KeyboardId): cstring                       {.importc: "SDL_GetKeyboardNameForID"        .}
+proc sdl_get_keyboard_focus*(): Window                                                       {.importc: "SDL_GetKeyboardFocus"            .}
+proc sdl_get_keyboard_state*(key_count: ptr cint): ptr UncheckedArray[bool]                  {.importc: "SDL_GetKeyboardState"            .}
+proc sdl_reset_keyboard*()                                                                   {.importc: "SDL_ResetKeyboard"               .}
+proc sdl_get_mod_state*(): KeyMod                                                            {.importc: "SDL_GetModState"                 .}
+proc sdl_set_mod_state*(mod_state: KeyMod)                                                   {.importc: "SDL_SetModState"                 .}
+proc sdl_get_key_from_scancode*(code: ScanCode; mod_state: KeyMod; key_event: bool): KeyCode {.importc: "SDL_GetKeyFromScancode"          .}
+proc sdl_get_scancode_from_key*(key: KeyCode; mod_state: ptr KeyMod): ScanCode               {.importc: "SDL_GetScancodeFromKey"          .}
+proc sdl_set_scancode_name*(code: ScanCode; name: cstring): bool                             {.importc: "SDL_SetScancodeName"             .}
+proc sdl_get_scancode_name*(code: ScanCode): cstring                                         {.importc: "SDL_GetScancodeName"             .}
+proc sdl_get_scancode_from_name*(name: cstring): ScanCode                                    {.importc: "SDL_GetScancodeFromName"         .}
+proc sdl_get_key_name*(key: KeyCode): cstring                                                {.importc: "SDL_GetKeyName"                  .}
+proc sdl_get_key_from_name*(name: cstring): KeyCode                                          {.importc: "SDL_GetKeyFromName"              .}
+proc sdl_start_text_input*(win): bool                                                        {.importc: "SDL_StartTextInput"              .}
+proc sdl_start_text_input_with_properties*(win; props: PropertyId): bool                     {.importc: "SDL_StartTextInputWithProperties".}
+proc sdl_text_input_active*(win): bool                                                       {.importc: "SDL_TextInputActive"             .}
+proc sdl_stop_text_input*(win): bool                                                         {.importc: "SDL_StopTextInput"               .}
+proc sdl_clear_composition*(win): bool                                                       {.importc: "SDL_ClearComposition"            .}
+proc sdl_set_text_input_area*(win; rect: ptr Rect; cursor: cint): bool                       {.importc: "SDL_SetTextInputArea"            .}
+proc sdl_get_text_input_area*(win; rect: ptr Rect; cursor: ptr cint): bool                   {.importc: "SDL_GetTextInputArea"            .}
+proc sdl_has_screen_keyboard_support*(): bool                                                {.importc: "SDL_HasScreenKeyboardSupport"    .}
+proc sdl_screen_keyboard_shown*(win): bool                                                   {.importc: "SDL_ScreenKeyboardShown"         .}
 {.pop.}
 
 #[ -------------------------------------------------------------------- ]#
@@ -589,7 +589,7 @@ proc keyboards*(): seq[KeyboardId] =
     for kb in to_open_array(kbs, 0, count - 1):
         result.add kb
 
-proc keyboard_state*(): tuple[count: int32; keys: ptr UncheckedArray[cbool]] =
+proc keyboard_state*(): tuple[count: int32; keys: ptr UncheckedArray[bool]] =
     result.keys = sdl_get_keyboard_state(result.count.addr)
 
 proc name*(id: KeyboardId): string = $sdl_get_keyboard_instance_name(id)

@@ -7,7 +7,7 @@ type GlContext* = object
 {.push dynlib: SdlLib.}
 proc sdl_gl_get_proc_address*(name: cstring): pointer {.importc: "SDL_GL_GetProcAddress".}
 proc sdl_gl_create_context*(win: Window): GlContext   {.importc: "SDL_GL_CreateContext" .}
-proc sdl_gl_swap_window*(win: Window): cbool          {.importc: "SDL_GL_SwapWindow"    .}
+proc sdl_gl_swap_window*(win: Window): bool           {.importc: "SDL_GL_SwapWindow"    .}
 {.pop.}
 
 {.push inline.}
