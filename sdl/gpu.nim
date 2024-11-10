@@ -1,5 +1,5 @@
-import common, bitgen, properties
 from std/strformat import `&`
+import common, bitgen, properties, options
 from pixels  import FColour
 from rect    import Rect
 from surface import FlipMode
@@ -952,21 +952,9 @@ proc draw_indirect*(ren_pass; buf: Buffer; offset: SomeInteger = 0; draw_count: 
 proc draw_indirect_indexed*(ren_pass; buf: Buffer; offset: SomeInteger = 0; draw_count: SomeInteger = 1) =
     ren_pass.sdl_draw_gpu_indexed_primitives_indirect buf, uint32 offset, uint32 draw_count
 
-proc `viewport=`*(ren_pass; vp: Viewport)          = ren_pass.sdl_set_gpu_viewport vp.addr
-proc `scissor=`*(ren_pass; scissor: Rect)          = ren_pass.sdl_set_gpu_scissor scissor.addr
+proc `viewport=`*(ren_pass; vp: Option[Viewport])  = ren_pass.sdl_set_gpu_viewport (if vp.is_some: (get vp).addr else: nil)
+proc `scissor=`*(ren_pass; scissor: Option[Rect])  = ren_pass.sdl_set_gpu_scissor (if scissor.is_some: (get scissor).addr else: nil)
 proc `blend_consts=`*(ren_pass; consts: FColour)   = ren_pass.sdl_set_gpu_blend_constants consts
 proc `stencil_ref=`*(ren_pass; `ref`: SomeInteger) = ren_pass.sdl_set_gpu_stencil_reference uint8 `ref`
-
-# `depth_target: DepthStencilTargetInfo` is left out for overload resolution to work
-template render_pass*(cmd_buf; targets: openArray[ColourTargetInfo]; depth_target; body) =
-    let ren_pass = begin_render_pass(cmd_buf, targets, depth_target)
-    with ren_pass:
-        body
-    `end` ren_pass
-template render_pass*(cmd_buf; targets: openArray[ColourTargetInfo]; body) =
-    let ren_pass = begin_render_pass(cmd_buf, targets)
-    with ren_pass:
-        body
-    `end` ren_pass
 
 {.pop.}

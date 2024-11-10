@@ -1,27 +1,25 @@
-import std/with, sdl, sdl/gpu
+import std/[options, with], sdl, sdl/gpu
 from std/os        import `/`
 from std/strformat import `&`
-
-const
-    ShaderDir   = "tests/shaders"
-    ClearColour = fcolour(0.28, 0.12, 0.28, 1.0)
-    TriVerts: array[21, float32] = [
-        -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
-         0.0,  0.5, 0.0, 0.0, 1.0, 0.0, 1.0,
-         0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 1.0,
-    ]
 
 type Vertex = object
     pos   : array[3, float32]
     colour: array[4, float32]
 
+const
+    ShaderDir   = "tests/shaders"
+    ClearColour = fcolour(0.28, 0.12, 0.28, 1.0)
+    TriVerts = [
+        Vertex(pos: [-0.5, -0.5, 0.0], colour: [1.0, 0.0, 0.0, 1.0]),
+        Vertex(pos: [ 0.0,  0.5, 0.0], colour: [0.0, 1.0, 0.0, 1.0]),
+        Vertex(pos: [ 0.5, -0.5, 0.0], colour: [0.0, 0.0, 1.0, 1.0]),
+    ]
+
 var
-    pipeln: GraphicsPipeline
-    viewport = viewport(160, 120, 320, 240, 0.1, 1.0)
-    scissor  = rect(320, 240, 320, 240)
-    use_wireframe      = false
-    use_small_viewport = false
-    use_scissor        = false
+    viewport = none Viewport
+    scissor  = none Rect
+    small_viewport = viewport(160, 120, 320, 240, 0.1, 1.0)
+    small_scissor  = rect(320, 240, 320, 240)
 
 assert sdl.init(initVideo or initEvents), &"Failed to initialize SDL: '{sdl.get_error()}'"
 let device = create_device(shaderFmtSpirV, true)
@@ -52,11 +50,16 @@ let line_pipeln = device.create_graphics_pipeline(vtx_shader, frag_shader,
         [vtx_attr(0, 0, vtxElemFloat3, 0),
          vtx_attr(1, 0, vtxElemFloat4, 12)],
     ),
+    target_info = GraphicsPipelineTargetInfo(
+        colour_target_descrs: ct_descr.addr,
+        colour_target_count : 1,
+    ),
     raster_state = RasterizerState(
         fill_mode: fillLine,
     ),
 )
 assert fill_pipeln and line_pipeln, "Failed to create pipelines"
+var pipeln = fill_pipeln
 
 let verts_buf = device.create_buffer(bufUsageVertex, sizeof TriVerts)
 let trans_buf = device.create_transfer_buffer(sizeof TriVerts)
@@ -84,11 +87,14 @@ proc draw() =
         store_op    : storeStore,
     )
 
-    cmd_buf.render_pass [colour_target_info]:
+    let ren_pass = begin_render_pass(cmd_buf, [colour_target_info])
+    with ren_pass:
         viewport = viewport
-        `bind` fill_pipeln
+        scissor  = scissor
+        `bind` pipeln
         `bind` 0, [BufferBinding(buf: verts_buf)]
         draw 3
+    `end` ren_pass
     submit cmd_buf
 
 var running = true
@@ -102,6 +108,8 @@ while running:
             of kcEscape: running = false
             of kc1: pipeln = fill_pipeln
             of kc2: pipeln = line_pipeln
+            of kcV: viewport = if viewport.is_some: none Viewport else: some small_viewport
+            of kcS: scissor  = if scissor.is_some : none Rect     else: some small_scissor
             else: discard
         else: discard
 
@@ -115,26 +123,3 @@ with device:
     destroy frag_shader
     destroy
 sdl.quit()
-
-# static int Draw(Context* context)
-# {
-#     if (swapchainTexture != NULL)
-#     {
-#         SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
-#         SDL_BindGPUGraphicsPipeline(renderPass, UseWireframeMode ? LinePipeline : FillPipeline);
-#         if (UseSmallViewport)
-#         {
-#             SDL_SetGPUViewport(renderPass, &SmallViewport);
-#         }
-#         if (UseScissorRect)
-#         {
-#             SDL_SetGPUScissor(renderPass, &ScissorRect);
-#         }
-#         SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
-#         SDL_EndGPURenderPass(renderPass);
-#     }
-
-#     SDL_SubmitGPUCommandBuffer(cmdbuf);
-
-#     return 0;
-# }
