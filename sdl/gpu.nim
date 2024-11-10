@@ -384,9 +384,9 @@ type
         offset*: uint32
 
     VertexInputState* = object
-        buf_descrs*: ptr UncheckedArray[VertexBufferDescription]
+        buf_descrs*: ptr VertexBufferDescription
         buf_count* : uint32
-        attrs*     : ptr UncheckedArray[VertexAttribute]
+        attrs*     : ptr VertexAttribute
         attr_count*: uint32
 
     StencilOpState* = object
@@ -472,7 +472,7 @@ type
         blend_state*: ColourTargetBlendState
 
     GraphicsPipelineTargetInfo* = object
-        colour_target_descrs*    : ptr UncheckedArray[ColourTargetDescription]
+        colour_target_descrs*    : ptr ColourTargetDescription
         colour_target_count*     : uint32
         depth_stencil_fmt*       : TextureFormat
         has_depth_stencil_target*: bool
@@ -718,29 +718,34 @@ func viewport*(x, y, w, h, min_d, max_d: float32): Viewport =
 
 func vertex_input_state*(descrs: openArray[VertexBufferDescription]; attrs: openArray[VertexAttribute]): VertexInputState =
     VertexInputState(
-        buf_descrs: cast[ptr UncheckedArray[VertexBufferDescription]](descrs[0].addr),
+        buf_descrs: descrs[0].addr,
         buf_count : uint32 descrs.len,
-        attrs     : cast[ptr UncheckedArray[VertexAttribute]](attrs[0].addr),
+        attrs     : attrs[0].addr,
         attr_count: uint32 attrs.len
     )
 
-func vertex_descriptor*(slot, pitch: int; input_rate: VertexInputRate; step_rate = 1): VertexBufferDescription =
+func vertex_descriptor*(slot, pitch: SomeInteger; input_rate: VertexInputRate; step_rate: SomeInteger = 0): VertexBufferDescription =
     VertexBufferDescription(
         slot      : uint32 slot,
         pitch     : uint32 pitch,
         input_rate: input_rate,
         step_rate : uint32 step_rate,
     )
-const vtx_descr* = vertex_descriptor
+func vtx_descr*(slot, pitch: SomeInteger; input_rate: VertexInputRate; step_rate: SomeInteger = 0): VertexBufferDescription =
+    vertex_descriptor slot, pitch, input_rate, step_rate
 
-func vertex_attribute*(loc, slot: int; fmt: VertexElementFormat; offset = 0): VertexAttribute =
+func vertex_attribute*(loc, slot: SomeInteger; fmt: VertexElementFormat; offset: SomeInteger): VertexAttribute =
     VertexAttribute(
         loc   : uint32 loc,
         slot  : uint32 slot,
         fmt   : fmt,
         offset: uint32 offset,
     )
-const vtx_attr* = vertex_attribute
+func vtx_attr*(loc, slot: SomeInteger; fmt: VertexElementFormat; offset: SomeInteger): VertexAttribute =
+    vertex_attribute loc, slot, fmt, offset
+
+const swapchain_texture_format* = sdl_get_gpu_swapchain_texture_format
+const swapchain_tex_fmt* = swapchain_texture_format
 
 proc create_device*(fmt_flags: ShaderFormatFlag; debug_mode: bool; name = ""): Device =
     sdl_create_gpu_device fmt_flags, debug_mode, (if name == "": nil else: cstring name)
@@ -769,7 +774,7 @@ proc create_graphics_pipeline*(dev; vs, fs: Shader; vtx_input_state: VertexInput
     )
     sdl_create_gpu_graphics_pipeline dev, ci.addr
 
-proc create_shader*(dev; stage: ShaderStage; code: pointer; code_sz: int; entry = "main"; fmt = shaderFmtSpirV;
+proc create_shader*(dev; stage: ShaderStage; code: pointer; code_sz: SomeInteger; entry = "main"; fmt = shaderFmtSpirV;
                     sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count: SomeInteger = 0; props = InvalidProperty;
                     ): Shader =
     let ci = ShaderCreateInfo(
@@ -788,7 +793,7 @@ proc create_shader*(dev; stage: ShaderStage; code: pointer; code_sz: int; entry 
 
 # TODO: shader format and shader stage detection via file extension
 proc create_shader*(dev; stage: ShaderStage; path: string; entry = "main"; fmt = shaderFmtSpirV;
-                    sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count: SomeNumber = 0; props = InvalidProperty;
+                    sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count: SomeInteger = 0; props = InvalidProperty;
                     ): Shader =
     let code = read_file path
     create_shader dev, stage, code[0].addr, code.len, entry, fmt, sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count, props
@@ -824,7 +829,7 @@ proc create_sampler*(dev; min_filter, mag_filter = filterNearest; mip_map_mode =
     )
     sdl_create_gpu_sampler dev, ci.addr
 
-proc create_texture*(dev; w, h: uint32; depth_or_layer_count = 1'u32; kind = tex2D; fmt = texFmtR8G8B8A8Uint;
+proc create_texture*(dev; w, h: SomeInteger; depth_or_layer_count = 1'u32; kind = tex2D; fmt = texFmtR8G8B8A8Uint;
                      usage = texUsageGraphicsStorageRead; lvl_count = 1'u32; sample_count = sampleCount1;
                      props = InvalidProperty;
                      ): Texture =
@@ -856,13 +861,13 @@ proc unmap*(dev; buf: TransferBuffer) =
     sdl_unmap_gpu_transfer_buffer dev, buf
 
 proc begin_copy_pass*(cmd_buf): CopyPass = sdl_begin_gpu_copy_pass cmd_buf
-proc end_copy_pass*(copy_pass)           = sdl_end_gpu_copy_pass copy_pass
+proc `end`*(copy_pass)                   = sdl_end_gpu_copy_pass copy_pass
 
-proc upload*(copy_pass; buf: TransferBuffer; px_w, px_h: SomeNumber; tex; offset, mip_lvl, layer: SomeNumber = 0;
-             x, y, z: SomeNumber = 0; w: SomeNumber = px_w; h: SomeNumber = px_h; d: SomeNumber = 0; cycle = false;
+proc upload*(copy_pass; trans_buf: TransferBuffer; px_w, px_h: SomeInteger; tex; offset, mip_lvl, layer: SomeInteger = 0;
+             x, y, z: SomeInteger = 0; w: SomeInteger = px_w; h: SomeInteger = px_h; d: SomeInteger = 0; cycle = false;
              ) =
     let src = TextureTransferInfo(
-        trans_buf     : buf,
+        trans_buf     : trans_buf,
         offset        : uint32 offset,
         px_per_row    : uint32 px_w,
         rows_per_layer: uint32 px_h,
@@ -876,7 +881,7 @@ proc upload*(copy_pass; buf: TransferBuffer; px_w, px_h: SomeNumber; tex; offset
     )
     sdl_upload_to_gpu_texture copy_pass, src.addr, dst.addr, cycle
 
-proc upload*(copy_pass; trans_buf: TransferBuffer; buf: Buffer; sz: SomeNumber;
+proc upload*(copy_pass; trans_buf: TransferBuffer; buf: Buffer; sz: SomeInteger;
              trans_buf_offset, buf_offset: SomeInteger = 0; cycle = false;
              ) =
     let src = TransferBufferLocation(
@@ -895,8 +900,8 @@ proc upload*(copy_pass; trans_buf: TransferBuffer; buf: Buffer; sz: SomeNumber;
 # proc sdl_download_from_gpu_texture*(copy_pass; src: ptr TextureRegion; dst: ptr TextureTransferInfo)
 # proc sdl_download_from_gpu_buffer*(copy_pass; src: ptr BufferRegion; dst: ptr TransferBufferLocation)
 
-proc get_device_count*(): int                   = sdl_get_num_gpu_drivers()
-proc get_driver*(i: int): cstring               = sdl_get_gpu_driver cint i
+proc get_device_count*(): int                   = int sdl_get_num_gpu_drivers()
+proc get_driver*(i: SomeInteger): cstring       = sdl_get_gpu_driver cint i
 proc get_driver*(dev): cstring                  = sdl_get_gpu_device_driver dev
 proc get_shader_formats*(dev): ShaderFormatFlag = sdl_get_gpu_shader_formats dev
 
@@ -922,7 +927,7 @@ proc begin_render_pass*(cmd_buf; cti: openArray[ColourTargetInfo]): RenderPass =
     result = sdl_begin_gpu_render_pass(cmd_buf, cti[0].addr, uint32 cti.len, nil)
     # TODO error
 
-proc end_render_pass*(ren_pass) = sdl_end_gpu_render_pass ren_pass
+proc `end`*(ren_pass) = sdl_end_gpu_render_pass ren_pass
 
 proc `bind`*(ren_pass; pipeln: GraphicsPipeline)                                          = ren_pass.sdl_bind_gpu_graphics_pipeline pipeln
 proc `bind`*(ren_pass; buf: BufferBinding; idx_elem_sz: IndexElementSize)                 = ren_pass.sdl_bind_gpu_index_buffer buf.addr, idx_elem_sz
@@ -938,30 +943,30 @@ proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[Buffer]; stage = s
     of shaderVertex  : ren_pass.sdl_bind_gpu_vertex_storage_buffers   uint32 fst_slot, bufs[0].addr, uint32 bufs.len
     of shaderFragment: ren_pass.sdl_bind_gpu_fragment_storage_buffers uint32 fst_slot, bufs[0].addr, uint32 bufs.len
 
-proc draw*(ren_pass; vtx_count: int; inst_count = 1; fst_vtx, fst_inst = 0) =
+proc draw*(ren_pass; vtx_count: SomeInteger; inst_count: SomeInteger = 1; fst_vtx, fst_inst: SomeInteger = 0) =
     ren_pass.sdl_draw_gpu_primitives uint32 vtx_count, uint32 inst_count, uint32 fst_vtx, uint32 fst_inst
-proc draw_indexed*(ren_pass; idx_count: int; inst_count = 1; fst_idx, vtx_offset, fst_inst = 0) =
+proc draw_indexed*(ren_pass; idx_count: SomeInteger; inst_count: SomeInteger = 1; fst_idx, vtx_offset, fst_inst: SomeInteger = 0) =
     ren_pass.sdl_draw_gpu_indexed_primitives uint32 idx_count, uint32 inst_count, uint32 fst_idx, int32 vtx_offset, uint32 fst_inst
-proc draw_indirect*(ren_pass; buf: Buffer; offset = 0; draw_count = 1) =
+proc draw_indirect*(ren_pass; buf: Buffer; offset: SomeInteger = 0; draw_count: SomeInteger = 1) =
     ren_pass.sdl_draw_gpu_primitives_indirect buf, uint32 offset, uint32 draw_count
-proc draw_indirect_indexed*(ren_pass; buf: Buffer; offset = 0; draw_count = 1) =
+proc draw_indirect_indexed*(ren_pass; buf: Buffer; offset: SomeInteger = 0; draw_count: SomeInteger = 1) =
     ren_pass.sdl_draw_gpu_indexed_primitives_indirect buf, uint32 offset, uint32 draw_count
 
-proc `viewport=`*(ren_pass; vp: Viewport)        = ren_pass.sdl_set_gpu_viewport vp.addr
-proc `scissor=`*(ren_pass; scissor: Rect)        = ren_pass.sdl_set_gpu_scissor scissor.addr
-proc `blend_consts=`*(ren_pass; consts: FColour) = ren_pass.sdl_set_gpu_blend_constants consts
-proc `stencil_ref=`*(ren_pass; `ref`: uint8)     = ren_pass.sdl_set_gpu_stencil_reference `ref`
+proc `viewport=`*(ren_pass; vp: Viewport)          = ren_pass.sdl_set_gpu_viewport vp.addr
+proc `scissor=`*(ren_pass; scissor: Rect)          = ren_pass.sdl_set_gpu_scissor scissor.addr
+proc `blend_consts=`*(ren_pass; consts: FColour)   = ren_pass.sdl_set_gpu_blend_constants consts
+proc `stencil_ref=`*(ren_pass; `ref`: SomeInteger) = ren_pass.sdl_set_gpu_stencil_reference uint8 `ref`
 
 # `depth_target: DepthStencilTargetInfo` is left out for overload resolution to work
 template render_pass*(cmd_buf; targets: openArray[ColourTargetInfo]; depth_target; body) =
     let ren_pass = begin_render_pass(cmd_buf, targets, depth_target)
     with ren_pass:
         body
-    end_render_pass ren_pass
+    `end` ren_pass
 template render_pass*(cmd_buf; targets: openArray[ColourTargetInfo]; body) =
     let ren_pass = begin_render_pass(cmd_buf, targets)
     with ren_pass:
         body
-    end_render_pass ren_pass
+    `end` ren_pass
 
 {.pop.}

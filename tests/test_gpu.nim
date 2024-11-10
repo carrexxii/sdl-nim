@@ -16,6 +16,7 @@ type Vertex = object
     colour: array[4, float32]
 
 var
+    pipeln: GraphicsPipeline
     viewport = viewport(160, 120, 320, 240, 0.1, 1.0)
     scissor  = rect(320, 240, 320, 240)
     use_wireframe      = false
@@ -33,19 +34,23 @@ let vtx_shader  = device.create_shader(shaderVertex, ShaderDir / "simple.vert.sp
 let frag_shader = device.create_shader(shaderVertex, ShaderDir / "simple.frag.spv")
 assert vtx_shader and frag_shader, &"Failed to load shaders: vs = '{vtx_shader}'; fs = '{frag_shader}'"
 
-var pipeln: GraphicsPipeline
+let ct_descr = ColourTargetDescription(fmt: swapchain_tex_fmt(device, window))
 let fill_pipeln = device.create_graphics_pipeline(vtx_shader, frag_shader,
     vertex_input_state(
         [vtx_descr(0, sizeof Vertex, inputVertex)],
-        [vtx_attr(0, 0, vtxElemFloat3),
-         vtx_attr(1, 0, vtxElemFloat4)],
+        [vtx_attr(0, 0, vtxElemFloat3, 0),
+         vtx_attr(1, 0, vtxElemFloat4, 12)],
+    ),
+    target_info = GraphicsPipelineTargetInfo(
+        colour_target_descrs: ct_descr.addr,
+        colour_target_count : 1,
     ),
 )
 let line_pipeln = device.create_graphics_pipeline(vtx_shader, frag_shader,
     vertex_input_state(
         [vtx_descr(0, sizeof Vertex, inputVertex)],
-        [vtx_attr(0, 0, vtxElemFloat3),
-         vtx_attr(1, 0, vtxElemFloat4)],
+        [vtx_attr(0, 0, vtxElemFloat3, 0),
+         vtx_attr(1, 0, vtxElemFloat4, 12)],
     ),
     raster_state = RasterizerState(
         fill_mode: fillLine,
@@ -56,19 +61,19 @@ assert fill_pipeln and line_pipeln, "Failed to create pipelines"
 let verts_buf = device.create_buffer(bufUsageVertex, sizeof TriVerts)
 let trans_buf = device.create_transfer_buffer(sizeof TriVerts)
 
-var buf_dst = cast[array[21, float32]](device.map trans_buf)
-buf_dst = TriVerts
+var buf_dst = cast[ptr typeof TriVerts](device.map trans_buf)
+buf_dst[] = TriVerts
 device.unmap trans_buf
 
-let cmd_buf   = device.acquire_cmd_buf
+let cmd_buf   = acquire_cmd_buf device
 let copy_pass = begin_copy_pass cmd_buf
 copy_pass.upload trans_buf, verts_buf, sizeof TriVerts
-end_copy_pass copy_pass
+`end` copy_pass
 submit cmd_buf
 device.destroy trans_buf
 
 proc draw() =
-    let cmd_buf = device.acquire_cmd_buf
+    let cmd_buf = acquire_cmd_buf device
     assert cmd_buf, &"Failed to acquire command buffer: {sdl.get_error()}"
 
     let swapchain = cmd_buf.acquire_swapchain window
@@ -84,7 +89,6 @@ proc draw() =
         `bind` fill_pipeln
         `bind` 0, [BufferBinding(buf: verts_buf)]
         draw 3
-
     submit cmd_buf
 
 var running = true
@@ -104,6 +108,7 @@ while running:
     draw()
 
 with device:
+    destroy verts_buf
     destroy fill_pipeln
     destroy line_pipeln
     destroy vtx_shader
