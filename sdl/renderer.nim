@@ -24,10 +24,8 @@ type
         presentIntegerScale
 
 type
-    Renderer* = object
-        _: pointer
-    Texture* = object
-        _: pointer
+    Renderer* = distinct pointer
+    Texture*  = distinct pointer
 
     RendererInfo* = object
         name*         : cstring
@@ -42,8 +40,8 @@ type
         colour*   : FColour
         tex_coord*: FPoint
 
-converter `Renderer -> pointer`*(ren: Renderer): pointer = cast[pointer](ren)
-converter `Texture -> pointer`*(tex: Texture)  : pointer = cast[pointer](tex)
+converter `Renderer -> bool`*(ren: Renderer): bool = cast[pointer](ren) != nil
+converter `Texture -> bool`*(tex: Texture)  : bool = cast[pointer](tex) != nil
 
 func vertex*(x, y, r, g, b, a, u, v: float32 = 0.0): Vertex =
     Vertex(pos      : FPoint(x: x, y: y),
@@ -146,7 +144,7 @@ proc sdl_render_geometry_raw_float*(ren; tex;
                                     colours: ptr FColour; colour_stride: cint;
                                     uvs    : ptr cfloat ; uv_stride    : cint;
                                     vert_count: cint; inds: pointer; idx_count: cint; inds_sz: cint): bool {.importc: "SDL_RenderGeometryRawFloat".}
-proc sdl_render_read_pixels*(ren; rect: ptr Rect): pointer {.importc: "SDL_RenderReadPixels".} # TODO: this needs to be free'd
+proc sdl_render_read_pixels*(ren; rect: ptr Rect): Surface {.importc: "SDL_RenderReadPixels".} # TODO: this needs to be free'd
 proc sdl_render_present*(ren): bool                        {.importc: "SDL_RenderPresent"   .}
 proc sdl_destroy_texture*(tex)                             {.importc: "SDL_DestroyTexture"  .}
 proc sdl_destroy_renderer*(ren)                            {.importc: "SDL_DestroyRenderer" .}
@@ -178,89 +176,153 @@ proc `=destroy`*(tex) = sdl_destroy_texture  tex
 proc `=destroy`*(ren) = sdl_destroy_renderer ren
 
 proc create_renderer*(surf): Renderer =
-    sdl_create_software_renderer surf
+    result = sdl_create_software_renderer surf
+    sdl_assert result, &"Failed to create renderer for surface"
 
 proc create_renderer*(win; name = ""; flags = renPresentVSync): Renderer =
     let name = if name != "": cstring name else: nil
-    sdl_create_renderer win, name, flags
+    result = sdl_create_renderer(win, name, flags)
+    sdl_assert result, &"Failed to create renderer for window"
 
-proc create_window_and_renderer*(title: string; w, h: int; win_flags = winNone): (Window, Renderer) =
-    assert sdl_create_window_and_renderer(cstring title, cint w, cint h, win_flags, result[0].addr, result[1].addr)
+proc create_window_and_renderer*(title: string; w, h: SomeInteger; win_flags = winNone): (Window, Renderer) =
+    let success = sdl_create_window_and_renderer(cstring title, cint w, cint h, win_flags, result[0].addr, result[1].addr)
+    sdl_assert success, &"Failed to create window and renderer"
 
-proc name*(ren): cstring =
-    sdl_get_renderer_name ren
+proc name*(ren): cstring = sdl_get_renderer_name ren
 
 proc sz*(ren): tuple[x, y: int32] =
-    assert sdl_get_renderer_output_size(ren, result.x.addr, result.y.addr)
+    var x, y: cint
+    let success = sdl_get_renderer_output_size(ren, x.addr, y.addr)
+    sdl_assert success, &"Failed to get renderer size"
+    (int32 x, int32 y)
 
 proc create_texture*(ren; w, h: int; fmt = pxFmtRgba8; access = texAccessStatic): Texture =
-    sdl_create_texture ren, fmt, access, cint w, cint h
-
+    result = sdl_create_texture(ren, fmt, access, cint w, cint h)
+    sdl_assert result, &"Failed to create texture ({w}x{h}, {fmt}, {access})"
 proc create_texture*(ren; surf): Texture =
-    sdl_create_texture_from_surface ren, surf
+    result = sdl_create_texture_from_surface(ren, surf)
+    sdl_assert result, &"Failed to create texture from surface"
 
-proc update*(tex; pxs: pointer; x, y, w, h: int32; pitch: int32 = 4 * w): bool =
-    let rect = Rect(x: x, y: y, w: w, h: h)
-    sdl_update_texture tex, rect.addr, pxs, pitch
+proc update*(tex; pxs: pointer; x, y, w, h: SomeInteger; pitch: SomeInteger = 4 * w): bool {.discardable.} =
+    let rect = rect(x, y, w, h)
+    result = sdl_update_texture(tex, rect.addr, pxs, pitch)
+    sdl_assert result, &"Failed to update texture ({rect}; pitch = {pitch})"
 
-proc update*(tex; pxs: pointer; pitch: int32): bool =
-    sdl_update_texture tex, nil, pxs, pitch
+proc update*(tex; pxs: pointer; pitch: SomeInteger): bool {.discardable.} =
+    result = sdl_update_texture(tex, nil, pxs, cint pitch)
+    sdl_assert result, &"Failed to update texture (pitch = {pitch})"
 
-proc vsync*(ren): int32                = assert sdl_get_render_vsync(ren, result.addr)
-proc scale*(ren): tuple[x, y: float32] = assert sdl_get_render_scale(ren, result.x.addr, result.y.addr)
-proc draw_colour*(ren): Colour         = assert sdl_get_render_draw_colour(ren, result.r.addr, result.g.addr, result.b.addr, result.a.addr)
-proc colour_scale*(ren): float32       = assert sdl_get_render_colour_scale(ren, result.addr)
-proc blend_mode*(ren): BlendMode       = assert sdl_get_render_draw_blend_mode(ren, result.addr)
+proc vsync*(ren): int32 =
+    let success = sdl_get_render_vsync(ren, result.addr)
+    sdl_assert success, &"Failed to get renderer's vsync"
+proc scale*(ren): tuple[x, y: float32] =
+    let success = sdl_get_render_scale(ren, result.x.addr, result.y.addr)
+    sdl_assert success, &"Failed to get renderer's scale"
+proc draw_colour*(ren): Colour =
+    let success = sdl_get_render_draw_colour(ren, result.r.addr, result.g.addr, result.b.addr, result.a.addr)
+    sdl_assert success, &"Failed to get renderer's draw colour"
+proc colour_scale*(ren): float32 =
+    let success = sdl_get_render_colour_scale(ren, result.addr)
+    sdl_assert success, &"Failed to get renderer's colour scale"
+proc blend_mode*(ren): BlendMode =
+    let success = sdl_get_render_draw_blend_mode(ren, result.addr)
+    sdl_assert success, &"Failed to get renderer's blend mode"
 
-proc `viewport=`*(ren; rect: Rect)         = assert sdl_set_render_viewport(ren, rect.addr)
-proc `vsync=`*(ren; vsync: int32)          = assert sdl_set_render_vsync(ren, vsync)
-proc `target=`*(ren; tex)                  = assert sdl_set_render_target(ren, tex)
-proc `scale=`*(ren; x = 0.0; y = 0.0)      = assert sdl_set_render_scale(ren, x, y)
-proc `draw_colour=`*(ren; colour: Colour)  = assert sdl_set_render_draw_colour(ren, colour.r, colour.g, colour.b, colour.a)
-proc `draw_colour=`*(ren; colour: FColour) = assert sdl_set_render_draw_colour_float(ren, colour.r, colour.g, colour.b, colour.a)
-proc `colour_scale=`*(ren; scale: float32) = assert sdl_set_render_colour_scale(ren, scale)
-proc `blend_mode=`*(ren; mode: BlendMode)  = assert sdl_set_render_draw_blend_mode(ren, mode)
-proc `blend_mode=`*(tex; mode: BlendMode)  = assert sdl_set_texture_blend_mode(tex, mode)
+proc `viewport=`*(ren; rect: Rect): bool {.discardable.} =
+    let success = sdl_set_render_viewport(ren, rect.addr)
+    sdl_assert success, &"Failed to set renderer's viewport to {rect}"
+proc `vsync=`*(ren; vsync: SomeInteger): bool {.discardable.} =
+    let success = sdl_set_render_vsync(ren, vsync)
+    sdl_assert success, &"Failed to set renderer's vsync to {vsync}"
+proc `target=`*(ren; tex): bool {.discardable.} =
+    let success = sdl_set_render_target(ren, tex)
+    sdl_assert success, &"Failed to set renderer's target"
+proc `scale=`*(ren; x, y: SomeNumber = 0.0): bool {.discardable.} =
+    let success = sdl_set_render_scale(ren, cfloat x, cfloat y)
+    sdl_assert success, &"Failed to set renderer's scale to {x}x{y}"
+proc `draw_colour=`*(ren; colour: Colour): bool {.discardable.} =
+    let success = sdl_set_render_draw_colour(ren, colour.r, colour.g, colour.b, colour.a)
+    sdl_assert success, &"Failed to set renderer's draw colour to {colour}"
+proc `draw_colour=`*(ren; colour: FColour): bool {.discardable.} =
+    let success = sdl_set_render_draw_colour_float(ren, colour.r, colour.g, colour.b, colour.a)
+    sdl_assert success, &"Failed to set renderer's draw colour to {colour}"
+proc `colour_scale=`*(ren; scale: SomeNumber): bool {.discardable.} =
+    let success = sdl_set_render_colour_scale(ren, cfloat scale)
+    sdl_assert success, &"Failed to set renderer's scale to {scale}"
+proc `blend_mode=`*(ren; mode: BlendMode): bool {.discardable.} =
+    let success = sdl_set_render_draw_blend_mode(ren, mode)
+    sdl_assert success, &"Failed to set renderer's blend mode to {mode}"
+proc `blend_mode=`*(tex; mode: BlendMode): bool {.discardable.} =
+    let success = sdl_set_texture_blend_mode(tex, mode)
+    sdl_assert success, &"Failed to set texture's blend mode to {mode}"
 
-proc reset_target*(ren) = assert sdl_set_render_target(ren, cast[Texture](nil))
-proc clear*(ren)        = assert sdl_render_clear(ren)
-proc fill*(ren)         = assert sdl_render_fill_rect(ren, nil)
-proc present*(ren)      = assert sdl_render_present(ren)
-proc flush*(ren)        = assert sdl_flush_renderer(ren)
+proc reset_target*(ren): bool {.discardable.} =
+    result = sdl_set_render_target(ren, cast[Texture](nil))
+    sdl_assert result, &"Failed to reset renderer's target"
+proc clear*(ren): bool {.discardable.} =
+    result = sdl_render_clear(ren)
+    sdl_assert result, &"Failed to clear renderer"
+proc fill*(ren): bool {.discardable.} =
+    result = sdl_render_fill_rect(ren, nil)
+    sdl_assert result, &"Failed to fill renderer"
+proc present*(ren): bool {.discardable.} =
+    result = sdl_render_present(ren)
+    sdl_assert result, &"Failed to present renderer"
+proc flush*(ren): bool {.discardable.} =
+    result = sdl_flush_renderer(ren)
+    sdl_assert result, &"Failed to flush renderer"
 
-proc draw_point*(ren; x, y: float32)          = assert sdl_render_point(ren, x, y)
-proc draw_points*(ren; points: seq[FPoint])   = assert sdl_render_points(ren, points[0].addr, cint points.len)
-proc draw_line*(ren; p1, p2: FPoint)          = assert sdl_render_line(ren, p1.x, p1.y, p2.x, p2.y)
-proc draw_lines*(ren; points: seq[FPoint])    = assert sdl_render_lines(ren, points[0].addr, cint points.len)
-proc draw_rect*(ren; rect: FRect)             = assert sdl_render_rect(ren, rect.addr)
-proc draw_rects*(ren; rects: seq[FRect])      = assert sdl_render_rects(ren, rects[0].addr, cint rects.len)
-proc draw_fill_rect*(ren; rect: FRect)        = assert sdl_render_fill_rect(ren, rect.addr)
-proc draw_fill_rects*(ren; rects: seq[FRect]) = assert sdl_render_fill_rects(ren, rects[0].addr, cint rects.len)
+proc draw_point*(ren; x, y: SomeNumber): bool {.discardable.} =
+    result = sdl_render_point(ren, cfloat x, cfloat y)
+    sdl_assert result, &"Failed to draw point ({x}, {y})"
+proc draw_points*(ren; points: openArray[FPoint]): bool {.discardable.} =
+    result = sdl_render_points(ren, points[0].addr, cint points.len)
+    sdl_assert result, &"Failed to draw points ({points})"
+proc draw_line*(ren; p1, p2: FPoint): bool {.discardable.} =
+    result = sdl_render_line(ren, p1.x, p1.y, p2.x, p2.y)
+    sdl_assert result, &"Failed to draw line from {p1} to {p2}"
+proc draw_lines*(ren; points: openArray[FPoint]): bool {.discardable.} =
+    result = sdl_render_lines(ren, points[0].addr, cint points.len)
+    sdl_assert result, &"Failed to draw lines ({points})"
+proc draw_rect*(ren; rect: FRect): bool {.discardable.} =
+    result = sdl_render_rect(ren, rect.addr)
+    sdl_assert result, &"Failed to draw rect {rect}"
+proc draw_rects*(ren; rects: openArray[FRect]): bool {.discardable.} =
+    result = sdl_render_rects(ren, rects[0].addr, cint rects.len)
+    sdl_assert result, &"Failed to draw rects ({rects})"
+proc draw_fill_rect*(ren; rect: FRect): bool {.discardable.} =
+    result = sdl_render_fill_rect(ren, rect.addr)
+    sdl_assert result, &"Failed to draw filled rects {rect}"
+proc draw_fill_rects*(ren; rects: openArray[FRect]): bool {.discardable.} =
+    result = sdl_render_fill_rects(ren, rects[0].addr, cint rects.len)
+    sdl_assert result, &"Failed to draw filled rects ({rects})"
 
-proc draw_rect*(ren; rect: Rect)      = draw_rect(ren, frect(rect))
-proc draw_fill_rect*(ren; rect: Rect) = draw_fill_rect(ren, frect(rect))
+proc draw_rect*(ren; rect: Rect): bool {.discardable.}      = draw_rect      ren, frect rect
+proc draw_fill_rect*(ren; rect: Rect): bool {.discardable.} = draw_fill_rect ren, frect rect
 
-proc draw_texture*(ren; tex; dst_rect, src_rect = FRect()) =
+proc draw_texture*(ren; tex; dst_rect, src_rect = FRect()): bool {.discardable.} =
     let src = if src_rect.w != 0.0 and src_rect.h != 0.0: src_rect.addr else: nil
     let dst = if dst_rect.w != 0.0 and dst_rect.h != 0.0: dst_rect.addr else: nil
-    assert sdl_render_texture(ren, tex, src, dst), $get_error()
+    result = sdl_render_texture(ren, tex, src, dst)
+    sdl_assert result, &"Failed to draw texture (dst: {dst_rect}; src: {src_rect})"
 
-proc draw_texture*(ren; tex; angle: float; src_rect = FRect(); dst_rect = FRect(); centre = FPoint(); flip: FlipMode = flipNone) =
+proc draw_texture*(ren; tex; angle: SomeNumber; dst_rect, src_rect = FRect(); centre = FPoint(); flip = flipNone): bool {.discardable.} =
     let src = if src_rect.w != 0.0 and src_rect.h != 0.0: src_rect.addr else: nil
     let dst = if dst_rect.w != 0.0 and dst_rect.h != 0.0: dst_rect.addr else: nil
-    assert sdl_render_texture_rotated(ren, tex, src, dst, angle, centre.addr, flip), $get_error()
+    result = sdl_render_texture_rotated(ren, tex, src, dst, cdouble angle, centre.addr, flip)
+    sdl_assert result, &"Failed to draw texture rotated (dst: {dst_rect}; src: {src_rect}; angle = {angle}; centre = {centre}; flip = {flip})"
 
-proc draw_geometry*(ren; verts: openArray[Vertex]; inds: openArray[int32] = []; tex = none Texture) =
-    let tex   = if is_some tex: cast[pointer](get tex) else: nil
+proc draw_geometry*(ren; verts: openArray[Vertex]; inds: openArray[int32] = []; tex = none Texture): bool {.discardable.} =
+    let tex   = if tex.is_some: cast[pointer](get tex) else: nil
     let vertc = cint verts.len
     let indc  = cint inds.len
     let inds  = if indc > 0: inds[0].addr else: nil
-    assert sdl_render_geometry(ren, cast[Texture](tex), verts[0].addr, vertc, inds, indc), $get_error()
+    result = sdl_render_geometry(ren, cast[Texture](tex), verts[0].addr, vertc, inds, indc)
+    sdl_assert result, &"Failed to draw geometry ({vertc} verts; {indc} inds)"
 
-proc read_pixels*(ren; rect = Rect()): (Surface, bool) =
-    let src = if rect.w != 0 and rect.h != 0: rect.addr else: nil
-    let surf = sdl_render_read_pixels(ren, src)
-    result[0] = cast[ptr Surface](surf)[]
-    result[1] = surf != nil
+proc read_pixels*(ren; rect = Rect()): Surface =
+    let src  = if rect.w != 0 and rect.h != 0: rect.addr else: nil
+    result = sdl_render_read_pixels(ren, src)
+    sdl_assert result, &"Failed to read renderer's pixels from {rect}"
 
-{.pop.} # inline
+{.pop.}

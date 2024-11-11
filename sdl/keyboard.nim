@@ -590,17 +590,23 @@ proc keyboards*(): seq[KeyboardId] =
         result.add kb
 
 proc keyboard_state*(): tuple[count: int32; keys: ptr UncheckedArray[bool]] =
-    result.keys = sdl_get_keyboard_state(result.count.addr)
+    var count: cint
+    result.keys  = sdl_get_keyboard_state count.addr
+    result.count = int32 count
 
-proc name*(id: KeyboardId): string = $sdl_get_keyboard_instance_name(id)
+proc name*(id: KeyboardId): string = $(sdl_get_keyboard_instance_name id)
+
 proc key*(code: ScanCode; mod_state = modNone): KeyCode = sdl_get_key_from_scancode code, mod_state, true
-proc key*(name: string): KeyCode = sdl_get_key_from_name cstring name
+proc key*(name: string): KeyCode                        = sdl_get_key_from_name cstring name
+
 proc scancode*(key: KeyCode; mod_state = modNone): ScanCode = sdl_get_scancode_from_key key, (if mod_state == modNone: nil else: mod_state.addr)
-proc scancode*(name: string): ScanCode = sdl_get_scancode_from_name cstring name
-proc `$`*(code: ScanCode): string = $sdl_get_scancode_name(code)
-proc `$`*(key: KeyCode):   string = $sdl_get_key_name(key)
+proc scancode*(name: string): ScanCode                      = sdl_get_scancode_from_name cstring name
 
-proc set_text_input_area*(win: Window; rect: Rect; cursor: int32): bool {.discardable.} =
-    sdl_set_text_input_area win, rect.addr, cursor
+proc `$`*(code: ScanCode): string = $(sdl_get_scancode_name code)
+proc `$`*(key: KeyCode):   string = $(sdl_get_key_name key)
 
-{.pop.} # inline
+proc set_text_input_area*(win: Window; rect: Rect; cursor: SomeInteger): bool {.discardable.} =
+    result = sdl_set_text_input_area(win, rect.addr, cint cursor)
+    sdl_assert result, &"Failed to set text input area to '{rect}' (cursor {cursor})"
+
+{.pop.}

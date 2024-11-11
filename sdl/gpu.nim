@@ -1,5 +1,5 @@
+import std/with, common, bitgen, properties, options
 from std/strformat import `&`
-import common, bitgen, properties, options
 from pixels  import FColour
 from rect    import Rect
 from surface import FlipMode
@@ -573,6 +573,37 @@ converter `ComputePass -> bool`*(p: ComputePass): bool           = cast[pointer]
 converter `CopyPass -> bool`*(p: CopyPass): bool                 = cast[pointer](p) != nil
 converter `Fence -> bool`*(p: Fence): bool                       = cast[pointer](p) != nil
 
+func viewport*(x, y, w, h, min_d, max_d: float32): Viewport =
+    Viewport(x: x, y: y, w: w, h: h, min_depth: min_d, max_depth: max_d)
+
+func vertex_input_state*(descrs: openArray[VertexBufferDescription]; attrs: openArray[VertexAttribute]): VertexInputState =
+    VertexInputState(
+        buf_descrs: descrs[0].addr,
+        buf_count : uint32 descrs.len,
+        attrs     : attrs[0].addr,
+        attr_count: uint32 attrs.len
+    )
+
+func vertex_descriptor*(slot, pitch: SomeInteger; input_rate: VertexInputRate; step_rate: SomeInteger = 0): VertexBufferDescription =
+    VertexBufferDescription(
+        slot      : uint32 slot,
+        pitch     : uint32 pitch,
+        input_rate: input_rate,
+        step_rate : uint32 step_rate,
+    )
+func vtx_descr*(slot, pitch: SomeInteger; input_rate: VertexInputRate; step_rate: SomeInteger = 0): VertexBufferDescription =
+    vertex_descriptor slot, pitch, input_rate, step_rate
+
+func vertex_attribute*(loc, slot: SomeInteger; fmt: VertexElementFormat; offset: SomeInteger): VertexAttribute =
+    VertexAttribute(
+        loc   : uint32 loc,
+        slot  : uint32 slot,
+        fmt   : fmt,
+        offset: uint32 offset,
+    )
+func vtx_attr*(loc, slot: SomeInteger; fmt: VertexElementFormat; offset: SomeInteger): VertexAttribute =
+    vertex_attribute loc, slot, fmt, offset
+
 #[ -------------------------------------------------------------------- ]#
 
 using
@@ -700,58 +731,17 @@ when defined SdlPlatformGdk:
 
 #[ -------------------------------------------------------------------- ]#
 
-import shadercross
-export shadercross
-
 {.push inline.}
 
-proc destroy*(dev)                           = sdl_destroy_gpu_device dev
-proc destroy*(dev; pipeln: GraphicsPipeline) = sdl_release_gpu_graphics_pipeline dev, pipeln
-proc destroy*(dev; shader)                   = sdl_release_gpu_shader dev, shader
-proc destroy*(dev; tex)                      = sdl_release_gpu_texture dev, tex
-proc destroy*(dev; sampler)                  = sdl_release_gpu_sampler dev, sampler
-proc destroy*(dev; buf)                      = sdl_release_gpu_buffer dev, buf
-proc destroy*(dev; trans_buf)                = sdl_release_gpu_transfer_buffer dev, trans_buf
-
-func viewport*(x, y, w, h, min_d, max_d: float32): Viewport =
-    Viewport(x: x, y: y, w: w, h: h, min_depth: min_d, max_depth: max_d)
-
-func vertex_input_state*(descrs: openArray[VertexBufferDescription]; attrs: openArray[VertexAttribute]): VertexInputState =
-    VertexInputState(
-        buf_descrs: descrs[0].addr,
-        buf_count : uint32 descrs.len,
-        attrs     : attrs[0].addr,
-        attr_count: uint32 attrs.len
-    )
-
-func vertex_descriptor*(slot, pitch: SomeInteger; input_rate: VertexInputRate; step_rate: SomeInteger = 0): VertexBufferDescription =
-    VertexBufferDescription(
-        slot      : uint32 slot,
-        pitch     : uint32 pitch,
-        input_rate: input_rate,
-        step_rate : uint32 step_rate,
-    )
-func vtx_descr*(slot, pitch: SomeInteger; input_rate: VertexInputRate; step_rate: SomeInteger = 0): VertexBufferDescription =
-    vertex_descriptor slot, pitch, input_rate, step_rate
-
-func vertex_attribute*(loc, slot: SomeInteger; fmt: VertexElementFormat; offset: SomeInteger): VertexAttribute =
-    VertexAttribute(
-        loc   : uint32 loc,
-        slot  : uint32 slot,
-        fmt   : fmt,
-        offset: uint32 offset,
-    )
-func vtx_attr*(loc, slot: SomeInteger; fmt: VertexElementFormat; offset: SomeInteger): VertexAttribute =
-    vertex_attribute loc, slot, fmt, offset
-
-const swapchain_texture_format* = sdl_get_gpu_swapchain_texture_format
-const swapchain_tex_fmt* = swapchain_texture_format
+proc swapchain_texture_format*(dev; win): TextureFormat = sdl_get_gpu_swapchain_texture_format dev, win
+proc swapchain_tex_fmt*(dev; win): TextureFormat        = swapchain_texture_format dev, win
 
 proc create_device*(fmt_flags: ShaderFormatFlag; debug_mode: bool; name = ""): Device =
-    sdl_create_gpu_device fmt_flags, debug_mode, (if name == "": nil else: cstring name)
-
+    result = sdl_create_gpu_device(fmt_flags, debug_mode, (if name == "": nil else: cstring name))
+    sdl_assert result, &"Failed to create GPU device: '{get_error()}'"
 proc create_device*(props: PropertyId): Device =
-    sdl_create_gpu_device_with_properties props
+    result = sdl_create_gpu_device_with_properties props
+    sdl_assert result, &"Failed to create GPU device: '{get_error()}'"
 
 proc create_graphics_pipeline*(dev; vs, fs: Shader; vtx_input_state: VertexInputState;
                                prim_kind           = primTriangleList;
@@ -772,7 +762,8 @@ proc create_graphics_pipeline*(dev; vs, fs: Shader; vtx_input_state: VertexInput
         target_info        : target_info,
         props              : props,
     )
-    sdl_create_gpu_graphics_pipeline dev, ci.addr
+    result = sdl_create_gpu_graphics_pipeline(dev, ci.addr)
+    sdl_assert result, &"Failed to create graphics pipeline: '{get_error()}'"
 
 proc create_shader*(dev; stage: ShaderStage; code: pointer; code_sz: SomeInteger; entry = "main"; fmt = shaderFmtSpirV;
                     sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count: SomeInteger = 0; props = InvalidProperty;
@@ -789,7 +780,8 @@ proc create_shader*(dev; stage: ShaderStage; code: pointer; code_sz: SomeInteger
         uniform_buf_count: uint32 uniform_buf_count,
         props            : props,
     )
-    sdl_create_gpu_shader dev, ci.addr
+    result = sdl_create_gpu_shader(dev, ci.addr)
+    sdl_assert result, &"Failed to create shader: '{get_error()}'"
 
 # TODO: shader format and shader stage detection via file extension
 proc create_shader*(dev; stage: ShaderStage; path: string; entry = "main"; fmt = shaderFmtSpirV;
@@ -804,7 +796,8 @@ proc create_buffer*(dev; usage: BufferUsageFlag; sz: SomeInteger; props = Invali
         sz   : uint32 sz,
         props: props,
     )
-    sdl_create_gpu_buffer dev, ci.addr
+    result = sdl_create_gpu_buffer(dev, ci.addr)
+    sdl_assert result, &"Failed to create buffer: '{get_error()}'"
 
 proc create_sampler*(dev; min_filter, mag_filter = filterNearest; mip_map_mode = mipMapModeNearest;
                      addr_mode_u, addr_mode_v, addr_mode_w = addrModeRepeat; mip_lod_bias = 0'f32;
@@ -827,7 +820,8 @@ proc create_sampler*(dev; min_filter, mag_filter = filterNearest; mip_map_mode =
         enable_compare   : enable_compare,
         props            : props,
     )
-    sdl_create_gpu_sampler dev, ci.addr
+    result = sdl_create_gpu_sampler(dev, ci.addr)
+    sdl_assert result, &"Failed to create sampler: '{get_error()}'"
 
 proc create_texture*(dev; w, h: SomeInteger; depth_or_layer_count = 1'u32; kind = tex2D; fmt = texFmtR8G8B8A8Uint;
                      usage = texUsageGraphicsStorageRead; lvl_count = 1'u32; sample_count = sampleCount1;
@@ -844,7 +838,8 @@ proc create_texture*(dev; w, h: SomeInteger; depth_or_layer_count = 1'u32; kind 
         sample_count        : sample_count,
         props               : props,
     )
-    sdl_create_gpu_texture dev, ci.addr
+    result = sdl_create_gpu_texture(dev, ci.addr)
+    sdl_assert result, &"Failed to create texture: '{get_error()}'"
 
 proc create_transfer_buffer*(dev; sz: SomeInteger; usage = transferUpload; props = InvalidProperty): TransferBuffer =
     let ci = TransferBufferCreateInfo(
@@ -852,16 +847,17 @@ proc create_transfer_buffer*(dev; sz: SomeInteger; usage = transferUpload; props
         sz   : uint32 sz,
         props: props,
     )
-    sdl_create_gpu_transfer_buffer dev, ci.addr
+    result = sdl_create_gpu_transfer_buffer(dev, ci.addr)
+    sdl_assert result, &"Failed to create transfer buffer: '{get_error()}'"
 
-proc map*(dev; buf: TransferBuffer; cycle = false): pointer =
-    sdl_map_gpu_transfer_buffer(dev, buf, cycle)
+proc map*(dev; buf: TransferBuffer; cycle = false): pointer = sdl_map_gpu_transfer_buffer   dev, buf, cycle
+proc unmap*(dev; buf: TransferBuffer)                       = sdl_unmap_gpu_transfer_buffer dev, buf
 
-proc unmap*(dev; buf: TransferBuffer) =
-    sdl_unmap_gpu_transfer_buffer dev, buf
-
-proc begin_copy_pass*(cmd_buf): CopyPass = sdl_begin_gpu_copy_pass cmd_buf
-proc `end`*(copy_pass)                   = sdl_end_gpu_copy_pass copy_pass
+proc begin_copy_pass*(cmd_buf): CopyPass =
+    result = sdl_begin_gpu_copy_pass cmd_buf
+    sdl_assert result, &"Failed to begin copy pass: '{get_error()}'"
+proc end_copy_pass*(copy_pass) = sdl_end_gpu_copy_pass copy_pass
+proc `end`*(copy_pass)         = sdl_end_gpu_copy_pass copy_pass
 
 proc upload*(copy_pass; trans_buf: TransferBuffer; px_w, px_h: SomeInteger; tex; offset, mip_lvl, layer: SomeInteger = 0;
              x, y, z: SomeInteger = 0; w: SomeInteger = px_w; h: SomeInteger = px_h; d: SomeInteger = 0; cycle = false;
@@ -905,27 +901,32 @@ proc get_driver*(i: SomeInteger): cstring       = sdl_get_gpu_driver cint i
 proc get_driver*(dev): cstring                  = sdl_get_gpu_device_driver dev
 proc get_shader_formats*(dev): ShaderFormatFlag = sdl_get_gpu_shader_formats dev
 
-proc claim_window*(dev; win): bool = sdl_claim_window_for_gpu_device dev, win
+proc claim_window*(dev; win): bool {.discardable.} =
+    result = sdl_claim_window_for_gpu_device(dev, win)
+    sdl_assert result, &"Failed to claim window for device: '{get_error()}'"
 
-proc acquire_command_buffer*(dev): CommandBuffer = sdl_acquire_gpu_command_buffer dev
-const acquire_cmd_buf* = acquire_command_buffer
+proc acquire_command_buffer*(dev): CommandBuffer =
+    result = sdl_acquire_gpu_command_buffer dev
+    sdl_assert result, &"Failed to acquire command buffer: '{get_error()}'"
+proc acquire_cmd_buf*(dev): CommandBuffer = acquire_command_buffer dev
 
 proc acquire_swapchain_texture*(cmd_buf; win): tuple[tex: Texture; w, h: uint32] =
-    assert sdl_acquire_gpu_swapchain_texture(cmd_buf, win, result.tex.addr, result.w.addr, result.h.addr)
-    # TODO error
-const acquire_swapchain* = acquire_swapchain_texture
+    let success = sdl_acquire_gpu_swapchain_texture(cmd_buf, win, result.tex.addr, result.w.addr, result.h.addr)
+    sdl_assert success, &"Failed to acquire swapchain texture: '{get_error()}'"
+proc acquire_swapchain*(cmd_buf; win): auto = acquire_swapchain_texture cmd_buf, win
 
-proc submit*(cmd_buf; acquire_fence: static[bool] = false) =
-    when acquire_fence:
-        sdl_submit_gpu_command_buffer_and_acquire_fence cmd_buf
-    else:
-        assert sdl_submit_gpu_command_buffer(cmd_buf), &"Failed to submit command buffer: '{get_error()}'"
+proc submit*(cmd_buf) =
+    let success = sdl_submit_gpu_command_buffer cmd_buf
+    sdl_assert success, &"Failed to submit command buffer: '{get_error()}'"
 
-proc begin_render_pass*(cmd_buf; cti: openArray[ColourTargetInfo]; dsti: DepthStencilTargetInfo): RenderPass =
-    result = sdl_begin_gpu_render_pass(cmd_buf, cti[0].addr, uint32 cti.len, dsti.addr)
-proc begin_render_pass*(cmd_buf; cti: openArray[ColourTargetInfo]): RenderPass =
-    result = sdl_begin_gpu_render_pass(cmd_buf, cti[0].addr, uint32 cti.len, nil)
-    # TODO error
+proc submit_with_fence*(cmd_buf): Fence =
+    result = sdl_submit_gpu_command_buffer_and_acquire_fence cmd_buf
+    sdl_assert result, &"Failed to submit command buffer with fence: '{get_error()}'"
+
+proc begin_render_pass*(cmd_buf; cti: openArray[ColourTargetInfo]; dsti = none DepthStencilTargetInfo): RenderPass =
+    let dsti = if dsti.is_some: (get dsti).addr else: nil
+    result = sdl_begin_gpu_render_pass(cmd_buf, cti[0].addr, uint32 cti.len, dsti)
+    sdl_assert result, &"Failed to begin render pass: '{get_error()}'"
 
 proc `end`*(ren_pass) = sdl_end_gpu_render_pass ren_pass
 
@@ -957,4 +958,28 @@ proc `scissor=`*(ren_pass; scissor: Option[Rect])  = ren_pass.sdl_set_gpu_scisso
 proc `blend_consts=`*(ren_pass; consts: FColour)   = ren_pass.sdl_set_gpu_blend_constants consts
 proc `stencil_ref=`*(ren_pass; `ref`: SomeInteger) = ren_pass.sdl_set_gpu_stencil_reference uint8 `ref`
 
+proc destroy*(dev)                           = sdl_destroy_gpu_device dev
+proc destroy*(dev; pipeln: GraphicsPipeline) = sdl_release_gpu_graphics_pipeline dev, pipeln
+proc destroy*(dev; shader)                   = sdl_release_gpu_shader dev, shader
+proc destroy*(dev; tex)                      = sdl_release_gpu_texture dev, tex
+proc destroy*(dev; sampler)                  = sdl_release_gpu_sampler dev, sampler
+proc destroy*(dev; buf)                      = sdl_release_gpu_buffer dev, buf
+proc destroy*(dev; trans_buf)                = sdl_release_gpu_transfer_buffer dev, trans_buf
+
 {.pop.}
+
+proc upload*[T](dev; usage: BufferUsageFlag; data: T): Buffer =
+    result        = dev.create_buffer(usage, sizeof data)
+    let trans_buf = dev.create_transfer_buffer(sizeof data)
+
+    var buf_dst = cast[ptr T](dev.map trans_buf)
+    buf_dst[] = data
+    dev.unmap trans_buf
+
+    let cmd_buf   = acquire_cmd_buf dev
+    let copy_pass = begin_copy_pass cmd_buf
+    with copy_pass:
+        upload trans_buf, result, sizeof data
+        `end`
+    submit cmd_buf
+    dev.destroy trans_buf

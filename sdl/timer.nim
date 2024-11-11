@@ -1,5 +1,4 @@
 import std/strutils, common, util
-from std/strformat import `&`
 
 type
     TimerId* = distinct uint32
@@ -46,7 +45,7 @@ proc sdl_delay_ns*(ns: Nanoseconds)                {.importc: "SDL_DelayNS"     
 
 proc sdl_add_timer*(interval: Milliseconds; callback: TimerCallback; user_data: pointer): TimerId   {.importc: "SDL_AddTimer"   .}
 proc sdl_add_timer_ns*(interval: Nanoseconds; callback: TimerCallback; user_data: pointer): TimerId {.importc: "SDL_AddTimerNS" .}
-proc sdl_remove_timer*(timer: TimerID): bool                                                        {.importc: "SDL_RemoveTimer".}
+proc sdl_remove_timer*(timer: TimerId): bool                                                        {.importc: "SDL_RemoveTimer".}
 {.pop.}
 
 {.push inline.}
@@ -59,14 +58,11 @@ proc sleep*(ns: Nanoseconds) = sdl_delay_ns ns
 proc create_timer*(interval: Nanoseconds; cb: TimerCallback; user_data: pointer = nil): TimerId =
     sdl_add_timer_ns interval, cb, user_data
 
-# TODO: add error return
 proc remove*(timer: TimerId): bool {.discardable.} =
-    sdl_remove_timer timer
+    result = sdl_remove_timer timer
+    sdl_assert result, &"Failed to remove time {cast[int](timer)}"
 
-func fps_to_ns*(fps: int): Nanoseconds =
-    Nanoseconds (1 / fps * 1000_000_000)
+func fps_to_ns*(fps: int): Nanoseconds  = Nanoseconds (1 / fps * 1000_000_000)
+func ns_to_fps*(ns: Nanoseconds): float = 1 / ((float ns) / 1000_000_000)
 
-func ns_to_fps*(ns: Nanoseconds): float =
-    1 / ((float ns) / 1000_000_000)
-
-{.pop.} # inline
+{.pop.}

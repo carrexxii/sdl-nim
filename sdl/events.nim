@@ -319,11 +319,11 @@ proc sdl_get_window_from_event*(event): ptr Window                              
 
 iterator events*(): Event =
     var event: Event
-    while sdl_poll_event(event.addr):
+    while sdl_poll_event event.addr:
         yield event
 
 proc register_event*(): CustomEvent =
-    CustomEvent sdl_register_events(1)
+    CustomEvent sdl_register_events 1
 
 proc push_event*(event: Event): bool = sdl_push_event(event.addr)
 

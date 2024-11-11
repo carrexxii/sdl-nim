@@ -1,4 +1,6 @@
-from std/os import `/`, parent_dir
+from std/os        import `/`, parent_dir
+from std/strformat import `&`
+export `&`
 
 const
     Cwd = current_source_path.parent_dir()
@@ -14,5 +16,6 @@ type
 proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SdlLib.}
 proc cfree*(p: pointer)    {.importc: "free"                        .}
 
-# converter `OpaquePointer -> pointer`*(p: OpaquePointer): pointer = cast[pointer](p)
-# func `$`*(p: OpaquePointer): string = $cast[uint](p)
+proc sdl_assert*(cond: bool; msg: string) {.inline.} =
+    when not defined SdlNoGpuAssert:
+        assert cond, msg & &": '{get_error()}'"

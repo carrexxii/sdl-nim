@@ -1,4 +1,4 @@
-import sdl, sdl/ttf
+import sdl, sdl/[renderer, ttf]
 from std/strformat import `&`
 
 const
@@ -23,23 +23,18 @@ echo &"Nim version    : {NimVersion}"
 echo &"SDL version    : {sdl.version()}"
 echo &"SDL_ttf version: {ttf.version()}"
 
-assert init(initVideo or initEvents), &"Failed to initialize SDL: {sdl.get_error()}"
-assert ttf.init()                   , &"Failed to initialize SDL_ttf: {sdl.get_error()}"
+sdl.init(initVideo or initEvents)
+ttf.init()
 
 let (win, ren) = create_window_and_renderer("SDL Tests", WinW, WinH, winResizeable)
-assert (win != nil or ren != nil), &"Failed to create window and renderer: {sdl.get_error()}"
 ren.draw_colour = Olive
 
 let font = open_font &"tests/fonts/{FontName}.ttf"
-assert font != nil, &"Failed to load font \"{FontName}\": {sdl.get_error()}"
 font.size = 16
 let font_h = font.height()
 
 let msg = font.render_lcd(&"Font: '{FontName}'\n\n" & TestText, Black, Olive, wrap_len = WinW - 200)
-assert msg != nil, "Failed to render message"
-
 let tex = ren.create_texture msg
-assert tex != nil, "Failed to convert font surface to texture"
 
 var running = true
 while running:

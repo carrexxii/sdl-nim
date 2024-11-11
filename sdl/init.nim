@@ -45,6 +45,8 @@ proc sdl_get_app_metadata_property*(name: cstring): cstring                 {.im
 {.pop.}
 
 {.push inline.}
-proc version*(): Version          = sdl_get_version()
-proc init*(flags: InitFlag): bool = sdl_init flags
+proc version*(): Version = sdl_get_version()
+proc init*(flags: InitFlag): bool {.discardable.} =
+    result = sdl_init flags
+    sdl_assert result, "Failed to initialize SDL"
 {.pop.}

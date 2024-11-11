@@ -1,5 +1,5 @@
 import std/[strformat, options, sugar]
-import sdl, sdl/ttf, sdl/ui
+import sdl, sdl/[renderer, ttf, ui]
 
 const
     WinW = 1280

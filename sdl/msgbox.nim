@@ -43,6 +43,6 @@ type
         colour_scheme*: ptr MessageBoxColourScheme
 
 {.push dynlib: SdlLib.}
-proc show_message_box*(data: ptr MessageBoxData; btn_id: ptr cint): cbool                     {.importc: "SDL_ShowMessageBox"      .}
-proc show_simple_message_box*(flags: MessageBoxFlag; title, msg: cstring; win: Window): cbool {.importc: "SDL_ShowSimpleMessageBox".}
+proc show_message_box*(data: ptr MessageBoxData; btn_id: ptr cint): bool                     {.importc: "SDL_ShowMessageBox"      .}
+proc show_simple_message_box*(flags: MessageBoxFlag; title, msg: cstring; win: Window): bool {.importc: "SDL_ShowSimpleMessageBox".}
 {.pop.}

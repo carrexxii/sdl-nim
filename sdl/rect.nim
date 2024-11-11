@@ -13,7 +13,7 @@ type
 
 {.push inline.}
 
-func point*(x, y: SomeNumber = 0): Point     =  Point(x: int32   x, y: int32   y)
+func  point*(x, y: SomeNumber = 0): Point    =  Point(x: int32   x, y: int32   y)
 func fpoint*(x, y: SomeNumber = 0.0): FPoint = FPoint(x: float32 x, y: float32 y)
 
 func  rect*(x, y, w, h: SomeNumber = 0)  : Rect  =  Rect(x: cint    x, y: cint    y, w: cint    w, h: cint    h)
