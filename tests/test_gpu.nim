@@ -24,7 +24,7 @@ var
 sdl.init (initVideo or initEvents)
 let device = create_device(shaderFmtSpirV, true)
 let window = create_window("GPU Test", 640, 480, winNone)
-device.claim_window window
+device.claim window
 
 let vtx_shader  = device.create_shader(shaderVertex, ShaderDir / "simple.vert.spv")
 let frag_shader = device.create_shader(shaderVertex, ShaderDir / "simple.frag.spv")
@@ -62,7 +62,7 @@ let verts_buf = device.upload(bufUsageVertex, TriVerts)
 
 proc draw() =
     let cmd_buf   = acquire_cmd_buf device
-    let swapchain = cmd_buf.acquire_swapchain window
+    let swapchain = cmd_buf.swapchain_tex window
     let colour_target_info = ColourTargetInfo(
         tex         : swapchain.tex,
         clear_colour: ClearColour,
