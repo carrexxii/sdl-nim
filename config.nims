@@ -59,8 +59,6 @@ func is_git_repo(url: string): bool =
 #[ -------------------------------------------------------------------- ]#
 
 task restore, "Fetch and build dependencies":
-    run &"rm -rf {lib_dir}/*"
-    run &"git submodule update --init --remote --merge -j 8"
     for dep in deps:
         if is_git_repo dep.src:
             with_dir dep.dst:

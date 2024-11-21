@@ -101,7 +101,7 @@ type
 
 func colour*(r, g, b: SomeInteger; a: SomeInteger = 255): Colour =
     Colour(r: uint8 r, g: uint8 g, b: uint8 b, a: uint8 a)
-func fcolour*(r, g, b, a: SomeNumber): FColour =
+func fcolour*(r, g, b: SomeNumber; a: SomeNumber = 1.0): FColour =
     FColour(r: float32 r, g: float32 g, b: float32 b, a: float32 a)
 
 func `+`*[T: Colour | FColour](a, b: T): T = colour a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a

@@ -749,7 +749,7 @@ const supports_mode*     = supports_present_mode
 const supports_fmt*      = supports_format
 
 proc block_size*(fmt: TextureFormat): uint32 = sdl_gpu_texture_format_texel_block_size fmt
-proc block_sz*(fmt: TextureFormat): uint32   = block_size fmt
+const block_sz* = block_size
 
 proc create_device*(fmt_flags: ShaderFormatFlag; debug_mode: bool; name = ""): Device =
     result = sdl_create_gpu_device(fmt_flags, debug_mode, (if name == "": nil else: cstring name))
@@ -839,8 +839,8 @@ proc create_buffer*(dev; usage: BufferUsageFlag; sz: SomeInteger; props = Invali
     sdl_assert result, &"Failed to create buffer: '{get_error()}'"
 
 proc create_sampler*(dev; min_filter, mag_filter = filterNearest; mip_map_mode = mipMapModeNearest;
-                     addr_mode_u, addr_mode_v, addr_mode_w = addrModeRepeat; mip_lod_bias = 0'f32;
-                     max_anisotropy = 1'f32; compare_op = cmpInvalid; min_lod, max_lod = 1'f32;
+                     addr_mode_u, addr_mode_v, addr_mode_w = addrModeRepeat; mip_lod_bias: SomeNumber = 0;
+                     max_anisotropy: SomeNumber = 1; compare_op = cmpInvalid; min_lod, max_lod: SomeNumber = 1;
                      enable_anisotropy, enable_compare = false; props = InvalidProperty;
                      ): Sampler =
     let ci = SamplerCreateInfo(
@@ -850,11 +850,11 @@ proc create_sampler*(dev; min_filter, mag_filter = filterNearest; mip_map_mode =
         addr_mode_u      : addr_mode_u,
         addr_mode_v      : addr_mode_v,
         addr_mode_w      : addr_mode_w,
-        mip_lod_bias     : mip_lod_bias,
-        max_anisotropy   : max_anisotropy,
+        mip_lod_bias     : cfloat mip_lod_bias,
+        max_anisotropy   : cfloat max_anisotropy,
         compare_op       : compare_op,
-        min_lod          : min_lod,
-        max_lod          : max_lod,
+        min_lod          : cfloat min_lod,
+        max_lod          : cfloat max_lod,
         enable_anisotropy: enable_anisotropy,
         enable_compare   : enable_compare,
         props            : props,
@@ -862,18 +862,18 @@ proc create_sampler*(dev; min_filter, mag_filter = filterNearest; mip_map_mode =
     result = sdl_create_gpu_sampler(dev, ci.addr)
     sdl_assert result, &"Failed to create sampler: '{get_error()}'"
 
-proc create_texture*(dev; w, h: SomeInteger; depth_or_layer_count = 1'u32; kind = tex2D; fmt = texFmtR8G8B8A8Uint;
-                     usage = texUsageGraphicsStorageRead; lvl_count = 1'u32; sample_count = sampleCount1;
+proc create_texture*(dev; w, h: SomeInteger; depth_or_layer_count: SomeInteger = 1; kind = tex2D; fmt = texFmtR8G8B8A8Uint;
+                     usage = texUsageGraphicsStorageRead; lvl_count: SomeInteger = 1; sample_count = sampleCount1;
                      props = InvalidProperty;
                      ): Texture =
     let ci = TextureCreateInfo(
         kind                : kind,
         fmt                 : fmt,
         usage               : usage,
-        w                   : w,
-        h                   : h,
-        depth_or_layer_count: depth_or_layer_count,
-        lvl_count           : lvl_count,
+        w                   : uint32 w,
+        h                   : uint32 h,
+        depth_or_layer_count: uint32 depth_or_layer_count,
+        lvl_count           : uint32 lvl_count,
         sample_count        : sample_count,
         props               : props,
     )
@@ -897,7 +897,7 @@ proc begin_copy_pass*(cmd_buf): CopyPass =
     sdl_assert result, &"Failed to begin copy pass: '{get_error()}'"
 
 proc upload*(copy_pass; trans_buf: TransferBuffer; px_w, px_h: SomeInteger; tex; offset, mip_lvl, layer: SomeInteger = 0;
-             x, y, z: SomeInteger = 0; w: SomeInteger = px_w; h: SomeInteger = px_h; d: SomeInteger = 0; cycle = false;
+             x, y, z: SomeInteger = 0; w: SomeInteger = px_w; h: SomeInteger = px_h; d: SomeInteger = 1; cycle = false;
              ) =
     let src = TextureTransferInfo(
         trans_buf     : trans_buf,
@@ -1075,8 +1075,25 @@ proc upload*[T](dev; usage: BufferUsageFlag; data: T): Buffer =
 
     let cmd_buf   = acquire_cmd_buf dev
     let copy_pass = begin_copy_pass cmd_buf
-    with copy_pass:
-        upload trans_buf, result, sizeof data
-        `end`
+    copy_pass.upload trans_buf, result, sizeof data
+    `end`copy_pass
+
+    submit cmd_buf
+    dev.destroy trans_buf
+
+proc upload*(dev; pxs: pointer; w, h: SomeInteger; fmt = texFmtR8G8B8A8Unorm): Texture =
+    let data_sz   = (uint32 w)*(uint32 h)*fmt.block_sz
+    result        = dev.create_texture(w, h)
+    let trans_buf = dev.create_transfer_buffer data_sz
+
+    var tex_dst = dev.map trans_buf
+    copy_mem tex_dst, pxs, data_sz
+    dev.unmap trans_buf
+
+    let cmd_buf   = acquire_cmd_buf dev
+    let copy_pass = begin_copy_pass cmd_buf
+    copy_pass.upload trans_buf, w, h, result
+    `end` copy_pass
+
     submit cmd_buf
     dev.destroy trans_buf

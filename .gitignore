@@ -2,6 +2,7 @@
 !*.*
 !*/
 !LICENSE
+!lib/*
 
 test
 *.so*
