@@ -27,7 +27,7 @@ type
         mwdNormal
         mwdFlipped
 
-    MouseButton* {.size: sizeof(cint).} = enum
+    MouseButton* {.size: sizeof(uint8).} = enum
         mbLeft   = 1
         mbMiddle = 2
         mbRight  = 3

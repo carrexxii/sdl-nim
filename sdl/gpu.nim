@@ -25,8 +25,9 @@ ShaderFormatFlag.gen_bit_ops(
 )
 const shaderFmtInvalid* = ShaderFormatFlag 0
 
-type ColourComponentFlag* = distinct uint32
+type ColourComponentFlag* = distinct uint8
 ColourComponentFlag.gen_bit_ops colourCompR, colourCompG, colourCompB, colourCompA
+const colourCompNone* = ColourComponentFlag 0
 
 type
     PrimitiveKind* {.size: sizeof(cint).} = enum
@@ -575,48 +576,75 @@ converter `Fence -> bool`*(p: Fence): bool                       = cast[pointer]
 func viewport*(x, y, w, h, min_d, max_d: float32): Viewport =
     Viewport(x: x, y: y, w: w, h: h, min_depth: min_d, max_depth: max_d)
 
-func vertex_input_state*(descrs: openArray[VertexBufferDescription]; attrs: openArray[VertexAttribute]): VertexInputState =
+func vertex_input_state*(descrs: openArray[VertexBufferDescription];
+                         attrs : openArray[VertexAttribute];
+                         ): VertexInputState =
     VertexInputState(
         buf_descrs: descrs[0].addr,
         buf_count : uint32 descrs.len,
         attrs     : attrs[0].addr,
         attr_count: uint32 attrs.len
     )
-func vertex_descriptor*(slot, pitch: SomeInteger; input_rate: VertexInputRate; step_rate: SomeInteger = 0): VertexBufferDescription =
+
+func vertex_descriptor*(slot      : SomeInteger;
+                        pitch     : SomeInteger;
+                        input_rate: VertexInputRate;
+                        step_rate : SomeInteger = 0;
+                        ): VertexBufferDescription =
     VertexBufferDescription(
         slot      : uint32 slot,
         pitch     : uint32 pitch,
         input_rate: input_rate,
         step_rate : uint32 step_rate,
     )
-func vertex_attribute*(loc, slot: SomeInteger; fmt: VertexElementFormat; offset: SomeInteger): VertexAttribute =
+
+func vertex_attribute*(loc   : SomeInteger;
+                       slot  : SomeInteger;
+                       fmt   : VertexElementFormat;
+                       offset: SomeInteger;
+                       ): VertexAttribute =
     VertexAttribute(
         loc   : uint32 loc,
         slot  : uint32 slot,
         fmt   : fmt,
         offset: uint32 offset,
     )
-func vtx_descr*(slot, pitch: SomeInteger; input_rate: VertexInputRate; step_rate: SomeInteger = 0): VertexBufferDescription =
+
+func vtx_descr*(slot      : SomeInteger;
+                pitch     : SomeInteger;
+                input_rate: VertexInputRate;
+                step_rate : SomeInteger = 0;
+                ): VertexBufferDescription =
     vertex_descriptor slot, pitch, input_rate, step_rate
-func vtx_attr*(loc, slot: SomeInteger; fmt: VertexElementFormat; offset: SomeInteger): VertexAttribute =
+
+func vtx_attr*(loc   : SomeInteger;
+               slot  : SomeInteger;
+               fmt   : VertexElementFormat;
+               offset: SomeInteger;
+               ): VertexAttribute =
     vertex_attribute loc, slot, fmt, offset
 
 #[ -------------------------------------------------------------------- ]#
 
 using
-    dev         : Device
-    win         : Window
-    buf         : Buffer
-    trans_buf   : TransferBuffer
-    cmd_buf     : CommandBuffer
-    tex         : Texture
-    sampler     : Sampler
-    shader      : Shader
+    dev           : Device
+    win           : Window
+    gfx_pipeln    : GraphicsPipeline
+    compute_pipeln: ComputePipeline
+    buf           : Buffer
+    trans_buf     : TransferBuffer
+    cmd_buf       : CommandBuffer
+
     ren_pass    : RenderPass
     compute_pass: ComputePass
     copy_pass   : CopyPass
-    fst_slot    : uint32
-    bind_count  : uint32
+
+    tex       : Texture
+    tex_fmt   : TextureFormat
+    sampler   : Sampler
+    shader    : Shader
+    fst_slot  : uint32
+    bind_count: uint32
 
 {.push dynlib: SdlLib.}
 proc sdl_gpu_supports_shader_formats*(fmt_flags: ShaderFormatFlag; name: cstring): bool           {.importc: "SDL_GPUSupportsShaderFormats"     .}
@@ -638,13 +666,13 @@ proc sdl_create_gpu_texture*(dev; create_info: ptr TextureCreateInfo): Texture  
 proc sdl_create_gpu_buffer*(dev; create_info: ptr BufferCreateInfo): Buffer                                {.importc: "SDL_CreateGPUBuffer"          .}
 proc sdl_create_gpu_transfer_buffer*(dev; create_info: ptr TransferBufferCreateInfo): TransferBuffer       {.importc: "SDL_CreateGPUTransferBuffer"  .}
 
-proc sdl_release_gpu_texture*(dev; tex)                                {.importc: "SDL_ReleaseGPUTexture"         .}
-proc sdl_release_gpu_sampler*(dev; sampler)                            {.importc: "SDL_ReleaseGPUSampler"         .}
-proc sdl_release_gpu_buffer*(dev; buf)                                 {.importc: "SDL_ReleaseGPUBuffer"          .}
-proc sdl_release_gpu_transfer_buffer*(dev; trans_buf)                  {.importc: "SDL_ReleaseGPUTransferBuffer"  .}
-proc sdl_release_gpu_compute_pipeline*(dev; pipeln: ComputePipeline)   {.importc: "SDL_ReleaseGPUComputePipeline" .}
-proc sdl_release_gpu_shader*(dev; shader)                              {.importc: "SDL_ReleaseGPUShader"          .}
-proc sdl_release_gpu_graphics_pipeline*(dev; pipeln: GraphicsPipeline) {.importc: "SDL_ReleaseGPUGraphicsPipeline".}
+proc sdl_release_gpu_texture*(dev; tex)                     {.importc: "SDL_ReleaseGPUTexture"         .}
+proc sdl_release_gpu_sampler*(dev; sampler)                 {.importc: "SDL_ReleaseGPUSampler"         .}
+proc sdl_release_gpu_buffer*(dev; buf)                      {.importc: "SDL_ReleaseGPUBuffer"          .}
+proc sdl_release_gpu_transfer_buffer*(dev; trans_buf)       {.importc: "SDL_ReleaseGPUTransferBuffer"  .}
+proc sdl_release_gpu_compute_pipeline*(dev; compute_pipeln) {.importc: "SDL_ReleaseGPUComputePipeline" .}
+proc sdl_release_gpu_shader*(dev; shader)                   {.importc: "SDL_ReleaseGPUShader"          .}
+proc sdl_release_gpu_graphics_pipeline*(dev; gfx_pipeln)    {.importc: "SDL_ReleaseGPUGraphicsPipeline".}
 
 proc sdl_set_gpu_buffer_name*(dev; buf; text: cstring)   {.importc: "SDL_SetGPUBufferName"   .}
 proc sdl_set_gpu_texture_name*(dev; tex; text: cstring)  {.importc: "SDL_SetGPUTextureName"  .}
@@ -657,35 +685,38 @@ proc sdl_push_gpu_vertex_uniform_data*(cmd_buf; slot_idx: uint32; data: pointer;
 proc sdl_push_gpu_fragment_uniform_data*(cmd_buf; slot_idx: uint32; data: pointer; len: uint32) {.importc: "SDL_PushGPUFragmentUniformData".}
 proc sdl_push_gpu_compute_uniform_data*(cmd_buf; slot_idx: uint32; data: pointer; len: uint32)  {.importc: "SDL_PushGPUComputeUniformData" .}
 
-proc sdl_begin_gpu_render_pass*(cmd_buf; cti: ptr ColourTargetInfo; ct_count: uint32; dsti: ptr DepthStencilTargetInfo): RenderPass {.importc: "SDL_BeginGPURenderPass"              .}
-proc sdl_bind_gpu_graphics_pipeline*(ren_pass; pipeln: GraphicsPipeline)                                                            {.importc: "SDL_BindGPUGraphicsPipeline"         .}
-proc sdl_set_gpu_viewport*(ren_pass; viewport: ptr Viewport)                                                                        {.importc: "SDL_SetGPUViewport"                  .}
-proc sdl_set_gpu_scissor*(ren_pass; scissor: ptr Rect)                                                                              {.importc: "SDL_SetGPUScissor"                   .}
-proc sdl_set_gpu_blend_constants*(ren_pass; blend_consts: FColour)                                                                  {.importc: "SDL_SetGPUBlendConstants"            .}
-proc sdl_set_gpu_stencil_reference*(ren_pass; `ref`: uint8)                                                                         {.importc: "SDL_SetGPUStencilReference"          .}
-proc sdl_bind_gpu_vertex_buffer*(ren_pass; fst_slot; binds: ptr BufferBinding; bind_count)                                          {.importc: "SDL_BindGPUVertexBuffers"            .}
-proc sdl_bind_gpu_index_buffer*(ren_pass; `bind`: ptr BufferBinding; idx_elem_sz: IndexElementSize)                                 {.importc: "SDL_BindGPUIndexBuffer"              .}
-proc sdl_bind_gpu_vertex_samplers*(ren_pass; fst_slot; binds: ptr TextureSamplerBinding; bind_count)                                {.importc: "SDL_BindGPUVertexSamplers"           .}
-proc sdl_bind_gpu_vertex_storage_textures*(ren_pass; fst_slot; texs: ptr Texture; bind_count)                                       {.importc: "SDL_BindGPUVertexStorageTextures"    .}
-proc sdl_bind_gpu_vertex_storage_buffers*(ren_pass; fst_slot; bufs: ptr Buffer; bind_count)                                         {.importc: "SDL_BindGPUVertexStorageBuffers"     .}
-proc sdl_bind_gpu_fragment_samplers*(ren_pass; fst_slot; binds: ptr TextureSamplerBinding; bind_count)                              {.importc: "SDL_BindGPUFragmentSamplers"         .}
-proc sdl_bind_gpu_fragment_storage_textures*(ren_pass; fst_slot; texs: ptr Texture; bind_count)                                     {.importc: "SDL_BindGPUFragmentStorageTextures"  .}
-proc sdl_bind_gpu_fragment_storage_buffers*(ren_pass; fst_slot; bufs: ptr Buffer; bind_count)                                       {.importc: "SDL_BindGPUFragmentStorageBuffers"   .}
-proc sdl_draw_gpu_indexed_primitives*(ren_pass; idx_count, inst_count, fst_idx: uint32; vtx_offset: int32; fst_inst: uint32)        {.importc: "SDL_DrawGPUIndexedPrimitives"        .}
-proc sdl_draw_gpu_primitives*(ren_pass; vtx_count, inst_count, fst_vtx, fst_inst: uint32)                                           {.importc: "SDL_DrawGPUPrimitives"               .}
-proc sdl_draw_gpu_primitives_indirect*(ren_pass; buf: Buffer; offset, draw_count: uint32)                                           {.importc: "SDL_DrawGPUPrimitivesIndirect"       .}
-proc sdl_draw_gpu_indexed_primitives_indirect*(ren_pass; buf: Buffer; offset, draw_count: uint32)                                   {.importc: "SDL_DrawGPUIndexedPrimitivesIndirect".}
-proc sdl_end_gpu_render_pass*(ren_pass)                                                                                             {.importc: "SDL_EndGPURenderPass"                .}
+using dsti: ptr DepthStencilTargetInfo
+proc sdl_begin_gpu_render_pass*(cmd_buf; cti: ptr ColourTargetInfo; ct_count: uint32; dsti): RenderPass                      {.importc: "SDL_BeginGPURenderPass"              .}
+proc sdl_bind_gpu_graphics_pipeline*(ren_pass; gfx_pipeln)                                                                   {.importc: "SDL_BindGPUGraphicsPipeline"         .}
+proc sdl_set_gpu_viewport*(ren_pass; viewport: ptr Viewport)                                                                 {.importc: "SDL_SetGPUViewport"                  .}
+proc sdl_set_gpu_scissor*(ren_pass; scissor: ptr Rect)                                                                       {.importc: "SDL_SetGPUScissor"                   .}
+proc sdl_set_gpu_blend_constants*(ren_pass; blend_consts: FColour)                                                           {.importc: "SDL_SetGPUBlendConstants"            .}
+proc sdl_set_gpu_stencil_reference*(ren_pass; `ref`: uint8)                                                                  {.importc: "SDL_SetGPUStencilReference"          .}
+proc sdl_bind_gpu_vertex_buffer*(ren_pass; fst_slot; binds: ptr BufferBinding; bind_count)                                   {.importc: "SDL_BindGPUVertexBuffers"            .}
+proc sdl_bind_gpu_index_buffer*(ren_pass; `bind`: ptr BufferBinding; idx_elem_sz: IndexElementSize)                          {.importc: "SDL_BindGPUIndexBuffer"              .}
+proc sdl_bind_gpu_vertex_samplers*(ren_pass; fst_slot; binds: ptr TextureSamplerBinding; bind_count)                         {.importc: "SDL_BindGPUVertexSamplers"           .}
+proc sdl_bind_gpu_vertex_storage_textures*(ren_pass; fst_slot; texs: ptr Texture; bind_count)                                {.importc: "SDL_BindGPUVertexStorageTextures"    .}
+proc sdl_bind_gpu_vertex_storage_buffers*(ren_pass; fst_slot; bufs: ptr Buffer; bind_count)                                  {.importc: "SDL_BindGPUVertexStorageBuffers"     .}
+proc sdl_bind_gpu_fragment_samplers*(ren_pass; fst_slot; binds: ptr TextureSamplerBinding; bind_count)                       {.importc: "SDL_BindGPUFragmentSamplers"         .}
+proc sdl_bind_gpu_fragment_storage_textures*(ren_pass; fst_slot; texs: ptr Texture; bind_count)                              {.importc: "SDL_BindGPUFragmentStorageTextures"  .}
+proc sdl_bind_gpu_fragment_storage_buffers*(ren_pass; fst_slot; bufs: ptr Buffer; bind_count)                                {.importc: "SDL_BindGPUFragmentStorageBuffers"   .}
+proc sdl_draw_gpu_indexed_primitives*(ren_pass; idx_count, inst_count, fst_idx: uint32; vtx_offset: int32; fst_inst: uint32) {.importc: "SDL_DrawGPUIndexedPrimitives"        .}
+proc sdl_draw_gpu_primitives*(ren_pass; vtx_count, inst_count, fst_vtx, fst_inst: uint32)                                    {.importc: "SDL_DrawGPUPrimitives"               .}
+proc sdl_draw_gpu_primitives_indirect*(ren_pass; buf: Buffer; offset, draw_count: uint32)                                    {.importc: "SDL_DrawGPUPrimitivesIndirect"       .}
+proc sdl_draw_gpu_indexed_primitives_indirect*(ren_pass; buf: Buffer; offset, draw_count: uint32)                            {.importc: "SDL_DrawGPUIndexedPrimitivesIndirect".}
+proc sdl_end_gpu_render_pass*(ren_pass)                                                                                      {.importc: "SDL_EndGPURenderPass"                .}
 
-proc sdl_begin_gpu_compute_pass*(cmd_buf; storage_tex_binds: ptr StorageTextureReadWriteBinding; storage_tex_bind_count: uint32;
-                                          storage_buf_binds: ptr StorageBufferReadWriteBinding ; storage_buf_bind_count: uint32): ComputePass {.importc: "SDL_BeginGPUComputePass"          .}
-proc sdl_bind_gpu_compute_pipeline*(compute_pass; pipeln: ComputePipeline)                                                                    {.importc: "SDL_BindGPUComputePipeline"       .}
-proc sdl_bind_gpu_compute_samplers*(compute_pass; fst_slot; binds: ptr TextureSamplerBinding; bind_count: uint32)                             {.importc: "SDL_BindGPUComputeSamplers"       .}
-proc sdl_bind_gpu_compute_storage_textures*(compute_pass; fst_slot; texs: ptr Texture; tex_count: uint32)                                     {.importc: "SDL_BindGPUComputeStorageTextures".}
-proc sdl_bind_gpu_compute_storage_buffers*(compute_pass; fst_slot; bufs: ptr Buffer; buf_count: uint32)                                       {.importc: "SDL_BindGPUComputeStorageBuffers" .}
-proc sdl_dispatch_gpu_compute*(compute_pass; group_count_x, group_count_y, group_count_z: uint32)                                             {.importc: "SDL_DispatchGPUCompute"           .}
-proc sdl_dispatch_gpu_compute_indirect*(compute_pass; buf: Buffer; offset: uint32)                                                            {.importc: "SDL_DispatchGPUComputeIndirect"   .}
-proc sdl_end_gpu_compute_pass*(compute_pass)                                                                                                  {.importc: "SDL_EndGPUComputePass"            .}
+using
+    stb: ptr StorageTextureReadWriteBinding
+    sbb: ptr StorageBufferReadWriteBinding 
+proc sdl_begin_gpu_compute_pass*(cmd_buf; stb; stb_count: uint32; sbb; sbb_count: uint32): ComputePass            {.importc: "SDL_BeginGPUComputePass"          .}
+proc sdl_bind_gpu_compute_pipeline*(compute_pass; compute_pipeln)                                                 {.importc: "SDL_BindGPUComputePipeline"       .}
+proc sdl_bind_gpu_compute_samplers*(compute_pass; fst_slot; binds: ptr TextureSamplerBinding; bind_count: uint32) {.importc: "SDL_BindGPUComputeSamplers"       .}
+proc sdl_bind_gpu_compute_storage_textures*(compute_pass; fst_slot; texs: ptr Texture; tex_count: uint32)         {.importc: "SDL_BindGPUComputeStorageTextures".}
+proc sdl_bind_gpu_compute_storage_buffers*(compute_pass; fst_slot; bufs: ptr Buffer; buf_count: uint32)           {.importc: "SDL_BindGPUComputeStorageBuffers" .}
+proc sdl_dispatch_gpu_compute*(compute_pass; group_count_x, group_count_y, group_count_z: uint32)                 {.importc: "SDL_DispatchGPUCompute"           .}
+proc sdl_dispatch_gpu_compute_indirect*(compute_pass; buf: Buffer; offset: uint32)                                {.importc: "SDL_DispatchGPUComputeIndirect"   .}
+proc sdl_end_gpu_compute_pass*(compute_pass)                                                                      {.importc: "SDL_EndGPUComputePass"            .}
 
 proc sdl_map_gpu_transfer_buffer*(dev; buf: TransferBuffer; cycle: bool): pointer {.importc: "SDL_MapGPUTransferBuffer"  .}
 proc sdl_unmap_gpu_transfer_buffer*(dev; buf: TransferBuffer)                     {.importc: "SDL_UnmapGPUTransferBuffer".}
@@ -716,9 +747,9 @@ proc sdl_wait_for_gpu_fences*(dev; wait_all: bool; fences: ptr Fence; fence_coun
 proc sdl_query_gpu_fence*(dev; fence: Fence): bool                                                      {.importc: "SDL_QueryGPUFence"                        .}
 proc sdl_release_gpu_fence*(dev; fence: Fence)                                                          {.importc: "SDL_ReleaseGPUFence"                      .}
 
-proc sdl_gpu_texture_format_texel_block_size*(fmt: TextureFormat): uint32                                        {.importc: "SDL_GPUTextureFormatTexelBlockSize".}
-proc sdl_gpu_texture_supports_format*(dev; fmt: TextureFormat; kind: TextureKind; usage: TextureUsageFlag): bool {.importc: "SDL_GPUTextureSupportsFormat"      .}
-proc sdl_gpu_texture_supports_sample_count*(dev; fmt: TextureFormat; cample_count: SampleCount): bool            {.importc: "SDL_GPUTextureSupportsSampleCount" .}
+proc sdl_gpu_texture_format_texel_block_size*(tex_fmt): uint32                                        {.importc: "SDL_GPUTextureFormatTexelBlockSize".}
+proc sdl_gpu_texture_supports_format*(dev; tex_fmt; kind: TextureKind; usage: TextureUsageFlag): bool {.importc: "SDL_GPUTextureSupportsFormat"      .}
+proc sdl_gpu_texture_supports_sample_count*(dev; tex_fmt; cample_count: SampleCount): bool            {.importc: "SDL_GPUTextureSupportsSampleCount" .}
 
 # TODO
 when defined SdlPlatformGdk:
@@ -735,11 +766,11 @@ proc get_driver*(i: SomeInteger): cstring       = sdl_get_gpu_driver cint i
 proc get_driver*(dev): cstring                  = sdl_get_gpu_device_driver dev
 proc get_shader_formats*(dev): ShaderFormatFlag = sdl_get_gpu_shader_formats dev
 
-proc swapchain_texture_format*(dev; win): TextureFormat                                          = sdl_get_gpu_swapchain_texture_format dev, win
-proc supports_swapchain_composition*(dev; win; comp: SwapchainComposition): bool                 = sdl_window_supports_gpu_swapchain_composition dev, win, comp
-proc supports_present_mode*(dev; win; mode: PresentMode): bool                                   = sdl_window_supports_gpu_present_mode dev, win, mode
-proc supports_format*(dev; fmt: TextureFormat; kind: TextureKind; usage: TextureUsageFlag): bool = sdl_gpu_texture_supports_format dev, fmt, kind, usage
-proc supports_sample_count*(dev; fmt: TextureFormat; count: SampleCount): bool                   = sdl_gpu_texture_supports_sample_count dev, fmt, count
+proc swapchain_texture_format*(dev; win): TextureFormat                               = sdl_get_gpu_swapchain_texture_format dev, win
+proc supports_swapchain_composition*(dev; win; comp: SwapchainComposition): bool      = sdl_window_supports_gpu_swapchain_composition dev, win, comp
+proc supports_present_mode*(dev; win; mode: PresentMode): bool                        = sdl_window_supports_gpu_present_mode dev, win, mode
+proc supports_format*(dev; tex_fmt; kind: TextureKind; usage: TextureUsageFlag): bool = sdl_gpu_texture_supports_format dev, tex_fmt, kind, usage
+proc supports_sample_count*(dev; tex_fmt; count: SampleCount): bool                   = sdl_gpu_texture_supports_sample_count dev, tex_fmt, count
 proc set_swapchain_params*(dev; win; comp: SwapchainComposition; mode: PresentMode): bool {.discardable.} =
     result = sdl_set_gpu_swapchain_parameters(dev, win, comp, mode)
     sdl_assert result, &"Failed to set GPU swapchain parameters ({comp}, {mode})"
@@ -748,7 +779,7 @@ const supports_comp*     = supports_swapchain_composition
 const supports_mode*     = supports_present_mode
 const supports_fmt*      = supports_format
 
-proc block_size*(fmt: TextureFormat): uint32 = sdl_gpu_texture_format_texel_block_size fmt
+proc block_size*(tex_fmt): uint32 = sdl_gpu_texture_format_texel_block_size tex_fmt
 const block_sz* = block_size
 
 proc create_device*(fmt_flags: ShaderFormatFlag; debug_mode: bool; name = ""): Device =
@@ -780,15 +811,21 @@ proc create_graphics_pipeline*(dev; vs, fs: Shader; vtx_input_state: VertexInput
     result = sdl_create_gpu_graphics_pipeline(dev, ci.addr)
     sdl_assert result, &"Failed to create graphics pipeline: '{get_error()}'"
 
-proc create_compute_pipeline*(dev; code: string; thread_count: tuple[x, y, z: uint32];
-                              entry_point = "main"; fmt = shaderFmtSpirV; sampler_count: SomeInteger = 0;
-                              r_tex_count, r_buf_count, rw_tex_count, rw_buf_count, uniform_buf_count: SomeInteger = 0;
+proc create_compute_pipeline*(dev; code: openArray[byte]; thread_count: tuple[x, y, z: uint32];
+                              entry = "main";
+                              fmt   = shaderFmtSpirV;
                               props = InvalidProperty;
+                              sampler_count    : SomeInteger = 0;
+                              r_tex_count      : SomeInteger = 0;
+                              r_buf_count      : SomeInteger = 0;
+                              rw_tex_count     : SomeInteger = 0;
+                              rw_buf_count     : SomeInteger = 0;
+                              uniform_buf_count: SomeInteger = 0;
                               ): ComputePipeline =
     let ci = ComputePipelineCreateInfo(
         code_sz                    : uint32 code.len,
         code                       : code[0].addr,
-        entry_point                : cstring entry_point,
+        entry_point                : cstring entry,
         fmt                        : fmt,
         sampler_count              : sampler_count,
         readonly_storage_tex_count : r_tex_count,
@@ -804,12 +841,18 @@ proc create_compute_pipeline*(dev; code: string; thread_count: tuple[x, y, z: ui
     result = sdl_create_gpu_compute_pipeline(dev, ci.addr)
     sdl_assert result, &"Failed to create compute pipeline ({ci})"
 
-proc create_shader*(dev; stage: ShaderStage; code: pointer; code_sz: SomeInteger; entry = "main"; fmt = shaderFmtSpirV;
-                    sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count: SomeInteger = 0; props = InvalidProperty;
+proc create_shader*(dev; stage: ShaderStage; code: string;
+                    entry = "main";
+                    fmt   = shaderFmtSpirV;
+                    props = InvalidProperty;
+                    sampler_count    : SomeInteger = 0;
+                    storage_tex_count: SomeInteger = 0;
+                    storage_buf_count: SomeInteger = 0;
+                    uniform_buf_count: SomeInteger = 0;
                     ): Shader =
     let ci = ShaderCreateInfo(
-        code_sz          : uint code_sz,
-        code             : code,
+        code_sz          : uint32 code.len,
+        code             : code[0].addr,
         entry_point      : cstring entry,
         fmt              : fmt,
         stage            : stage,
@@ -823,11 +866,17 @@ proc create_shader*(dev; stage: ShaderStage; code: pointer; code_sz: SomeInteger
     sdl_assert result, &"Failed to create shader: '{get_error()}'"
 
 # TODO: shader format and shader stage detection via file extension
-proc create_shader*(dev; stage: ShaderStage; path: string; entry = "main"; fmt = shaderFmtSpirV;
-                    sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count: SomeInteger = 0; props = InvalidProperty;
-                    ): Shader =
+proc create_shader_from_file*(dev; stage: ShaderStage; path: string;
+                              entry = "main";
+                              fmt   = shaderFmtSpirV;
+                              props = InvalidProperty;
+                              sampler_count    : SomeInteger = 0;
+                              storage_tex_count: SomeInteger = 0;
+                              storage_buf_count: SomeInteger = 0;
+                              uniform_buf_count: SomeInteger = 0;
+                              ): Shader =
     let code = read_file path
-    create_shader dev, stage, code[0].addr, code.len, entry, fmt, sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count, props
+    create_shader dev, stage, code, entry, fmt, props, sampler_count, storage_tex_count, storage_buf_count, uniform_buf_count
 
 proc create_buffer*(dev; usage: BufferUsageFlag; sz: SomeInteger; props = InvalidProperty): Buffer =
     let ci = BufferCreateInfo(
@@ -838,10 +887,25 @@ proc create_buffer*(dev; usage: BufferUsageFlag; sz: SomeInteger; props = Invali
     result = sdl_create_gpu_buffer(dev, ci.addr)
     sdl_assert result, &"Failed to create buffer: '{get_error()}'"
 
-proc create_sampler*(dev; min_filter, mag_filter = filterNearest; mip_map_mode = mipMapModeNearest;
-                     addr_mode_u, addr_mode_v, addr_mode_w = addrModeRepeat; mip_lod_bias: SomeNumber = 0;
-                     max_anisotropy: SomeNumber = 1; compare_op = cmpInvalid; min_lod, max_lod: SomeNumber = 1;
-                     enable_anisotropy, enable_compare = false; props = InvalidProperty;
+proc create_buffer*(dev; usage: BufferUsageFlag; sz: SomeInteger; name: string; props = InvalidProperty): Buffer =
+    result = create_buffer(dev, usage, sz, props)
+    dev.set_buf_name result, name
+
+proc create_sampler*(dev;
+                     min_filter        = filterNearest;
+                     mag_filter        = filterNearest;
+                     mip_map_mode      = mipMapModeNearest;
+                     addr_mode_u       = addrModeRepeat;
+                     addr_mode_v       = addrModeRepeat;
+                     addr_mode_w       = addrModeRepeat;
+                     compare_op        = cmpInvalid;
+                     enable_anisotropy = false;
+                     enable_compare    = false;
+                     props             = InvalidProperty;
+                     mip_lod_bias  : SomeNumber = 0;
+                     max_anisotropy: SomeNumber = 1;
+                     min_lod       : SomeNumber = 1;
+                     max_lod       : SomeNumber = 1;
                      ): Sampler =
     let ci = SamplerCreateInfo(
         min_filter       : min_filter,
@@ -862,9 +926,14 @@ proc create_sampler*(dev; min_filter, mag_filter = filterNearest; mip_map_mode =
     result = sdl_create_gpu_sampler(dev, ci.addr)
     sdl_assert result, &"Failed to create sampler: '{get_error()}'"
 
-proc create_texture*(dev; w, h: SomeInteger; depth_or_layer_count: SomeInteger = 1; kind = tex2D; fmt = texFmtR8G8B8A8Uint;
-                     usage = texUsageGraphicsStorageRead; lvl_count: SomeInteger = 1; sample_count = sampleCount1;
-                     props = InvalidProperty;
+proc create_texture*(dev; w: SomeInteger; h: SomeInteger;
+                     kind         = tex2D;
+                     fmt          = texFmtR8G8B8A8Unorm;
+                     usage        = texUsageSampler;
+                     props        = InvalidProperty;
+                     sample_count = sampleCount1;
+                     depth_or_layer_count: SomeInteger = 1;
+                     lvl_count           : SomeInteger = 1;
                      ): Texture =
     let ci = TextureCreateInfo(
         kind                : kind,
@@ -880,7 +949,10 @@ proc create_texture*(dev; w, h: SomeInteger; depth_or_layer_count: SomeInteger =
     result = sdl_create_gpu_texture(dev, ci.addr)
     sdl_assert result, &"Failed to create texture: '{get_error()}'"
 
-proc create_transfer_buffer*(dev; sz: SomeInteger; usage = transferUpload; props = InvalidProperty): TransferBuffer =
+proc create_transfer_buffer*(dev; sz: SomeInteger;
+                             usage = transferUpload;
+                             props = InvalidProperty;
+                             ): TransferBuffer =
     let ci = TransferBufferCreateInfo(
         usage: usage,
         sz   : uint32 sz,
@@ -896,8 +968,13 @@ proc begin_copy_pass*(cmd_buf): CopyPass =
     result = sdl_begin_gpu_copy_pass cmd_buf
     sdl_assert result, &"Failed to begin copy pass: '{get_error()}'"
 
-proc upload*(copy_pass; trans_buf: TransferBuffer; px_w, px_h: SomeInteger; tex; offset, mip_lvl, layer: SomeInteger = 0;
-             x, y, z: SomeInteger = 0; w: SomeInteger = px_w; h: SomeInteger = px_h; d: SomeInteger = 1; cycle = false;
+proc upload*(copy_pass; trans_buf: TransferBuffer; tex; px_w: SomeInteger; px_h: SomeInteger;
+             offset : SomeInteger = 0;
+             mip_lvl: SomeInteger = 0;
+             layer  : SomeInteger = 0;
+             x: SomeInteger = 0   ; y: SomeInteger = 0   ; z: SomeInteger = 0;
+             w: SomeInteger = px_w; h: SomeInteger = px_h; d: SomeInteger = 1;
+             cycle = false;
              ) =
     let src = TextureTransferInfo(
         trans_buf     : trans_buf,
@@ -915,7 +992,9 @@ proc upload*(copy_pass; trans_buf: TransferBuffer; px_w, px_h: SomeInteger; tex;
     sdl_upload_to_gpu_texture copy_pass, src.addr, dst.addr, cycle
 
 proc upload*(copy_pass; trans_buf: TransferBuffer; buf: Buffer; sz: SomeInteger;
-             trans_buf_offset, buf_offset: SomeInteger = 0; cycle = false;
+             trans_buf_offset: SomeInteger = 0;
+             buf_offset      : SomeInteger = 0;
+             cycle = false;
              ) =
     let src = TransferBufferLocation(
         trans_buf: trans_buf,
@@ -928,7 +1007,7 @@ proc upload*(copy_pass; trans_buf: TransferBuffer; buf: Buffer; sz: SomeInteger;
     )
     sdl_upload_to_gpu_buffer copy_pass, src.addr, dst.addr, cycle
 
-proc copy*(copy_pass; dst, src: TextureLocation; w, h, d: SomeInteger; cycle = false) =
+proc copy*(copy_pass; dst, src: TextureLocation; w: SomeInteger; h: SomeInteger; d: SomeInteger; cycle = false) =
     sdl_copy_gpu_texture_to_texture copy_pass, src.addr, dst.addr, uint32 w, uint32 h, uint32 d, cycle
 proc copy*(copy_pass; dst, src: BufferLocation; sz: SomeInteger; cycle = false) =
     sdl_copy_gpu_buffer_to_buffer copy_pass, src.addr, dst.addr, uint32 sz, cycle
@@ -948,27 +1027,28 @@ proc release*(dev; win) = sdl_release_window_from_gpu_device dev, win
 proc acquire_command_buffer*(dev): CommandBuffer =
     result = sdl_acquire_gpu_command_buffer dev
     sdl_assert result, &"Failed to acquire command buffer: '{get_error()}'"
-proc acquire_cmd_buf*(dev): CommandBuffer = acquire_command_buffer dev
+const acquire_cmd_buf* = acquire_command_buffer
 
 proc acquire_swapchain_texture*(cmd_buf; win): tuple[tex: Texture; w, h: uint32] =
     let success = sdl_acquire_gpu_swapchain_texture(cmd_buf, win, result.tex.addr, result.w.addr, result.h.addr)
     sdl_assert success, &"Failed to acquire swapchain texture: '{get_error()}'"
 const swapchain_tex* = acquire_swapchain_texture
 
-proc push_vertex_uniform_data*(cmd_buf; slot: SomeInteger; data: openArray[byte]) =
-    sdl_push_gpu_vertex_uniform_data cmd_buf, uint32 slot, data[0].addr, uint32 data.len
-proc push_fragment_uniform_data*(cmd_buf; slot: SomeInteger; data: openArray[byte]) =
-    sdl_push_gpu_fragment_uniform_data cmd_buf, uint32 slot, data[0].addr, uint32 data.len
-proc push_compute_uniform_data*(cmd_buf; slot: SomeInteger; data: openArray[byte]) =
-    sdl_push_gpu_compute_uniform_data cmd_buf, uint32 slot, data[0].addr, uint32 data.len
-proc push_vtx_uniform*(cmd_buf; slot: SomeInteger; data: openArray[byte])     = push_vertex_uniform_data   cmd_buf, slot, data
-proc push_frag_uniform*(cmd_buf; slot: SomeInteger; data: openArray[byte])    = push_fragment_uniform_data cmd_buf, slot, data
-proc push_compute_uniform*(cmd_buf; slot: SomeInteger; data: openArray[byte]) = push_compute_uniform_data  cmd_buf, slot, data
+proc push_vertex_uniform_data*[T](cmd_buf; slot: SomeInteger; data: T)   = sdl_push_gpu_vertex_uniform_data   cmd_buf, uint32 slot, data[0].addr, uint32 sizeof T
+proc push_fragment_uniform_data*[T](cmd_buf; slot: SomeInteger; data: T) = sdl_push_gpu_fragment_uniform_data cmd_buf, uint32 slot, data[0].addr, uint32 sizeof T
+proc push_compute_uniform_data*[T](cmd_buf; slot: SomeInteger; data: T)  = sdl_push_gpu_compute_uniform_data  cmd_buf, uint32 slot, data[0].addr, uint32 sizeof T
+proc push_vtx_uniform*[T](cmd_buf; slot: SomeInteger; data: T)     = push_vertex_uniform_data   cmd_buf, slot, data
+proc push_frag_uniform*[T](cmd_buf; slot: SomeInteger; data: T)    = push_fragment_uniform_data cmd_buf, slot, data
+proc push_compute_uniform*[T](cmd_buf; slot: SomeInteger; data: T) = push_compute_uniform_data  cmd_buf, slot, data
 
 proc gen_mip_maps*(cmd_buf; tex) = sdl_generate_mip_maps_for_gpu_texture cmd_buf, tex
 
-proc blit*(cmd_buf; dst, src: BlitRegion; load_op = loadLoad; clear_colour = FBlack;
-           flip_mode = flipNone; filter = filterNearest; cycle = false;
+proc blit*(cmd_buf; dst, src: BlitRegion;
+           load_op      = loadLoad;
+           clear_colour = FBlack;
+           flip_mode    = flipNone;
+           filter       = filterNearest;
+           cycle        = false;
            ) =
     let blit_info = BlitInfo(
         src         : src,
@@ -994,11 +1074,13 @@ proc begin_render_pass*(cmd_buf; cti: openArray[ColourTargetInfo]; dsti = none D
     result = sdl_begin_gpu_render_pass(cmd_buf, cti[0].addr, uint32 cti.len, dsti)
     sdl_assert result, &"Failed to begin render pass: '{get_error()}'"
 
-proc `bind`*(ren_pass; pipeln: GraphicsPipeline)                                          = ren_pass.sdl_bind_gpu_graphics_pipeline pipeln
-proc `bind`*(ren_pass; buf: BufferBinding; idx_elem_sz: IndexElementSize)                 = ren_pass.sdl_bind_gpu_index_buffer buf.addr, idx_elem_sz
-proc `bind`*(ren_pass; fst_slot: SomeInteger; binds: openArray[TextureSamplerBinding])    = ren_pass.sdl_bind_gpu_vertex_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
-proc `bind`*(ren_pass; fst_slot: SomeInteger; samplers: openArray[TextureSamplerBinding]) = ren_pass.sdl_bind_gpu_fragment_samplers uint32 fst_slot, samplers[0].addr, uint32 samplers.len
-proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[BufferBinding])             = ren_pass.sdl_bind_gpu_vertex_buffer uint32 fst_slot, bufs[0].addr, uint32 bufs.len
+proc `bind`*(ren_pass; gfx_pipeln)                                            = ren_pass.sdl_bind_gpu_graphics_pipeline gfx_pipeln
+proc `bind`*(ren_pass; buf: BufferBinding; idx_elem_sz: IndexElementSize)     = ren_pass.sdl_bind_gpu_index_buffer buf.addr, idx_elem_sz
+proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[BufferBinding]) = ren_pass.sdl_bind_gpu_vertex_buffer uint32 fst_slot, bufs[0].addr, uint32 bufs.len
+proc `bind`*(ren_pass; fst_slot: SomeInteger; binds: openArray[TextureSamplerBinding]; stage = shaderFragment) =
+    case stage
+    of shaderVertex  :ren_pass.sdl_bind_gpu_vertex_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
+    of shaderFragment:ren_pass.sdl_bind_gpu_fragment_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
 proc `bind`*(ren_pass; fst_slot: SomeInteger; texs: openArray[Texture]; stage = shaderVertex) =
     case stage
     of shaderVertex  : ren_pass.sdl_bind_gpu_vertex_storage_textures   uint32 fst_slot, texs[0].addr, uint32 texs.len
@@ -1008,27 +1090,45 @@ proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[Buffer]; stage = s
     of shaderVertex  : ren_pass.sdl_bind_gpu_vertex_storage_buffers   uint32 fst_slot, bufs[0].addr, uint32 bufs.len
     of shaderFragment: ren_pass.sdl_bind_gpu_fragment_storage_buffers uint32 fst_slot, bufs[0].addr, uint32 bufs.len
 
-proc draw*(ren_pass; vtx_count: SomeInteger; inst_count: SomeInteger = 1; fst_vtx, fst_inst: SomeInteger = 0) =
+proc draw*(ren_pass; vtx_count: SomeInteger;
+           inst_count: SomeInteger = 1;
+           fst_vtx   : SomeInteger = 0;
+           fst_inst  : SomeInteger = 0;
+           ) =
     ren_pass.sdl_draw_gpu_primitives uint32 vtx_count, uint32 inst_count, uint32 fst_vtx, uint32 fst_inst
-proc draw_indexed*(ren_pass; idx_count: SomeInteger; inst_count: SomeInteger = 1; fst_idx, vtx_offset, fst_inst: SomeInteger = 0) =
+proc draw_indexed*(ren_pass; idx_count: SomeInteger;
+                   inst_count: SomeInteger = 1;
+                   fst_idx   : SomeInteger = 0;
+                   vtx_offset: SomeInteger = 0;
+                   fst_inst  : SomeInteger = 0;
+                   ) =
     ren_pass.sdl_draw_gpu_indexed_primitives uint32 idx_count, uint32 inst_count, uint32 fst_idx, int32 vtx_offset, uint32 fst_inst
-proc draw_indirect*(ren_pass; buf: Buffer; offset: SomeInteger = 0; draw_count: SomeInteger = 1) =
+proc draw_indirect*(ren_pass; buf: Buffer;
+                    offset    : SomeInteger = 0;
+                    draw_count: SomeInteger = 1;
+                    ) =
     ren_pass.sdl_draw_gpu_primitives_indirect buf, uint32 offset, uint32 draw_count
-proc draw_indirect_indexed*(ren_pass; buf: Buffer; offset: SomeInteger = 0; draw_count: SomeInteger = 1) =
+proc draw_indirect_indexed*(ren_pass; buf: Buffer;
+                            offset    : SomeInteger = 0;
+                            draw_count: SomeInteger = 1;
+                            ) =
     ren_pass.sdl_draw_gpu_indexed_primitives_indirect buf, uint32 offset, uint32 draw_count
 
 proc `end`*(ren_pass) = sdl_end_gpu_render_pass ren_pass
 
-proc begin_compute_pass*(cmd_buf; tex_binds: openArray[StorageTextureReadWriteBinding]; buf_binds: openArray[StorageBufferReadWriteBinding]): ComputePass =
+proc begin_compute_pass*(cmd_buf;
+                         tex_binds: openArray[StorageTextureReadWriteBinding];
+                         buf_binds: openArray[StorageBufferReadWriteBinding];
+                         ): ComputePass =
     result = sdl_begin_gpu_compute_pass(cmd_buf, tex_binds[0].addr, uint32 tex_binds.len, buf_binds[0].addr, uint32 buf_binds.len)
     sdl_assert result, &"Failed to begin compute pass ({tex_binds.len} texture bindings and {buf_binds.len} buffer bindings)"
 
-proc `bind`*(compute_pass; pipeln: ComputePipeline) = sdl_bind_gpu_compute_pipeline compute_pass, pipeln
+proc `bind`*(compute_pass; compute_pipeln)                                       = sdl_bind_gpu_compute_pipeline         compute_pass, compute_pipeln
 proc `bind`*(compute_pass; fst_slot; samplers: openArray[TextureSamplerBinding]) = sdl_bind_gpu_compute_samplers         compute_pass, fst_slot, samplers[0].addr, uint32 samplers.len
 proc `bind`*(compute_pass; fst_slot; texs: openArray[Texture])                   = sdl_bind_gpu_compute_storage_textures compute_pass, fst_slot, texs[0].addr, uint32 texs.len
 proc `bind`*(compute_pass; fst_slot; bufs: openArray[Buffer])                    = sdl_bind_gpu_compute_storage_buffers  compute_pass, fst_slot, bufs[0].addr, uint32 bufs.len
 
-proc dispatch*(compute_pass; group_counts: tuple[x, y, z: uint32]) = sdl_dispatch_gpu_compute compute_pass, group_counts.x, group_counts.y, group_counts.z
+proc dispatch*(compute_pass; group_counts: tuple[x, y, z: uint32])      = sdl_dispatch_gpu_compute compute_pass, group_counts.x, group_counts.y, group_counts.z
 proc dispatch_indirect*(compute_pass; buf: Buffer; offset: SomeInteger) = sdl_dispatch_gpu_compute_indirect compute_pass, buf, uint32 offset
 
 proc end_compute_pass*(compute_pass) = sdl_end_gpu_compute_pass compute_pass
@@ -1046,14 +1146,14 @@ proc `debug_label=`*(cmd_buf; text: string)   = sdl_insert_gpu_debug_label cmd_b
 proc push_debug_group*(cmd_buf; name: string) = sdl_push_gpu_debug_group cmd_buf, cstring name
 proc pop_debug_group*(cmd_buf)                = sdl_pop_gpu_debug_group cmd_buf
 
-proc destroy*(dev)                           = sdl_destroy_gpu_device dev
-proc destroy*(dev; pipeln: GraphicsPipeline) = sdl_release_gpu_graphics_pipeline dev, pipeln
-proc destroy*(dev; shader)                   = sdl_release_gpu_shader dev, shader
-proc destroy*(dev; tex)                      = sdl_release_gpu_texture dev, tex
-proc destroy*(dev; sampler)                  = sdl_release_gpu_sampler dev, sampler
-proc destroy*(dev; buf)                      = sdl_release_gpu_buffer dev, buf
-proc destroy*(dev; trans_buf)                = sdl_release_gpu_transfer_buffer dev, trans_buf
-proc destroy*(dev; fence: Fence)             = sdl_release_gpu_fence dev, fence
+proc destroy*(dev)               = sdl_destroy_gpu_device dev
+proc destroy*(dev; gfx_pipeln)   = sdl_release_gpu_graphics_pipeline dev, gfx_pipeln
+proc destroy*(dev; shader)       = sdl_release_gpu_shader dev, shader
+proc destroy*(dev; tex)          = sdl_release_gpu_texture dev, tex
+proc destroy*(dev; sampler)      = sdl_release_gpu_sampler dev, sampler
+proc destroy*(dev; buf)          = sdl_release_gpu_buffer dev, buf
+proc destroy*(dev; trans_buf)    = sdl_release_gpu_transfer_buffer dev, trans_buf
+proc destroy*(dev; fence: Fence) = sdl_release_gpu_fence dev, fence
 
 proc wait_for_idle*(dev): bool {.discardable.} =
     result = sdl_wait_for_gpu_idle dev
@@ -1083,7 +1183,7 @@ proc upload*[T](dev; usage: BufferUsageFlag; data: T): Buffer =
 
 proc upload*(dev; pxs: pointer; w, h: SomeInteger; fmt = texFmtR8G8B8A8Unorm): Texture =
     let data_sz   = (uint32 w)*(uint32 h)*fmt.block_sz
-    result        = dev.create_texture(w, h)
+    result        = dev.create_texture(w, h, fmt = fmt)
     let trans_buf = dev.create_transfer_buffer data_sz
 
     var tex_dst = dev.map trans_buf
@@ -1092,7 +1192,7 @@ proc upload*(dev; pxs: pointer; w, h: SomeInteger; fmt = texFmtR8G8B8A8Unorm): T
 
     let cmd_buf   = acquire_cmd_buf dev
     let copy_pass = begin_copy_pass cmd_buf
-    copy_pass.upload trans_buf, w, h, result
+    copy_pass.upload trans_buf, result, w, h
     `end` copy_pass
 
     submit cmd_buf

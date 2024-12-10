@@ -609,4 +609,8 @@ proc set_text_input_area*(win: Window; rect: Rect; cursor: SomeInteger): bool {.
     result = sdl_set_text_input_area(win, rect.addr, cint cursor)
     sdl_assert result, &"Failed to set text input area to '{rect}' (cursor {cursor})"
 
+proc start_text_input*(win): bool                    {.discardable.} = sdl_start_text_input win
+proc start_text_input*(win; props: PropertyId): bool {.discardable.} = sdl_start_text_input_with_properties win, props
+proc stop_text_input*(win): bool                     {.discardable.} = sdl_stop_text_input win
+
 {.pop.}

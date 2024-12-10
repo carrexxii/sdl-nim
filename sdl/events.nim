@@ -223,8 +223,8 @@ type
         time*    : Timestamp
         win_id*  : WindowId
         mouse_id*: MouseId
-        button*  : MouseButton
-        state*   : uint8
+        btn*     : MouseButton
+        down*    : bool
         clicks*  : uint8
         pad2     : uint8
         x*, y*   : cfloat
@@ -257,7 +257,7 @@ type
         text*     : TextInputEvent
         mouse_dev*: MouseDeviceEvent
         motion*   : MouseMotionEvent
-        button*   : MouseButtonEvent
+        btn*      : MouseButtonEvent
         wheel*    : MouseWheelEvent
         # jdevice*  : JoyDeviceEvent
         # jaxis*    : JoyAxisEvent
