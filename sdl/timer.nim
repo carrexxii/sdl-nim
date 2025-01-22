@@ -14,26 +14,27 @@ Microseconds.borrow_numeric uint64
 Nanoseconds.borrow_numeric  uint64
 
 func `$`*(x: Milliseconds): string = &"{x.ord}ms"
-func `$`*(x: Microseconds): string = &"{x.ord}us"
+func `$`*(x: Microseconds): string = &"{x.ord}μs"
 func `$`*(x: Nanoseconds) : string = &"{x.ord}ns"
 
 proc `'ms`*(x: string): Milliseconds {.compileTime.} = Milliseconds parse_int x
 proc `'us`*(x: string): Microseconds {.compileTime.} = Microseconds parse_int x
+proc `'μs`*(x: string): Microseconds {.compileTime.} = `'us` x
 proc `'ns`*(x: string): Nanoseconds  {.compileTime.} = Nanoseconds  parse_int x
 
-converter `ms -> us`*(x: Milliseconds): Microseconds = Microseconds ((uint32 x) * 1000)
-converter `ms -> ns`*(x: Milliseconds): Nanoseconds  = Nanoseconds  ((uint32 x) * 1000_000)
-converter `us -> ns`*(x: Microseconds): Nanoseconds  = Nanoseconds  ((uint64 x) * 1000)
-converter `us -> ms`*(x: Microseconds): Milliseconds = Milliseconds ((uint64 x) div 1000)
-converter `ns -> ms`*(x: Nanoseconds):  Milliseconds = Milliseconds ((uint64 x) div 1000_000)
-converter `ns -> us`*(x: Nanoseconds):  Microseconds = Microseconds ((uint64 x) div 1000)
+converter ms_to_us*(x: Milliseconds): Microseconds = Microseconds ((uint32 x) * 1000)
+converter ms_to_ns*(x: Milliseconds): Nanoseconds  = Nanoseconds  ((uint32 x) * 1000_000)
+converter us_to_ns*(x: Microseconds): Nanoseconds  = Nanoseconds  ((uint64 x) * 1000)
+converter us_to_ms*(x: Microseconds): Milliseconds = Milliseconds ((uint64 x) div 1000)
+converter ns_to_ms*(x: Nanoseconds):  Milliseconds = Milliseconds ((uint64 x) div 1000_000)
+converter ns_to_us*(x: Nanoseconds):  Microseconds = Microseconds ((uint64 x) div 1000)
 
-func `==`*(a: Milliseconds; b: Microseconds): bool = b == `ms -> us` a
-func `==`*(a: Milliseconds; b: NanoSeconds):  bool = b == `ms -> ns` a
-func `==`*(a: Microseconds; b: Nanoseconds):  bool = b == `us -> ns` a
-func `==`*(a: Microseconds; b: Milliseconds): bool = a == `ms -> us` b
-func `==`*(a: Nanoseconds ; b: Milliseconds): bool = a == `ms -> ns` b
-func `==`*(a: Nanoseconds ; b: Microseconds): bool = a == `us -> ns` b
+func `==`*(a: Milliseconds; b: Microseconds): bool = b == ms_to_us a
+func `==`*(a: Milliseconds; b: NanoSeconds):  bool = b == ms_to_ns a
+func `==`*(a: Microseconds; b: Nanoseconds):  bool = b == us_to_ns a
+func `==`*(a: Microseconds; b: Milliseconds): bool = a == ms_to_us b
+func `==`*(a: Nanoseconds ; b: Milliseconds): bool = a == ms_to_ns b
+func `==`*(a: Nanoseconds ; b: Microseconds): bool = a == us_to_ns b
 
 {.push dynlib: SdlLib.}
 proc sdl_get_ticks*(): Nanoseconds                 {.importc: "SDL_GetTicks"               .}
@@ -50,7 +51,7 @@ proc sdl_remove_timer*(timer: TimerId): bool                                    
 
 {.push inline.}
 
-proc ticks*(): Nanoseconds = sdl_get_ticks_ns()
+proc get_ticks*(): Nanoseconds = sdl_get_ticks_ns()
 
 proc delay*(ns: Nanoseconds) = sdl_delay_ns ns
 proc sleep*(ns: Nanoseconds) = sdl_delay_ns ns

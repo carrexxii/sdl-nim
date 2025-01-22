@@ -8,7 +8,7 @@ type Vertex = object
 
 const
     ShaderDir   = "tests/shaders"
-    ClearColour = fcolour(0.28, 0.12, 0.28, 1.0)
+    ClearColour = colour(0.28, 0.12, 0.28, 1.0)
     TriVerts = [
         Vertex(pos: [-0.5, -0.5, 0.0], colour: [1.0, 0.0, 0.0, 1.0]),
         Vertex(pos: [ 0.0,  0.5, 0.0], colour: [0.0, 1.0, 0.0, 1.0]),
@@ -22,52 +22,52 @@ var
     small_scissor  = rect(320, 240, 320, 240)
 
 sdl.init (initVideo or initEvents)
-let device = create_device(shaderFmtSpirV, true)
+let device = create_device(sfFlagSpirV, true)
 let window = create_window("GPU Test", 640, 480, winNone)
 device.claim window
 
-let vtx_shader  = device.create_shader(shaderVertex, ShaderDir / "simple.vert.spv")
-let frag_shader = device.create_shader(shaderVertex, ShaderDir / "simple.frag.spv")
+let vtx_shader  = device.create_shader_from_file(ssVertex  , ShaderDir / "simple.vert.spv")
+let frag_shader = device.create_shader_from_file(ssFragment, ShaderDir / "simple.frag.spv")
 
 let
     ct_descr = ColourTargetDescription(fmt: swapchain_tex_fmt(device, window))
     fill_pipeln = device.create_graphics_pipeline(vtx_shader, frag_shader,
         vertex_input_state(
-            [vtx_descr(0, sizeof Vertex, inputVertex)],
-            [vtx_attr(0, 0, vtxElemFloat3, 0),
-             vtx_attr(1, 0, vtxElemFloat4, 12)],
+            [vtx_descr(0, sizeof Vertex, virVertex)],
+            [vtx_attr(0, 0, vefFloat3, 0),
+             vtx_attr(1, 0, vefFloat4, 12)],
         ),
         target_info = GraphicsPipelineTargetInfo(
             colour_target_descrs: ct_descr.addr,
-            colour_target_count : 1,
+            colour_target_cnt   : 1,
         ),
     )
     line_pipeln = device.create_graphics_pipeline(vtx_shader, frag_shader,
         vertex_input_state(
-            [vtx_descr(0, sizeof Vertex, inputVertex)],
-            [vtx_attr(0, 0, vtxElemFloat3, 0),
-             vtx_attr(1, 0, vtxElemFloat4, 12)],
+            [vtx_descr(0, sizeof Vertex, virVertex)],
+            [vtx_attr(0, 0, vefFloat3, 0),
+             vtx_attr(1, 0, vefFloat4, 12)],
         ),
         target_info = GraphicsPipelineTargetInfo(
             colour_target_descrs: ct_descr.addr,
-            colour_target_count : 1,
+            colour_target_cnt   : 1,
         ),
         raster_state = RasterizerState(
-            fill_mode: fillLine,
+            fill_mode: fmLine,
         ),
     )
 var pipeln = fill_pipeln
 
-let verts_buf = device.upload(bufUsageVertex, TriVerts)
+let verts_buf = device.upload(buFlagVertex, TriVerts)
 
 proc draw() =
     let cmd_buf   = acquire_cmd_buf device
-    let swapchain = cmd_buf.swapchain_tex window
+    let swapchain = cmd_buf.wait_swapchain_tex window
     let colour_target_info = ColourTargetInfo(
         tex         : swapchain.tex,
         clear_colour: ClearColour,
-        load_op     : loadClear,
-        store_op    : storeStore,
+        load_op     : loClear,
+        store_op    : soStore,
     )
 
     let ren_pass = begin_render_pass(cmd_buf, [colour_target_info])

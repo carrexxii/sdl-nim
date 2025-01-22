@@ -1,11 +1,9 @@
-*
-!*.*
-!*/
-!LICENSE
-!lib/*
-
 test
 *.so*
+*.spv
 
 cache/
 docs/
+
+tests/*
+!tests/*.*

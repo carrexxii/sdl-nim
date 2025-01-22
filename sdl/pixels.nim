@@ -87,10 +87,10 @@ template bits_per_pixel*(px: Pixel) = (px shr 8 ) and 0xFF
 
 type
     Colour* = object
-        r*, g*, b*: uint8 = 0
+        b*, g*, r*: uint8 = 0
         a*: uint8 = 255
     FColour* = object
-        r*, g*, b*: float32 = 0.0
+        b*, g*, r*: float32 = 0.0
         a*: float32 = 1.0
 
     Palette* = object
@@ -99,10 +99,11 @@ type
         version*     : uint32
         ref_count*   : int32
 
-func colour*(r, g, b: SomeInteger; a: SomeInteger = 255): Colour =
-    Colour(r: uint8 r, g: uint8 g, b: uint8 b, a: uint8 a)
-func fcolour*(r, g, b: SomeNumber; a: SomeNumber = 1.0): FColour =
-    FColour(r: float32 r, g: float32 g, b: float32 b, a: float32 a)
+func colour*(r, g, b: uint8; a = 255'u8): Colour   = Colour(r: r, g: g, b: b, a: a)
+func colour*(r, g, b: float32; a = 1'f32): FColour = FColour(r: r, g: g, b: b, a: a)
+func colour*(hex: int): Colour =
+    result = cast[Colour](hex)
+    swap result.r, result.b
 
 func `+`*[T: Colour | FColour](a, b: T): T = colour a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a
 func `-`*[T: Colour | FColour](a, b: T): T = colour a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a
@@ -114,36 +115,36 @@ func fourcc*(a, b, c, d: uint8): uint32 =
     d shl 24
 
 const
-    Black*   = colour(0  , 0  , 0  , 255)
-    White*   = colour(255, 255, 255, 255)
-    Red*     = colour(255, 0  , 0  , 255)
-    Lime*    = colour(0  , 255, 0  , 255)
-    Blue*    = colour(0  , 0  , 255, 255)
-    Yellow*  = colour(255, 255, 0  , 255)
-    Cyan*    = colour(0  , 255, 255, 255)
-    Magenta* = colour(255, 0  , 255, 255)
-    Silver*  = colour(192, 192, 192, 255)
-    Grey*    = colour(128, 128, 128, 255)
-    Maroon*  = colour(128, 0  , 0  , 255)
-    Olive*   = colour(128, 128, 0  , 255)
-    Green*   = colour(0  , 128, 0  , 255)
-    Purple*  = colour(128, 0  , 128, 255)
-    Teal*    = colour(0  , 128, 128, 255)
-    Navy*    = colour(0  , 0  , 128, 255)
+    Black*   = colour(0  , 0  , 0  )
+    White*   = colour(255, 255, 255)
+    Red*     = colour(255, 0  , 0  )
+    Lime*    = colour(0  , 255, 0  )
+    Blue*    = colour(0  , 0  , 255)
+    Yellow*  = colour(255, 255, 0  )
+    Cyan*    = colour(0  , 255, 255)
+    Magenta* = colour(255, 0  , 255)
+    Silver*  = colour(192, 192, 192)
+    Grey*    = colour(128, 128, 128)
+    Maroon*  = colour(128, 0  , 0  )
+    Olive*   = colour(128, 128, 0  )
+    Green*   = colour(0  , 128, 0  )
+    Purple*  = colour(128, 0  , 128)
+    Teal*    = colour(0  , 128, 128)
+    Navy*    = colour(0  , 0  , 128)
 
-    FBlack*   = fcolour(0.0, 0.0, 0.0, 1.0)
-    FWhite*   = fcolour(1.0, 1.0, 1.0, 1.0)
-    FRed*     = fcolour(1.0, 0.0, 0.0, 1.0)
-    FLime*    = fcolour(0.0, 1.0, 0.0, 1.0)
-    FBlue*    = fcolour(0.0, 0.0, 1.0, 1.0)
-    FYellow*  = fcolour(1.0, 1.0, 0.0, 1.0)
-    FCyan*    = fcolour(0.0, 1.0, 1.0, 1.0)
-    FMagenta* = fcolour(1.0, 0.0, 1.0, 1.0)
-    FSilver*  = fcolour(0.8, 0.8, 0.8, 1.0)
-    FGrey*    = fcolour(0.5, 0.5, 0.5, 1.0)
-    FMaroon*  = fcolour(0.5, 0.0, 0.0, 1.0)
-    FOlive*   = fcolour(0.5, 0.5, 0.0, 1.0)
-    FGreen*   = fcolour(0.0, 0.5, 0.0, 1.0)
-    FPurple*  = fcolour(0.5, 0.0, 0.5, 1.0)
-    FTeal*    = fcolour(0.0, 0.5, 0.5, 1.0)
-    FNavy*    = fcolour(0.0, 0.0, 0.5, 1.0)
+    FBlack*   = colour(0.0, 0.0, 0.0)
+    FWhite*   = colour(1.0, 1.0, 1.0)
+    FRed*     = colour(1.0, 0.0, 0.0)
+    FLime*    = colour(0.0, 1.0, 0.0)
+    FBlue*    = colour(0.0, 0.0, 1.0)
+    FYellow*  = colour(1.0, 1.0, 0.0)
+    FCyan*    = colour(0.0, 1.0, 1.0)
+    FMagenta* = colour(1.0, 0.0, 1.0)
+    FSilver*  = colour(0.8, 0.8, 0.8)
+    FGrey*    = colour(0.5, 0.5, 0.5)
+    FMaroon*  = colour(0.5, 0.0, 0.0)
+    FOlive*   = colour(0.5, 0.5, 0.0)
+    FGreen*   = colour(0.0, 0.5, 0.0)
+    FPurple*  = colour(0.5, 0.0, 0.5)
+    FTeal*    = colour(0.0, 0.5, 0.5)
+    FNavy*    = colour(0.0, 0.0, 0.5)

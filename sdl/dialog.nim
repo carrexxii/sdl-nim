@@ -54,7 +54,7 @@ proc callback(user_data: pointer; file_lst: ptr cstring; filter: cint) {.cdecl.}
                 paths.add $file
                 inc i
                 file = file_lst[][i]
-            
+
         return_cb.multi_cb paths
 
 proc dialog_inner*(kind: DialogKind; win: Window; default_loc: string; filters: openArray[tuple[name, pattern: string]]) =
@@ -91,9 +91,9 @@ proc save_file_dialog*(cb: proc(path: string);
     dkSaveFile.dialog_inner win, default_loc, filters
 
 proc open_folder_dialog*(cb: proc(path: string);
-                       win: Window = cast[Window](nil);
-                       default_loc: string = "";
-                       filters    : openArray[tuple[name, pattern: string]] = [];
-                       ) =
+                         win: Window = cast[Window](nil);
+                         default_loc: string = "";
+                         filters    : openArray[tuple[name, pattern: string]] = [];
+                         ) =
     return_cb = Callback(kind: ckOne, single_cb: cb)
     dkSaveFile.dialog_inner win, default_loc, filters

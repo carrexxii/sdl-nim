@@ -537,7 +537,7 @@ type KeyMod* = distinct uint16
 KeyMod.gen_bit_ops(
     modLShift, modRShift, _, _,
     _, _, modLCtrl, modRCtrl,
-    modLAlt, modRAlt, modLGUI, modRGUI,
+    modLAlt, modRAlt, modLGui, modRGui,
     modNum, modCaps, modMode, modScroll,
 )
 const modShift* = modLShift or modRShift
@@ -589,7 +589,7 @@ proc keyboards*(): seq[KeyboardId] =
     for kb in to_open_array(kbs, 0, count - 1):
         result.add kb
 
-proc keyboard_state*(): tuple[count: int32; keys: ptr UncheckedArray[bool]] =
+proc get_keyboard_state*(): tuple[count: int32; keys: ptr UncheckedArray[bool]] =
     var count: cint
     result.keys  = sdl_get_keyboard_state count.addr
     result.count = int32 count
