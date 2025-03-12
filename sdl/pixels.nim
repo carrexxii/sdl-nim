@@ -99,11 +99,15 @@ type
         version*     : uint32
         ref_count*   : int32
 
-func colour*(r, g, b: uint8; a = 255'u8): Colour   = Colour(r: r, g: g, b: b, a: a)
+func colour*(r, g, b: uint8; a = 255'u8): Colour   =  Colour(r: r, g: g, b: b, a: a)
 func colour*(r, g, b: float32; a = 1'f32): FColour = FColour(r: r, g: g, b: b, a: a)
 func colour*(hex: int): Colour =
-    result = cast[Colour](hex)
-    swap result.r, result.b
+    Colour(r: uint8(hex and 0x000000FF),
+           g: uint8(hex and 0x0000FF00),
+           b: uint8(hex and 0x00FF0000),
+           a: uint8(hex and 0xFF000000))
+
+converter integer_to_colour*(rgba: SomeInteger): Colour = colour int rgba
 
 func `+`*[T: Colour | FColour](a, b: T): T = colour a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a
 func `-`*[T: Colour | FColour](a, b: T): T = colour a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a

@@ -1,4 +1,4 @@
-import std/[options, with], sdl, sdl/gpu
+import std/[options, with], sdl, sdl/[gpu, pixels, rect]
 from std/os        import `/`
 from std/strformat import `&`
 
@@ -22,7 +22,7 @@ var
     small_scissor  = rect(320, 240, 320, 240)
 
 sdl.init (initVideo or initEvents)
-let device = create_device(sfFlagSpirV, true)
+let device = create_device(sffSpirV, false) # TODO: debug mode fails to find required valdiation layers (03/03/25)
 let window = create_window("GPU Test", 640, 480, winNone)
 device.claim window
 
@@ -58,7 +58,7 @@ let
     )
 var pipeln = fill_pipeln
 
-let verts_buf = device.upload(buFlagVertex, TriVerts)
+let verts_buf = device.upload(bufVertex, TriVerts)
 
 proc draw() =
     let cmd_buf   = acquire_cmd_buf device

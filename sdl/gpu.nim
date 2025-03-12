@@ -1,5 +1,4 @@
-import std/[with, options], common, bitgen, properties, pixels
-from std/strformat import `&`
+import std/options, common, bitgen, properties, pixels
 from rect    import Rect
 from surface import FlipMode
 from video   import Window
@@ -8,26 +7,27 @@ from video   import Window
 
 type TextureUsageFlag* = distinct uint32
 TextureUsageFlag.gen_bit_ops(
-    tuFlagSampler, tuFlagColourTarget, tuFlagDepthStencilTarget, tuFlagGraphicsStorageRead,
-    tuFlagComputeStorageRead, tuFlagComputeStorageWrite, tuFlagComputeStorageSimultaneousReadWrite, _
+    tufSampler           , tufColourTarget       , tufDepthStencilTarget                 , tufGraphicsStorageRead,
+    tufComputeStorageRead, tufComputeStorageWrite, tufComputeStorageSimultaneousReadWrite,
 )
 
 type BufferUsageFlag* = distinct uint32
 BufferUsageFlag.gen_bit_ops(
-    buFlagVertex, buFlagIndex, buFlagIndirect, buFlagGraphicsStorage,
-    buFlagComputeStorageRead, buFlagComputeStorageWrite, _
+    bufVertex            , bufIndex              , bufIndirect, bufGraphicsStorage,
+    bufComputeStorageRead, bufComputeStorageWrite,
 )
 
 type ShaderFormatFlag* = distinct uint32
 ShaderFormatFlag.gen_bit_ops(
-    sfFlagPrivate, sfFlagSpirV, sfFlagDxBc, sfFlagDxIl,
-    sfFlagMsl, sfFlagMetalLib,
+    sffPrivate, sffSpirV   , sffDxBc, sffDxIl,
+    sffMsl    , sffMetalLib,
 )
 const sfFlagInvalid* = ShaderFormatFlag 0
 
 type ColourComponentFlag* = distinct uint8
-ColourComponentFlag.gen_bit_ops ccFlagR, ccFlagG, ccFlagB, ccFlagA
-const ccFlagNone* = ColourComponentFlag 0
+ColourComponentFlag.gen_bit_ops ccfR, ccfG, ccfB, ccfA
+const ccfNone* = ColourComponentFlag 0
+const ccfRgba* = ccfR or ccfG or ccfB or ccfA
 
 type
     PrimitiveKind* {.size: sizeof(cint).} = enum
@@ -865,7 +865,7 @@ proc create_graphics_pipeline*(dev; vs, fs: Shader; vtx_input_state: VertexInput
 
 proc create_compute_pipeline*(dev; code: string; thread_cnt: array[3, SomeInteger];
                               entry = "main";
-                              fmt   = sfFlagSpirV;
+                              fmt   = sffSpirV;
                               props = InvalidProperty;
                               sampler_cnt    : SomeInteger = 0;
                               r_tex_cnt      : SomeInteger = 0;
@@ -895,7 +895,7 @@ proc create_compute_pipeline*(dev; code: string; thread_cnt: array[3, SomeIntege
 
 proc create_shader*(dev; stage: ShaderStage; code: string;
                     entry = "main";
-                    fmt   = sfFlagSpirV;
+                    fmt   = sffSpirV;
                     props = InvalidProperty;
                     sampler_cnt    : SomeInteger = 0;
                     storage_tex_cnt: SomeInteger = 0;
@@ -920,7 +920,7 @@ proc create_shader*(dev; stage: ShaderStage; code: string;
 # TODO: shader format and shader stage detection via file extension
 proc create_shader_from_file*(dev; stage: ShaderStage; path: string;
                               entry = "main";
-                              fmt   = sfFlagSpirV;
+                              fmt   = sffSpirV;
                               props = InvalidProperty;
                               sampler_cnt    : SomeInteger = 0;
                               storage_tex_cnt: SomeInteger = 0;
@@ -954,10 +954,10 @@ proc create_sampler*(dev;
                      enable_anisotropy = false;
                      enable_compare    = false;
                      props             = InvalidProperty;
-                     mip_lod_bias  : SomeNumber = 0;
-                     max_anisotropy: SomeNumber = 1;
-                     min_lod       : SomeNumber = 1;
-                     max_lod       : SomeNumber = 1;
+                     mip_lod_bias   = 0'f32;
+                     max_anisotropy = 1'f32;
+                     min_lod        = 1'f32;
+                     max_lod        = 1'f32;
                      ): Sampler =
     let ci = SamplerCreateInfo(
         min_filter       : min_filter,
@@ -978,23 +978,23 @@ proc create_sampler*(dev;
     result = sdl_create_gpu_sampler(dev, ci.addr)
     sdl_assert result, &"Failed to create sampler: '{get_error()}'"
 
-proc create_texture*(dev; w: SomeInteger; h: SomeInteger;
+proc create_texture*(dev; w, h: uint32;
                      kind       = tk2D;
                      fmt        = tfR8G8B8A8Unorm;
-                     usage      = tuFlagSampler;
+                     usage      = tufSampler;
                      props      = InvalidProperty;
                      sample_cnt = sc1;
-                     depth_or_layer_cnt: SomeInteger = 1;
-                     lvl_cnt           : SomeInteger = 1;
+                     depth_or_layer_cnt = 1'u32;
+                     lvl_cnt            = 1'u32;
                      ): Texture =
     let ci = TextureCreateInfo(
         kind              : kind,
         fmt               : fmt,
         usage             : usage,
-        w                 : uint32 w,
-        h                 : uint32 h,
-        depth_or_layer_cnt: uint32 depth_or_layer_cnt,
-        lvl_cnt           : uint32 lvl_cnt,
+        w                 : w,
+        h                 : h,
+        depth_or_layer_cnt: depth_or_layer_cnt,
+        lvl_cnt           : lvl_cnt,
         sample_cnt        : sample_cnt,
         props             : props,
     )

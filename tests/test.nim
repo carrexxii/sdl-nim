@@ -1,4 +1,4 @@
-import sdl, sdl/[renderer, ttf]
+import sdl, sdl/[renderer, ttf, pixels, rect]
 from std/strformat import `&`
 
 const

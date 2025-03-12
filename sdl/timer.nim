@@ -1,5 +1,7 @@
 import std/strutils, common, util
 
+# TODO: Maybe move types (and rect stuff) to rely on NGM for better consistency
+
 type
     TimerId* = distinct uint32
     TimerCallback*   = proc(user_data: pointer; timer_id: TimerId; interval: Milliseconds): Milliseconds {.cdecl.}

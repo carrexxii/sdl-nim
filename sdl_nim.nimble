@@ -10,31 +10,34 @@ requires "nim >= 2.0.0"
 import std/[os, strformat, strutils, sequtils]
 
 const
-    SdlTag            = "release-3.2.0"
-    SdlTtfTag         = "7d62ee195e32180b874c97a07df4080712b467b6"
-    SdlShaderCrossTag = "d3e304a9279c921bbba5b36c1f8b105825ca6333"
+    SdlTag      = "release-3.2.6"
+    SdlTtfTag   = "release-3.2.0"
+    SdlImageTag = "release-3.2.4"
 
-    SdlFlags            = "-DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_DISABLE_INSTALL=ON"
-    SdlTtfFlags         = "-DSDL3_ROOT=../sdl/build"
-    SdlShadercrossFlags = "-DSDLGPUSHADERCROSS_SHARED=ON -DSDL3_DIR=../sdl/build"
+    SdlFlags      = "-DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_DISABLE_INSTALL=ON"
+    SdlTtfFlags   = "-DSDL3_ROOT=../sdl/build"
+    SdlImageFlags = "-DSDLIMAGE_VENDORED=OFF"
 
-task build_lib, "Fetch and build SDL libraries":
+task restore, "Fetch and build SDL libraries":
     exec &"git submodule update --init --remote --merge --recursive -j 8"
 
     with_dir "lib/sdl":
+        exec &"git checkout {SdlTag}"
         exec &"""cmake -S . -B ./build {SdlFlags};
                  cmake --build ./build -j8;
                  cp ./build/libSDL3.so* ../"""
 
     with_dir "lib/sdl_ttf":
+        exec &"git checkout {SdlTtfTag}"
         exec &"""cmake -S . -B ./build {SdlTtfFlags};
                  cmake --build ./build -j8;
                  mv ./build/libSDL3_ttf.so* ../"""
 
-    with_dir "lib/sdl_gpu_shadercross":
-        exec &"""cmake -S . -B ./build {SdlShadercrossFlags};
+    with_dir "lib/sdl_image":
+        exec &"git checkout {SdlImageTag}"
+        exec &"""cmake -S . -B ./build {SdlImageFlags};
                  cmake --build ./build -j8;
-                 mv ./build/libSDL3_gpu_shadercross.so.0.0.0 ../libSDL3_gpu_shadercross.so"""
+                 mv ./build/libSDL3_image.so* ../"""
 
 before test:
     let shaders = list_files("tests/shaders").filter_it(not it.ends_with ".spv")

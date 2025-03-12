@@ -4,6 +4,6 @@
 [submodule "lib/sdl_ttf"]
 	path = lib/sdl_ttf
 	url = https://github.com/libsdl-org/SDL_ttf
-[submodule "lib/sdl_gpu_shadercross"]
-	path = lib/sdl_gpu_shadercross
-	url = https://github.com/libsdl-org/SDL_gpu_shadercross
+[submodule "lib/sdl_image"]
+	path = lib/sdl_image
+	url = https://github.com/libsdl-org/SDL_image
