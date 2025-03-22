@@ -139,6 +139,15 @@ const
     GpuBufferCreateNameString*           = PropertyName "SDL.gpu.buffer.create.name"
     GpuTransferBufferCreateNameString*   = PropertyName "SDL.gpu.transferbuffer.create.name"
 
+    IoStreamWindowsHandlePointer*   = PropertyName "SDL.iostream.windows.handle"
+    IoStreamStdioFilePointer*       = PropertyName "SDL.iostream.stdio.file"
+    IoStreamFileDescriptorName*     = PropertyName "SDL.iostream.file_descriptor"
+    IoStreamAndroidAassetPointer*   = PropertyName "SDL.iostream.android.aasset"
+    IoStreamMemoryPointer*          = PropertyName "SDL.iostream.memory.base"
+    IoStreamMemorySizeNumber*       = PropertyName "SDL.iostream.memory.size"
+    IoStreamDynamicMemoryPointer*   = PropertyName "SDL.iostream.dynamic.memory"
+    IoStreamDynamicChunkSizeNumber* = PropertyName "SDL.iostream.dynamic.chunksize"
+
 type
     Property*   = distinct pointer
     PropertyId* = distinct uint32
