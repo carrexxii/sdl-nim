@@ -6,6 +6,7 @@ const
     Cwd = current_source_path.parent_dir()
     SdlLib*            = Cwd / "../lib/libSDL3.so"
     SdlTtfLib*         = Cwd / "../lib/libSDL3_ttf.so"
+    SdlImageLib*       = Cwd / "../lib/libSDL3_image.so"
     SdlShadercrossLib* = Cwd / "../lib/libSDL3Shadercross.so"
 
 type

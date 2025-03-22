@@ -30,8 +30,8 @@ converter `IoStream -> bool`*(p: IoStream): bool = cast[pointer](p) != nil
 
 {.push importc, dynlib: SdlLib.}
 proc SDL_IOFromFile*(file, mode: cstring): IoStream
-proc SDL_IOFromMem*(mem: pointer; sz: uint): IoStream
-proc SDL_IOFromConstMem*(mem: pointer; sz: uint): IoStream
+proc SDL_IOFromMem*(mem: pointer; sz: csize_t): IoStream
+proc SDL_IOFromConstMem*(mem: pointer; sz: csize_t): IoStream
 proc SDL_IOFromDynamicMem*(): IoStream
 
 proc SDL_OpenIO*(iface: ptr IoStreamInterface; user_data: pointer): IoStream
@@ -41,13 +41,13 @@ proc SDL_GetIOStatus*(ctx: IoStream): IoStatus
 proc SDL_GetIOSize*(ctx: IoStream): int64
 proc SDL_SeekIO*(ctx: IoStream; offset: int64; whence: IoWhence): int64
 proc SDL_TellIO*(ctx: IoStream): int64
-proc SDL_ReadIO*(ctx: IoStream; dst: pointer; sz: uint): uint
-proc SDL_WriteIO*(ctx: IoStream; src: pointer; sz: uint): uint
+proc SDL_ReadIO*(ctx: IoStream; dst: pointer; sz: csize_t): csize_t
+proc SDL_WriteIO*(ctx: IoStream; src: pointer; sz: csize_t): csize_t
 proc SDL_FlushIO*(ctx: IoStream): bool
-proc SDL_LoadFile_IO*(src: IoStream; data_sz: ptr uint; close_io: bool): pointer
-proc SDL_LoadFile*(file: cstring; data_sz: ptr uint): pointer
-proc SDL_SaveFile_IO*(src: IoStream; data: pointer; data_sz: uint; close_io: bool): bool
-proc SDL_SaveFile*(file: cstring; data: pointer; data_sz: uint): bool
+proc SDL_LoadFile_IO*(src: IoStream; data_sz: ptr csize_t; close_io: bool): pointer
+proc SDL_LoadFile*(file: cstring; data_sz: ptr csize_t): pointer
+proc SDL_SaveFile_IO*(src: IoStream; data: pointer; data_sz: csize_t; close_io: bool): bool
+proc SDL_SaveFile*(file: cstring; data: pointer; data_sz: csize_t): bool
 proc SDL_ReadU8*(src: IoStream; val: ptr uint8): bool
 proc SDL_ReadS8*(src: IoStream; val: ptr int8): bool
 proc SDL_ReadU16LE*(src: IoStream; val: ptr uint16): bool

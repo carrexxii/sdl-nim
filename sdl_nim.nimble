@@ -3,10 +3,6 @@ author      = "carrexxii"
 description = "SDL3 bindings and wrapper for Nim"
 license     = "Apache2.0"
 
-requires "nim >= 2.0.0"
-
-#[ -------------------------------------------------------------------- ]#
-
 import std/[os, strformat, strutils, sequtils]
 
 const
