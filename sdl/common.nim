@@ -15,8 +15,8 @@ type
     Version* = distinct cint
 
 proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SdlLib.}
-proc cfree*(p: pointer)    {.importc: "free"                        .}
+proc SDL_free*(p: pointer) {.importc.}
 
 proc sdl_assert*(cond: bool; msg: string) {.inline.} =
-    when not defined SdlNoGpuAssert:
-        assert cond, msg & &": '{get_error()}'"
+    when not defined SdlNoAssert:
+        assert cond, &"{msg}: '{get_error()}'"

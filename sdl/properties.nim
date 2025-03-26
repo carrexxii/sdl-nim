@@ -151,7 +151,8 @@ const
 type
     Property*   = distinct pointer
     PropertyId* = distinct uint32
-func `$`*(x: PropertyId): string {.borrow.}
+func `$`*(x: PropertyId): string   {.borrow.}
+func `==`*(x, y: PropertyId): bool {.borrow.}
 
 const InvalidProperty* = PropertyId 0
 
