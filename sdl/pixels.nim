@@ -89,28 +89,29 @@ type
     Colour* = object
         b*, g*, r*: uint8 = 0
         a*: uint8 = 255
-    FColour* = object
+    ColourF* = object
         b*, g*, r*: float32 = 0.0
         a*: float32 = 1.0
 
-    Palette* = object
-        colour_count*: int32
-        colours*     : ptr UncheckedArray[Colour]
-        version*     : uint32
-        ref_count*   : int32
+    Palette* = ptr PaletteObj
+    PaletteObj = object
+        colour_cnt*: int32
+        colours*   : ptr UncheckedArray[Colour]
+        version*   : uint32
+        ref_cnt*   : int32
 
 func colour*(r, g, b: uint8; a = 255'u8): Colour   =  Colour(r: r, g: g, b: b, a: a)
-func colour*(r, g, b: float32; a = 1'f32): FColour = FColour(r: r, g: g, b: b, a: a)
-func colour*(hex: int): Colour =
-    Colour(r: uint8(hex and 0x000000FF),
-           g: uint8(hex and 0x0000FF00),
-           b: uint8(hex and 0x00FF0000),
-           a: uint8(hex and 0xFF000000))
+func colour*(r, g, b: float32; a = 1'f32): ColourF = ColourF(r: r, g: g, b: b, a: a)
+func colour*(hex: uint32): Colour =
+    Colour(r: uint8(hex and 0x0000_00FF'u32),
+           g: uint8(hex and 0x0000_FF00'u32),
+           b: uint8(hex and 0x00FF_0000'u32),
+           a: uint8(hex and 0xFF00_0000'u32))
 
-converter integer_to_colour*(rgba: SomeInteger): Colour = colour int rgba
+converter uint32_to_colour*(rgba: uint32): Colour = colour rgba
 
-func `+`*[T: Colour | FColour](a, b: T): T = colour a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a
-func `-`*[T: Colour | FColour](a, b: T): T = colour a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a
+func `+`*[T: Colour | ColourF](a, b: T): T = colour a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a
+func `-`*[T: Colour | ColourF](a, b: T): T = colour a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a
 
 func fourcc*(a, b, c, d: uint8): uint32 =
     a shl 0  or

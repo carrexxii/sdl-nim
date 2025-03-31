@@ -109,10 +109,11 @@ const
     TextureOpenGles2TextureTargetNumber* = PropertyName "SDL.texture.opengles2.target"
     TextureVulkanTextureNumber*          = PropertyName "SDL.texture.vulkan.texture"
 
-    SurfaceColourspaceNumber*      = PropertyName "SDL.surface.colorspace"
     SurfaceSdrWhitePointFloat*     = PropertyName "SDL.surface.SDR_white_point"
     SurfaceHdrHeadroomFloat*       = PropertyName "SDL.surface.HDR_headroom"
     SurfaceTonemapGeneratorString* = PropertyName "SDL.surface.tonemap"
+    SurfaceHotspotXNumber*         = PropertyName "SDL.surface.hotspot.x"
+    SurfaceHotspotyNumber*         = PropertyName "SDL.surface.hotspot.y"
 
     GpuDeviceCreateDebugModeBool*           = PropertyName "SDL.gpu.device.create.debugmode"
     GpuDeviceCreatePreferLowPowerBool*      = PropertyName "SDL.gpu.device.create.preferlowpower"

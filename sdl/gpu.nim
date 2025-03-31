@@ -551,7 +551,7 @@ type
         tex*                 : Texture
         mip_lvl*             : uint32
         layer_or_depth_plane*: uint32
-        clear_colour*        : FColour
+        clear_colour*        : ColourF
         load_op*             : LoadOp
         store_op*            : StoreOp
         resolve_tex*         : Texture
@@ -575,7 +575,7 @@ type
     BlitInfo* = object
         src*, dst*   : BlitRegion
         load_op*     : LoadOp
-        clear_colour*: FColour
+        clear_colour*: ColourF
         flip_mode*   : FlipMode
         filter*      : Filter
         cycle*       : bool
@@ -732,7 +732,7 @@ proc sdl_begin_gpu_render_pass*(cmd_buf; cti: ptr ColourTargetInfo; ct_cnt: uint
 proc sdl_bind_gpu_graphics_pipeline*(ren_pass; gfx_pipeln)                                                               {.importc: "SDL_BindGPUGraphicsPipeline"         .}
 proc sdl_set_gpu_viewport*(ren_pass; viewport: ptr Viewport)                                                             {.importc: "SDL_SetGPUViewport"                  .}
 proc sdl_set_gpu_scissor*(ren_pass; scissor: ptr Rect)                                                                   {.importc: "SDL_SetGPUScissor"                   .}
-proc sdl_set_gpu_blend_constants*(ren_pass; blend_consts: FColour)                                                       {.importc: "SDL_SetGPUBlendConstants"            .}
+proc sdl_set_gpu_blend_constants*(ren_pass; blend_consts: ColourF)                                                       {.importc: "SDL_SetGPUBlendConstants"            .}
 proc sdl_set_gpu_stencil_reference*(ren_pass; `ref`: uint8)                                                              {.importc: "SDL_SetGPUStencilReference"          .}
 proc sdl_bind_gpu_vertex_buffer*(ren_pass; fst_slot; binds: ptr BufferBinding; bind_cnt)                                 {.importc: "SDL_BindGPUVertexBuffers"            .}
 proc sdl_bind_gpu_index_buffer*(ren_pass; `bind`: ptr BufferBinding; idx_elem_sz: IndexElementSize)                      {.importc: "SDL_BindGPUIndexBuffer"              .}
@@ -1110,11 +1110,11 @@ proc push_compute_uniform*[T](cmd_buf; slot: SomeInteger; data: T) = push_comput
 proc gen_mip_maps*(cmd_buf; tex) = sdl_generate_mip_maps_for_gpu_texture cmd_buf, tex
 
 proc blit*(cmd_buf; dst, src: BlitRegion;
-           load_op      = loLoad;
-           clear_colour = FBlack;
-           flip_mode    = flipNone;
-           filter       = fNearest;
-           cycle        = false;
+           load_op             = loLoad;
+           clear_colour        = FBlack;
+           flip_mode: FlipMode = None;
+           filter              = fNearest;
+           cycle               = false;
            ) =
     let blit_info = BlitInfo(
         src         : src,
@@ -1205,7 +1205,7 @@ proc `end`*(compute_pass) = end_compute_pass compute_pass
 
 proc `viewport=`*(ren_pass; vp: Option[Viewport])  = ren_pass.sdl_set_gpu_viewport (if vp.is_some: (get vp).addr else: nil)
 proc `scissor=`*(ren_pass; scissor: Option[Rect])  = ren_pass.sdl_set_gpu_scissor (if scissor.is_some: (get scissor).addr else: nil)
-proc `blend_consts=`*(ren_pass; consts: FColour)   = ren_pass.sdl_set_gpu_blend_constants consts
+proc `blend_consts=`*(ren_pass; consts: ColourF)   = ren_pass.sdl_set_gpu_blend_constants consts
 proc `stencil_ref=`*(ren_pass; `ref`: SomeInteger) = ren_pass.sdl_set_gpu_stencil_reference uint8 `ref`
 
 proc set_buf_name*(dev; buf; text: string) = sdl_set_gpu_buffer_name  dev, buf, cstring text

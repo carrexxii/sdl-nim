@@ -1,4 +1,4 @@
-import std/options, common, pixels, rect, surface, video
+import std/options, common, pixels, rect, video
 
 const SoftwareRenderer* = "software"
 
@@ -37,7 +37,7 @@ type
 
     Vertex* = object
         pos*      : FPoint
-        colour*   : FColour
+        colour*   : ColourF
         tex_coord*: FPoint
 
 converter `Renderer -> bool`*(ren: Renderer): bool = cast[pointer](ren) != nil
@@ -45,13 +45,13 @@ converter `Texture -> bool`*(tex: Texture)  : bool = cast[pointer](tex) != nil
 
 func vertex*(x, y, r, g, b, a, u, v: float32 = 0.0): Vertex =
     Vertex(pos      : FPoint(x: x, y: y),
-           colour   : FColour(r: r, g: g, b: b, a: a),
+           colour   : ColourF(r: r, g: g, b: b, a: a),
            tex_coord: FPoint(x: u, y: v))
 
-func vertex*(x, y: float32 = 0.0; rgba = FColour(); u, v: float32 = 0.0): Vertex =
+func vertex*(x, y: float32 = 0.0; rgba = ColourF(); u, v: float32 = 0.0): Vertex =
     vertex x, y, rgba.r, rgba.g, rgba.b, rgba.a, u, v
 
-func vertex*(xy = FPoint(); rgba = FColour(); uv = FPoint()): Vertex =
+func vertex*(xy = FPoint(); rgba = ColourF(); uv = FPoint()): Vertex =
     vertex xy.x, xy.y, rgba.r, rgba.g, rgba.b, rgba.a, uv.x, uv.y
 
 #[ -------------------------------------------------------------------- ]#
@@ -91,6 +91,7 @@ proc compose_custom_blendmode*(src_colour, dst_colour: BlendFactor; colour_op: B
 #[ -------------------------------------------------------------------- ]#
 
 from properties import PropertyId
+from surface    import Surface, FlipMode
 
 using
     ren      : Renderer
@@ -141,7 +142,7 @@ proc sdl_render_geometry_raw*(ren; tex; xys    : ptr cfloat; xy_stride    : cint
                               vert_count: cint; inds: pointer; idx_count: cint; inds_sz: cint): bool {.importc: "SDL_RenderGeometryRaw".}
 proc sdl_render_geometry_raw_float*(ren; tex;
                                     xys    : ptr cfloat ; xy_stride    : cint;
-                                    colours: ptr FColour; colour_stride: cint;
+                                    colours: ptr ColourF; colour_stride: cint;
                                     uvs    : ptr cfloat ; uv_stride    : cint;
                                     vert_count: cint; inds: pointer; idx_count: cint; inds_sz: cint): bool {.importc: "SDL_RenderGeometryRawFloat".}
 proc sdl_render_read_pixels*(ren; rect: ptr Rect): Surface {.importc: "SDL_RenderReadPixels".} # TODO: this needs to be free'd
@@ -243,7 +244,7 @@ proc `scale=`*(ren; x, y: SomeNumber = 0.0): bool {.discardable.} =
 proc `draw_colour=`*(ren; colour: Colour): bool {.discardable.} =
     let success = sdl_set_render_draw_colour(ren, colour.r, colour.g, colour.b, colour.a)
     sdl_assert success, &"Failed to set renderer's draw colour to {colour}"
-proc `draw_colour=`*(ren; colour: FColour): bool {.discardable.} =
+proc `draw_colour=`*(ren; colour: ColourF): bool {.discardable.} =
     let success = sdl_set_render_draw_colour_float(ren, colour.r, colour.g, colour.b, colour.a)
     sdl_assert success, &"Failed to set renderer's draw colour to {colour}"
 proc `colour_scale=`*(ren; scale: SomeNumber): bool {.discardable.} =
@@ -306,7 +307,7 @@ proc draw_texture*(ren; tex; dst_rect, src_rect = FRect()): bool {.discardable.}
     result = sdl_render_texture(ren, tex, src, dst)
     sdl_assert result, &"Failed to draw texture (dst: {dst_rect}; src: {src_rect})"
 
-proc draw_texture*(ren; tex; angle: SomeNumber; dst_rect, src_rect = FRect(); centre = FPoint(); flip = flipNone): bool {.discardable.} =
+proc draw_texture*(ren; tex; angle: SomeNumber; dst_rect, src_rect = FRect(); centre = FPoint(); flip: FlipMode = None): bool {.discardable.} =
     let src = if src_rect.w != 0.0 and src_rect.h != 0.0: src_rect.addr else: nil
     let dst = if dst_rect.w != 0.0 and dst_rect.h != 0.0: dst_rect.addr else: nil
     result = sdl_render_texture_rotated(ren, tex, src, dst, cdouble angle, centre.addr, flip)
@@ -321,8 +322,8 @@ proc draw_geometry*(ren; verts: openArray[Vertex]; inds: openArray[int32] = []; 
     sdl_assert result, &"Failed to draw geometry ({vertc} verts; {indc} inds)"
 
 proc read_pixels*(ren; rect = Rect()): Surface =
-    let src  = if rect.w != 0 and rect.h != 0: rect.addr else: nil
+    let src = if rect.w != 0 and rect.h != 0: rect.addr else: nil
     result = sdl_render_read_pixels(ren, src)
-    sdl_assert result, &"Failed to read renderer's pixels from {rect}"
+    sdl_assert result != nil, &"Failed to read renderer's pixels from {rect}"
 
 {.pop.}

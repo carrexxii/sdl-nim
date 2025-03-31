@@ -58,7 +58,7 @@ type
     Text* = ptr TextObj
     TextObj* = object
         text*     : cstring
-        colour*   : FColour
+        colour*   : ColourF
         ln_count* : cint
         ref_count*: cint
         _         : TextData
@@ -346,7 +346,7 @@ using
     bg, fg  : Colour
     wrap_len: SomeInteger
 proc render_assert(res: Surface; text: string) =
-    sdl_assert res, &"Failed to render font text '{text}'"
+    sdl_assert res != nil, &"Failed to render font text '{text}'"
 
 proc render*(font; text; fg, bg): Surface =
     result = ttf_render_text_shaded(font, cstring text, csize_t text.len, fg, bg)

@@ -21,7 +21,7 @@ var
     small_viewport = viewport(160, 120, 320, 240, 0.1, 1.0)
     small_scissor  = rect(320, 240, 320, 240)
 
-sdl.init (initVideo or initEvents)
+init(initVideo or initEvents)
 let device = create_device(sffSpirV, false) # TODO: debug mode fails to find required valdiation layers (03/03/25)
 let window = create_window("GPU Test", 640, 480, winNone)
 device.claim window

@@ -6,7 +6,7 @@ license     = "Apache2.0"
 import std/[os, strformat, strutils, sequtils]
 
 const
-    SdlTag      = "release-3.2.6"
+    SdlTag      = "release-3.2.8"
     SdlTtfTag   = "release-3.2.0"
     SdlImageTag = "release-3.2.4"
 
