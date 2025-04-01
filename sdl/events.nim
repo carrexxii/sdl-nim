@@ -1,6 +1,5 @@
 import common, keyboard, mouse
-from video   import Window, WindowID, DisplayID
-from surface import Surface
+from video import Window, WindowId, DisplayId
 
 export keyboard
 

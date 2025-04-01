@@ -1,6 +1,6 @@
 from std/os        import `/`, parent_dir
 from std/strformat import `&`
-export `&`, `/`
+export `&`
 
 const
     Cwd = current_source_path.parent_dir()

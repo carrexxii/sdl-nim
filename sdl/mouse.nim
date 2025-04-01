@@ -52,8 +52,8 @@ type
 
 #[ -------------------------------------------------------------------- ]#
 
-import surface
-from video import Window
+from video   import Window
+from surface import Surface
 
 using win: Window
 

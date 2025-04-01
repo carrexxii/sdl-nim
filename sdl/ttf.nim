@@ -1,4 +1,4 @@
-import common, init, bitgen, pixels, rect, properties, surface, renderer
+import common, init, bitgen, pixels, rect, properties
 from std/unicode import Rune, `$`
 
 # TODO: default colours
@@ -121,6 +121,8 @@ converter `TextData -> bool`*(text_data: TextData): bool         = cast[pointer]
 converter `TextEngine -> bool`*(engine: TextEngine): bool        = cast[pointer](engine) != nil
 
 #[ -------------------------------------------------------------------- ]#
+
+import renderer, surface
 
 using
     font   : Font
@@ -346,7 +348,7 @@ using
     bg, fg  : Colour
     wrap_len: SomeInteger
 proc render_assert(res: Surface; text: string) =
-    sdl_assert res != nil, &"Failed to render font text '{text}'"
+    sdl_assert res, &"Failed to render font text '{text}'"
 
 proc render*(font; text; fg, bg): Surface =
     result = ttf_render_text_shaded(font, cstring text, csize_t text.len, fg, bg)

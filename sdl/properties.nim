@@ -152,32 +152,27 @@ const
 type
     Property*   = distinct pointer
     PropertyId* = distinct uint32
-func `$`*(x: PropertyId): string   {.borrow.}
-func `==`*(x, y: PropertyId): bool {.borrow.}
+func `$`*(id: PropertyId): string  {.borrow.}
+func `==`*(a, b: PropertyId): bool {.borrow.}
 
 const InvalidProperty* = PropertyId 0
 
-#[ -------------------------------------------------------------------- ]#
-
-from video import Window
-
-using
-    id  : PropertyId
-    name: PropertyName
-    win : ptr Window
-
-{.push dynlib: SdlLib.}
-proc sdl_get_property*       (id; name; default: pointer): pointer {.importc: "SDL_GetProperty"        .}
-proc sdl_get_number_property*(id; name; default: int64  ): int64   {.importc: "SDL_GetNumberProperty"  .}
-proc sdl_get_window_properties*(win): uint32                       {.importc: "SDL_GetWindowProperties".}
+{.push importc, cdecl, dynlib: SdlLib.}
+proc SDL_GetProperty*(id: PropertyId; name: PropertyName; default: pointer): pointer
+proc SDL_GetNumberProperty*(id: PropertyId; name: PropertyName; default: int64): int64
+proc SDL_GetWindowProperties*(win: pointer): uint32
 {.pop.}
 
-#[ -------------------------------------------------------------------- ]#
-
 {.push inline.}
-proc properties*(win): PropertyId = PropertyId sdl_get_window_properties(win)
 
-proc x11_screen_number*(win): int64 = sdl_get_number_property properties(win), WindowX11ScreenNumber, -1
-proc x11_window_number*(win): int64 = sdl_get_number_property properties(win), WindowX11WindowNumber, -1
-proc x11_display_pointer*(win): Property = Property sdl_get_property(properties(win), WindowX11DisplayPointer, nil)
+proc properties*(win: pointer): PropertyId =
+    PropertyId SDL_GetWindowProperties win
+
+proc get_number_property*(id: PropertyId; name: PropertyName; default: int64 = -1): int64 =
+    SDL_GetNumberProperty id, name, default
+
+proc x11_screen_number*(win: pointer): int64      = get_number_property properties(win), WindowX11ScreenNumber
+proc x11_window_number*(win: pointer): int64      = get_number_property properties(win), WindowX11WindowNumber
+proc x11_display_pointer*(win: pointer): Property = Property SDL_GetProperty(properties(win), WindowX11DisplayPointer, nil)
+
 {.pop.}

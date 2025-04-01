@@ -100,6 +100,10 @@ type
         version*   : uint32
         ref_cnt*   : int32
 
+converter `Palette -> bool`*(palette: Palette): bool = nil == pointer palette
+converter `Palette -> ptr PaletteObj`*(palette: Palette): ptr PaletteObj = cast[ptr PaletteObj](palette)
+export `Palette -> bool`, `Palette -> ptr PaletteObj`
+
 func colour*(r, g, b: uint8; a = 255'u8): Colour   =  Colour(r: r, g: g, b: b, a: a)
 func colour*(r, g, b: float32; a = 1'f32): ColourF = ColourF(r: r, g: g, b: b, a: a)
 func colour*(hex: uint32): Colour =

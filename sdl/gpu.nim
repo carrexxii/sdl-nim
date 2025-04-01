@@ -22,7 +22,7 @@ ShaderFormatFlag.gen_bit_ops(
     sffPrivate, sffSpirV   , sffDxBc, sffDxIl,
     sffMsl    , sffMetalLib,
 )
-const sfFlagInvalid* = ShaderFormatFlag 0
+const sffInvalid* = ShaderFormatFlag 0
 
 type ColourComponentFlag* = distinct uint8
 ColourComponentFlag.gen_bit_ops ccfR, ccfG, ccfB, ccfA
@@ -31,294 +31,294 @@ const ccfRgba* = ccfR or ccfG or ccfB or ccfA
 
 type
     PrimitiveKind* {.size: sizeof(cint).} = enum
-        pkTriangleList
-        pkTriangleStrip
-        pkLineList
-        pkLineStrip
-        pkPointList
+        TriangleList
+        TriangleStrip
+        LineList
+        LineStrip
+        PointList
 
     LoadOp* {.size: sizeof(cint).} = enum
-        loLoad
-        loClear
-        loDontCare
+        Load
+        Clear
+        DontCare
 
     StoreOp* {.size: sizeof(cint).} = enum
-        soStore
-        soDontCare
-        soResolve
-        soResolveAndStore
+        Store
+        DontCare
+        Resolve
+        ResolveAndStore
 
     IndexElementSize* {.size: sizeof(cint).} = enum
-        ies16
-        ies32
+        Index16
+        Index32
 
     TextureFormat* {.size: sizeof(cint).} = enum
-        tfInvalid
+        Invalid
 
-        tfA8UNorm
-        tfR8UNorm
-        tfR8G8UNorm
-        tfR8G8B8A8UNorm
-        tfR16UNorm
-        tfR16G16UNorm
-        tfR16G16B16A16UNorm
-        tfR10G10B10A2UNorm
-        tfB5G6R5UNorm
-        tfB5G5R5A1UNorm
-        tfB4G4R4A4UNorm
-        tfB8G8R8A8UNorm
+        A8UNorm
+        R8UNorm
+        R8G8UNorm
+        R8G8B8A8UNorm
+        R16UNorm
+        R16G16UNorm
+        R16G16B16A16UNorm
+        R10G10B10A2UNorm
+        B5G6R5UNorm
+        B5G5R5A1UNorm
+        B4G4R4A4UNorm
+        B8G8R8A8UNorm
 
-        tfBc1RgbaUNorm
-        tfBc2RgbaUNorm
-        tfBc3RgbaUNorm
-        tfBc4RUNorm
-        tfBc5RgUNorm
-        tfBc7RgbaUNorm
-        tfBc6HRgbFloat
-        tfBc6HRgbUFloat
+        Bc1RgbaUNorm
+        Bc2RgbaUNorm
+        Bc3RgbaUNorm
+        Bc4RUNorm
+        Bc5RgUNorm
+        Bc7RgbaUNorm
+        Bc6HRgbFloat
+        Bc6HRgbUFloat
 
-        tfR8SNorm
-        tfR8G8SNorm
-        tfR8G8B8A8SNorm
-        tfR16SNorm
-        tfR16G16SNorm
-        tfR16G16B16A16SNorm
+        R8SNorm
+        R8G8SNorm
+        R8G8B8A8SNorm
+        R16SNorm
+        R16G16SNorm
+        R16G16B16A16SNorm
 
-        tfR16Float
-        tfR16G16Float
-        tfR16G16B16A16Float
-        tfR32Float
-        tfR32G32Float
-        tfR32G32B32A32Float
-        tfR11G11B10UFloat
+        R16Float
+        R16G16Float
+        R16G16B16A16Float
+        R32Float
+        R32G32Float
+        R32G32B32A32Float
+        R11G11B10UFloat
 
-        tfR8UInt
-        tfR8G8UInt
-        tfR8G8B8A8UInt
-        tfR16UInt
-        tfR16G16UInt
-        tfR16G16B16A16UInt
-        tfR32UInt
-        tfR32G32UInt
-        tfR32G32B32A32UInt
+        R8UInt
+        R8G8UInt
+        R8G8B8A8UInt
+        R16UInt
+        R16G16UInt
+        R16G16B16A16UInt
+        R32UInt
+        R32G32UInt
+        R32G32B32A32UInt
 
-        tfR8Int
-        tfR8G8Int
-        tfR8G8B8A8Int
-        tfR16Int
-        tfR16G16Int
-        tfR16G16B16A16Int
-        tfR32Int
-        tfR32G32Int
-        tfR32G32B32A32Int
+        R8Int
+        R8G8Int
+        R8G8B8A8Int
+        R16Int
+        R16G16Int
+        R16G16B16A16Int
+        R32Int
+        R32G32Int
+        R32G32B32A32Int
 
-        tfR8G8B8A8UNormSrgb
-        tfB8G8R8A8UNormSrgb
+        R8G8B8A8UNormSrgb
+        B8G8R8A8UNormSrgb
 
-        tfBc1RgbaUNormSrgb
-        tfBc2RgbaUNormSrgb
-        tfBc3RgbaUNormSrgb
-        tfBc7RgbaUNormSrgb
+        Bc1RgbaUNormSrgb
+        Bc2RgbaUNormSrgb
+        Bc3RgbaUNormSrgb
+        Bc7RgbaUNormSrgb
 
-        tfD16UNorm
-        tfD24UNorm
-        tfD32Float
-        tfD24UNormS8UInt
-        tfD32FloatS8UInt
+        D16UNorm
+        D24UNorm
+        D32Float
+        D24UNormS8UInt
+        D32FloatS8UInt
 
-        tfAstc4x4UNorm
-        tfAstc5x4UNorm
-        tfAstc5x5UNorm
-        tfAstc6x5UNorm
-        tfAstc6x6UNorm
-        tfAstc8x5UNorm
-        tfAstc8x6UNorm
-        tfAstc8x8UNorm
-        tfAstc10x5UNorm
-        tfAstc10x6UNorm
-        tfAstc10x8UNorm
-        tfAstc10x10UNorm
-        tfAstc12x10UNorm
-        tfAstc12x12UNorm
+        Astc4x4UNorm
+        Astc5x4UNorm
+        Astc5x5UNorm
+        Astc6x5UNorm
+        Astc6x6UNorm
+        Astc8x5UNorm
+        Astc8x6UNorm
+        Astc8x8UNorm
+        Astc10x5UNorm
+        Astc10x6UNorm
+        Astc10x8UNorm
+        Astc10x10UNorm
+        Astc12x10UNorm
+        Astc12x12UNorm
 
-        tfAstc4x4UNormSrgb
-        tfAstc5x4UNormSrgb
-        tfAstc5x5UNormSrgb
-        tfAstc6x5UNormSrgb
-        tfAstc6x6UNormSrgb
-        tfAstc8x5UNormSrgb
-        tfAstc8x6UNormSrgb
-        tfAstc8x8UNormSrgb
-        tfAstc10x5UNormSrgb
-        tfAstc10x6UNormSrgb
-        tfAstc10x8UNormSrgb
-        tfAstc10x10UNormSrgb
-        tfAstc12x10UNormSrgb
-        tfAstc12x12UNormSrgb
+        Astc4x4UNormSrgb
+        Astc5x4UNormSrgb
+        Astc5x5UNormSrgb
+        Astc6x5UNormSrgb
+        Astc6x6UNormSrgb
+        Astc8x5UNormSrgb
+        Astc8x6UNormSrgb
+        Astc8x8UNormSrgb
+        Astc10x5UNormSrgb
+        Astc10x6UNormSrgb
+        Astc10x8UNormSrgb
+        Astc10x10UNormSrgb
+        Astc12x10UNormSrgb
+        Astc12x12UNormSrgb
 
-        tfAstc4x4Float
-        tfAstc5x4Float
-        tfAstc5x5Float
-        tfAstc6x5Float
-        tfAstc6x6Float
-        tfAstc8x5Float
-        tfAstc8x6Float
-        tfAstc8x8Float
-        tfAstc10x5Float
-        tfAstc10x6Float
-        tfAstc10x8Float
-        tfAstc10x10Float
-        tfAstc12x10Float
-        tfAstc12x12Float
+        Astc4x4Float
+        Astc5x4Float
+        Astc5x5Float
+        Astc6x5Float
+        Astc6x6Float
+        Astc8x5Float
+        Astc8x6Float
+        Astc8x8Float
+        Astc10x5Float
+        Astc10x6Float
+        Astc10x8Float
+        Astc10x10Float
+        Astc12x10Float
+        Astc12x12Float
 
     TextureKind* {.size: sizeof(cint).} = enum
-        tk2D
-        tk2DArray
-        tk3D
-        tkCube
-        tkCubeArray
+        Texture2D
+        Texture2DArray
+        Texture3D
+        TextureCube
+        TextureCubeArray
 
     SampleCount* {.size: sizeof(cint).} = enum
-        sc1
-        sc2
-        sc4
-        sc8
+        Samples1
+        Samples2
+        Samples4
+        Samples8
 
     CubeMapFace* {.size: sizeof(cint).} = enum
-        cmfPositiveX
-        cmfNegativeX
-        cmfPositiveY
-        cmfNegativeY
-        cmfPositiveZ
-        cmfNegativeZ
+        PositiveX
+        NegativeX
+        PositiveY
+        NegativeY
+        PositiveZ
+        NegativeZ
 
     TransferBufferUsage* {.size: sizeof(cint).} = enum
-        tbuUpload
-        tbuDownload
+        Upload
+        Download
 
     ShaderStage* {.size: sizeof(cint).} = enum
-        ssVertex
-        ssFragment
+        Vertex
+        Fragment
 
     VertexElementFormat* {.size: sizeof(cint).} = enum
-        vefInvalid
-        vefInt
-        vefInt2
-        vefInt3
-        vefInt4
-        vefUInt
-        vefUInt2
-        vefUInt3
-        vefUInt4
-        vefFloat
-        vefFloat2
-        vefFloat3
-        vefFloat4
-        vefByte2
-        vefByte4
-        vefUByte2
-        vefUByte4
-        vefByte2Norm
-        vefByte4Norm
-        vefUByte2Norm
-        vefUByte4Norm
-        vefShort2
-        vefShort4
-        vefUShort2
-        vefUShort4
-        vefShort2Norm
-        vefShort4Norm
-        vefUShort2Norm
-        vefUShort4Norm
-        vefHalf2
-        vefHalf4
+        Invalid
+        Int
+        Int2
+        Int3
+        Int4
+        UInt
+        UInt2
+        UInt3
+        UInt4
+        Float
+        Float2
+        Float3
+        Float4
+        Byte2
+        Byte4
+        UByte2
+        UByte4
+        Byte2Norm
+        Byte4Norm
+        UByte2Norm
+        UByte4Norm
+        Short2
+        Short4
+        UShort2
+        UShort4
+        Short2Norm
+        Short4Norm
+        UShort2Norm
+        UShort4Norm
+        Half2
+        Half4
 
     VertexInputRate* {.size: sizeof(cint).} = enum
-        virVertex
-        virInstance
+        Vertex
+        Instance
 
     FillMode* {.size: sizeof(cint).} = enum
-        fmFill
-        fmLine
+        Fill
+        Line
 
     CullMode* {.size: sizeof(cint).} = enum
-        cmNone
-        cmFront
-        cmBack
+        None
+        Front
+        Back
 
     FrontFace* {.size: sizeof(cint).} = enum
-        ffCcw
-        ffCw
+        Ccw
+        Cw
 
     CompareOp* {.size: sizeof(cint).} = enum
-        coInvalid
-        coNever
-        coLess
-        coEqual
-        coLessOrEqual
-        coGreater
-        coNotEqual
-        coGreaterOrEqual
-        coAlways
+        Invalid
+        Never
+        Less
+        Equal
+        LessOrEqual
+        Greater
+        NotEqual
+        GreaterOrEqual
+        Always
 
     StencilOp* {.size: sizeof(cint).} = enum
-        soInvalid
-        soKeep
-        soZero
-        soReplace
-        soIncrAndClamp
-        soDecrAndClamp
-        soInvert
-        soIncrAndWrap
-        soDecrAndWrap
+        Invalid
+        Keep
+        Zero
+        Replace
+        IncrAndClamp
+        DecrAndClamp
+        Invert
+        IncrAndWrap
+        DecrAndWrap
 
     BlendOp* {.size: sizeof(cint).} = enum
-        boInvalid
-        boAdd
-        boSub
-        boRevSub
-        boMin
-        boMax
+        Invalid
+        Add
+        Sub
+        RevSub
+        Min
+        Max
 
     BlendFactor* {.size: sizeof(cint).} = enum
-        bfInvalid
-        bfZero
-        bfOne
-        bfSrcColour
-        bfOneMinusSrcColour
-        bfDstColour
-        bfOneMinusDstColour
-        bfSrcAlpha
-        bfOneMinusAlpha
-        bfDstAlpha
-        bfOneMinusDstAlpha
-        bfConstColour
-        bfOneMinusConstColour
-        bfSrcAlphaSaturate
+        Invalid
+        Zero
+        One
+        SrcColour
+        OneMinusSrcColour
+        DstColour
+        OneMinusDstColour
+        SrcAlpha
+        OneMinusAlpha
+        DstAlpha
+        OneMinusDstAlpha
+        ConstColour
+        OneMinusConstColour
+        SrcAlphaSaturate
 
     Filter* {.size: sizeof(cint).} = enum
-        fNearest
-        fLinear
+        Nearest
+        Linear
 
     SamplerMipmapMode* {.size: sizeof(cint).} = enum
-        smmNearest
-        smmLinear
+        Nearest
+        Linear
 
     SamplerAddressMode* {.size: sizeof(cint).} = enum
-        samRepeat
-        samMirroredRepeat
-        samClampToEdge
+        Repeat
+        MirroredRepeat
+        ClampToEdge
 
     PresentMode* {.size: sizeof(cint).} = enum
-        pmVsync
-        pmImmediate
-        pmMailbox
+        Vsync
+        Immediate
+        Mailbox
 
     SwapchainComposition* {.size: sizeof(cint).} = enum
-        scSdr
-        scSdrLinear
-        scHdrExtendedLinear
-        scHdr10St2084
+        Sdr
+        SdrLinear
+        HdrExtendedLinear
+        Hdr10St2084
 
 type
     Device*           = distinct pointer
@@ -341,14 +341,14 @@ type
         max_depth*    : float32
 
     TextureTransferInfo* = object
-        trans_buf*     : TransferBuffer
+        tbo*           : TransferBuffer
         offset*        : uint32
         px_per_row*    : uint32
         rows_per_layer*: uint32
 
     TransferBufferLocation* = object
-        trans_buf*: TransferBuffer
-        offset*   : uint32
+        tbo*   : TransferBuffer
+        offset*: uint32
 
     TextureLocation* = object
         tex*      : Texture
@@ -405,11 +405,11 @@ type
         addr_mode_w*      : SamplerAddressMode
         mip_lod_bias*     : float32
         max_anisotropy*   : float32
-        compare_op*       : CompareOp
+        cmp_op*           : CompareOp
         min_lod*          : float32
         max_lod*          : float32
         enable_anisotropy*: bool
-        enable_compare*   : bool
+        enable_cmp*       : bool
         _                 : array[2, byte]
         props*            : PropertyId
 
@@ -435,7 +435,7 @@ type
         fail_op*      : StencilOp
         pass_op*      : StencilOp
         depth_fail_op*: StencilOp
-        compare_op*   : CompareOp
+        cmp_op*       : CompareOp
 
     ColourTargetBlendState* = object
         src_colour_blend_factor* : BlendFactor
@@ -499,10 +499,10 @@ type
         _           : array[3, byte]
 
     DepthStencilState* = object
-        compare_op*         : CompareOp
+        cmp_op*             : CompareOp
         back_stencil_state* : StencilOpState
         front_stencil_state*: StencilOpState
-        compare_mask*       : uint8
+        cmp_mask*           : uint8
         write_mask*         : uint8
         enable_depth_test*  : bool
         enable_depth_write* : bool
@@ -541,7 +541,7 @@ type
         readonly_storage_buf_cnt* : uint32
         readwrite_storage_tex_cnt*: uint32
         readwrite_storage_buf_cnt*: uint32
-        uniform_buf_cnt*          : uint32
+        ubo_cnt*                  : uint32
         thread_cnt_x*             : uint32
         thread_cnt_y*             : uint32
         thread_cnt_z*             : uint32
@@ -842,7 +842,7 @@ proc create_device*(props: PropertyId): Device =
     sdl_assert result, &"Failed to create GPU device: '{get_error()}'"
 
 proc create_graphics_pipeline*(dev; vs, fs: Shader; vtx_input_state: VertexInputState;
-                               prim_kind           = pkTriangleList;
+                               prim_kind           = TriangleList;
                                raster_state        = RasterizerState();
                                multisample_state   = MultisampleState();
                                depth_stencil_state = DepthStencilState();
@@ -944,20 +944,20 @@ proc create_buffer*(dev; usage: BufferUsageFlag; sz: SomeInteger; name: string; 
     dev.set_buf_name result, name
 
 proc create_sampler*(dev;
-                     min_filter        = fNearest;
-                     mag_filter        = fNearest;
-                     mip_map_mode      = smmNearest;
-                     addr_mode_u       = samRepeat;
-                     addr_mode_v       = samRepeat;
-                     addr_mode_w       = samRepeat;
-                     compare_op        = coInvalid;
+                     min_filter  : Filter             = Nearest;
+                     mag_filter  : Filter             = Nearest;
+                     mip_map_mode: SamplerMipmapMode  = Nearest;
+                     addr_mode_u : SamplerAddressMode = Repeat;
+                     addr_mode_v : SamplerAddressMode = Repeat;
+                     addr_mode_w : SamplerAddressMode = Repeat;
+                     cmp_op      : CompareOp          = Invalid;
                      enable_anisotropy = false;
-                     enable_compare    = false;
+                     enable_cmp        = false;
                      props             = InvalidProperty;
-                     mip_lod_bias   = 0'f32;
-                     max_anisotropy = 1'f32;
-                     min_lod        = 1'f32;
-                     max_lod        = 1'f32;
+                     mip_lod_bias      = 0'f32;
+                     max_anisotropy    = 1'f32;
+                     min_lod           = 1'f32;
+                     max_lod           = 1'f32;
                      ): Sampler =
     let ci = SamplerCreateInfo(
         min_filter       : min_filter,
@@ -968,22 +968,22 @@ proc create_sampler*(dev;
         addr_mode_w      : addr_mode_w,
         mip_lod_bias     : cfloat mip_lod_bias,
         max_anisotropy   : cfloat max_anisotropy,
-        compare_op       : compare_op,
+        cmp_op           : cmp_op,
         min_lod          : cfloat min_lod,
         max_lod          : cfloat max_lod,
         enable_anisotropy: enable_anisotropy,
-        enable_compare   : enable_compare,
+        enable_cmp       : enable_cmp,
         props            : props,
     )
     result = sdl_create_gpu_sampler(dev, ci.addr)
-    sdl_assert result, &"Failed to create sampler: '{get_error()}'"
+    sdl_assert result, &"Failed to create sampler ({ci})"
 
 proc create_texture*(dev; w, h: uint32;
-                     kind       = tk2D;
-                     fmt        = tfR8G8B8A8Unorm;
-                     usage      = tufSampler;
-                     props      = InvalidProperty;
-                     sample_cnt = sc1;
+                     kind               = Texture2D;
+                     fmt                = R8G8B8A8Unorm;
+                     usage              = Sampler;
+                     props              = InvalidProperty;
+                     sample_cnt         = Samples1;
                      depth_or_layer_cnt = 1'u32;
                      lvl_cnt            = 1'u32;
                      ): Texture =
@@ -1003,8 +1003,8 @@ proc create_texture*(dev; w, h: uint32;
 
 # TODO: have an option for a permanent multi-use transfer buffer
 proc create_transfer_buffer*(dev; sz: SomeInteger;
-                             usage = tbuUpload;
-                             props = InvalidProperty;
+                             usage: TransferBufferUsage = Upload;
+                             props: PropertyId          = InvalidProperty;
                              ): TransferBuffer =
     let ci = TransferBufferCreateInfo(
         usage: usage,
@@ -1014,14 +1014,14 @@ proc create_transfer_buffer*(dev; sz: SomeInteger;
     result = sdl_create_gpu_transfer_buffer(dev, ci.addr)
     sdl_assert result, &"Failed to create transfer buffer: '{get_error()}'"
 
-proc map*(dev; buf: TransferBuffer; cycle = false): pointer = sdl_map_gpu_transfer_buffer   dev, buf, cycle
-proc unmap*(dev; buf: TransferBuffer)                       = sdl_unmap_gpu_transfer_buffer dev, buf
+proc map*(dev; tbo: TransferBuffer; cycle = false): pointer = sdl_map_gpu_transfer_buffer   dev, tbo, cycle
+proc unmap*(dev; tbo: TransferBuffer)                       = sdl_unmap_gpu_transfer_buffer dev, tbo
 
 proc begin_copy_pass*(cmd_buf): CopyPass =
     result = sdl_begin_gpu_copy_pass cmd_buf
     sdl_assert result, &"Failed to begin copy pass: '{get_error()}'"
 
-proc upload*(copy_pass; trans_buf: TransferBuffer; tex; px_w: SomeInteger; px_h: SomeInteger;
+proc upload*(copy_pass; tbo: TransferBuffer; tex; px_w: SomeInteger; px_h: SomeInteger;
              offset : SomeInteger = 0;
              mip_lvl: SomeInteger = 0;
              layer  : SomeInteger = 0;
@@ -1030,7 +1030,7 @@ proc upload*(copy_pass; trans_buf: TransferBuffer; tex; px_w: SomeInteger; px_h:
              cycle = false;
              ) =
     let src = TextureTransferInfo(
-        trans_buf     : trans_buf,
+        tbo           : tbo,
         offset        : uint32 offset,
         px_per_row    : uint32 px_w,
         rows_per_layer: uint32 px_h,
@@ -1044,14 +1044,14 @@ proc upload*(copy_pass; trans_buf: TransferBuffer; tex; px_w: SomeInteger; px_h:
     )
     sdl_upload_to_gpu_texture copy_pass, src.addr, dst.addr, cycle
 
-proc upload*(copy_pass; trans_buf: TransferBuffer; buf: Buffer; sz: SomeInteger;
+proc upload*(copy_pass; tbo: TransferBuffer; buf: Buffer; sz: SomeInteger;
              trans_buf_offset: SomeInteger = 0;
              buf_offset      : SomeInteger = 0;
              cycle = false;
              ) =
     let src = TransferBufferLocation(
-        trans_buf: trans_buf,
-        offset   : uint32 trans_buf_offset,
+        tbo   : tbo,
+        offset: uint32 trans_buf_offset,
     )
     let dst = BufferRegion(
         buf   : buf,
@@ -1110,10 +1110,10 @@ proc push_compute_uniform*[T](cmd_buf; slot: SomeInteger; data: T) = push_comput
 proc gen_mip_maps*(cmd_buf; tex) = sdl_generate_mip_maps_for_gpu_texture cmd_buf, tex
 
 proc blit*(cmd_buf; dst, src: BlitRegion;
-           load_op             = loLoad;
+           load_op: LoadOp     = Load;
            clear_colour        = FBlack;
            flip_mode: FlipMode = None;
-           filter              = fNearest;
+           filter: Filter      = Nearest;
            cycle               = false;
            ) =
     let blit_info = BlitInfo(
@@ -1143,15 +1143,15 @@ proc begin_render_pass*(cmd_buf; cti: openArray[ColourTargetInfo]; dsti = none D
 proc `bind`*(ren_pass; gfx_pipeln)                                            = ren_pass.sdl_bind_gpu_graphics_pipeline gfx_pipeln
 proc `bind`*(ren_pass; buf: BufferBinding; idx_elem_sz: IndexElementSize)     = ren_pass.sdl_bind_gpu_index_buffer buf.addr, idx_elem_sz
 proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[BufferBinding]) = ren_pass.sdl_bind_gpu_vertex_buffer uint32 fst_slot, bufs[0].addr, uint32 bufs.len
-proc `bind`*(ren_pass; fst_slot: SomeInteger; binds: openArray[TextureSamplerBinding]; stage = ssFragment) =
+proc `bind`*(ren_pass; fst_slot: SomeInteger; binds: openArray[TextureSamplerBinding]; stage: ShaderStage = Fragment) =
     case stage
     of ssVertex  :ren_pass.sdl_bind_gpu_vertex_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
     of ssFragment:ren_pass.sdl_bind_gpu_fragment_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
-proc `bind`*(ren_pass; fst_slot: SomeInteger; texs: openArray[Texture]; stage = ssVertex) =
+proc `bind`*(ren_pass; fst_slot: SomeInteger; texs: openArray[Texture]; stage: ShaderStage = Vertex) =
     case stage
     of ssVertex  : ren_pass.sdl_bind_gpu_vertex_storage_textures   uint32 fst_slot, texs[0].addr, uint32 texs.len
     of ssFragment: ren_pass.sdl_bind_gpu_fragment_storage_textures uint32 fst_slot, texs[0].addr, uint32 texs.len
-proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[Buffer]; stage = ssVertex) =
+proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[Buffer]; stage: ShaderStage = Vertex) =
     case stage
     of ssVertex  : ren_pass.sdl_bind_gpu_vertex_storage_buffers   uint32 fst_slot, bufs[0].addr, uint32 bufs.len
     of ssFragment: ren_pass.sdl_bind_gpu_fragment_storage_buffers uint32 fst_slot, bufs[0].addr, uint32 bufs.len
@@ -1269,7 +1269,7 @@ proc upload*[T](dev; usage: BufferUsageFlag; data: T; name = ""): Buffer =
     submit cmd_buf
     dev.destroy trans_buf
 
-proc upload*(dev; pxs: pointer; w, h: SomeInteger; fmt = tfR8G8B8A8Unorm; name = ""): Texture =
+proc upload*(dev; pxs: pointer; w, h: distinct SomeInteger; fmt = R8G8B8A8Unorm; name = ""): Texture =
     let data_sz   = (uint32 w)*(uint32 h)*fmt.block_sz
     result        = dev.create_texture(w, h, fmt = fmt)
     let trans_buf = dev.create_transfer_buffer data_sz

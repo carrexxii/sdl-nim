@@ -26,16 +26,16 @@ let device = create_device(sffSpirV, false) # TODO: debug mode fails to find req
 let window = create_window("GPU Test", 640, 480, winNone)
 device.claim window
 
-let vtx_shader  = device.create_shader_from_file(ssVertex  , ShaderDir / "simple.vert.spv")
-let frag_shader = device.create_shader_from_file(ssFragment, ShaderDir / "simple.frag.spv")
+let vtx_shader  = device.create_shader_from_file(ShaderStage.Vertex  , ShaderDir / "simple.vert.spv")
+let frag_shader = device.create_shader_from_file(ShaderStage.Fragment, ShaderDir / "simple.frag.spv")
 
 let
     ct_descr = ColourTargetDescription(fmt: swapchain_tex_fmt(device, window))
     fill_pipeln = device.create_graphics_pipeline(vtx_shader, frag_shader,
         vertex_input_state(
-            [vtx_descr(0, sizeof Vertex, virVertex)],
-            [vtx_attr(0, 0, vefFloat3, 0),
-             vtx_attr(1, 0, vefFloat4, 12)],
+            [vtx_descr(0, sizeof Vertex, VertexInputRate.Vertex)],
+            [vtx_attr(0, 0, Float3, 0),
+             vtx_attr(1, 0, Float4, 12)],
         ),
         target_info = GraphicsPipelineTargetInfo(
             colour_target_descrs: ct_descr.addr,
@@ -44,16 +44,16 @@ let
     )
     line_pipeln = device.create_graphics_pipeline(vtx_shader, frag_shader,
         vertex_input_state(
-            [vtx_descr(0, sizeof Vertex, virVertex)],
-            [vtx_attr(0, 0, vefFloat3, 0),
-             vtx_attr(1, 0, vefFloat4, 12)],
+            [vtx_descr(0, sizeof Vertex, VertexInputRate.Vertex)],
+            [vtx_attr(0, 0, Float3, 0),
+             vtx_attr(1, 0, Float4, 12)],
         ),
         target_info = GraphicsPipelineTargetInfo(
             colour_target_descrs: ct_descr.addr,
             colour_target_cnt   : 1,
         ),
         raster_state = RasterizerState(
-            fill_mode: fmLine,
+            fill_mode: Line,
         ),
     )
 var pipeln = fill_pipeln
@@ -66,8 +66,8 @@ proc draw() =
     let colour_target_info = ColourTargetInfo(
         tex         : swapchain.tex,
         clear_colour: ClearColour,
-        load_op     : loClear,
-        store_op    : soStore,
+        load_op     : Clear,
+        store_op    : Store,
     )
 
     let ren_pass = begin_render_pass(cmd_buf, [colour_target_info])

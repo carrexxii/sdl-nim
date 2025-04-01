@@ -1,4 +1,4 @@
-import std/options, common, pixels, rect, video
+import std/options, common, pixels, rect, blendmode, properties
 
 const SoftwareRenderer* = "software"
 
@@ -56,42 +56,7 @@ func vertex*(xy = FPoint(); rgba = ColourF(); uv = FPoint()): Vertex =
 
 #[ -------------------------------------------------------------------- ]#
 
-type
-    BlendMode* {.size: sizeof(uint32).} = enum
-        blendNone    = 0x0000_0000
-        blendBlend   = 0x0000_0001
-        blendAdd     = 0x0000_0002
-        blendMod     = 0x0000_0004
-        blendMul     = 0x0000_0008
-        blendInvalid = 0x7FFF_FFFF
-
-    BlendOperation* {.size: sizeof(int32).} = enum
-        blendAdd         = 0x1
-        blendSubtract    = 0x2
-        blendRevSubtract = 0x3
-        blendMinimum     = 0x4
-        blendMaximum     = 0x5
-
-    BlendFactor* {.size: sizeof(int32).} = enum
-        blendZero              = 0x1
-        blendOne               = 0x2
-        blendSrcColour         = 0x3
-        blendOneMinusSrcColour = 0x4
-        blendSrcAlpha          = 0x5
-        blendOneMinusSrcAlpha  = 0x6
-        blendDstColour         = 0x7
-        blendOneMinusDstColour = 0x8
-        blendDstAlpha          = 0x9
-        blendOneMinusDstAlpha  = 0xA
-
-proc compose_custom_blendmode*(src_colour, dst_colour: BlendFactor; colour_op: BlendOperation;
-                               src_alpha , dst_alpha : BlendFactor; alpha_op : BlendOperation): BlendMode
-    {.importc: "SDL_ComposeCustomBlendMode".}
-
-#[ -------------------------------------------------------------------- ]#
-
-from properties import PropertyId
-from surface    import Surface, FlipMode
+import surface, video
 
 using
     ren      : Renderer
@@ -145,7 +110,7 @@ proc sdl_render_geometry_raw_float*(ren; tex;
                                     colours: ptr ColourF; colour_stride: cint;
                                     uvs    : ptr cfloat ; uv_stride    : cint;
                                     vert_count: cint; inds: pointer; idx_count: cint; inds_sz: cint): bool {.importc: "SDL_RenderGeometryRawFloat".}
-proc sdl_render_read_pixels*(ren; rect: ptr Rect): Surface {.importc: "SDL_RenderReadPixels".} # TODO: this needs to be free'd
+proc sdl_render_read_pixels*(ren; rect: ptr Rect): Surface {.importc: "SDL_RenderReadPixels".}
 proc sdl_render_present*(ren): bool                        {.importc: "SDL_RenderPresent"   .}
 proc sdl_destroy_texture*(tex)                             {.importc: "SDL_DestroyTexture"  .}
 proc sdl_destroy_renderer*(ren)                            {.importc: "SDL_DestroyRenderer" .}
@@ -169,9 +134,8 @@ proc sdl_get_texture_properties*(tex: ptr Texture): uint32 {.importc: "SDL_GetTe
 
 {.push inline.}
 
-import properties
-proc properties*(tex: ptr Texture): PropertyId = PropertyId sdl_get_texture_properties(tex)
-proc texture_number*(tex: ptr Texture): int64  = sdl_get_number_property properties(tex), TextureOpenGlTextureNumber, -1
+proc properties*(tex: ptr Texture): PropertyId = PropertyId sdl_get_texture_properties tex
+proc texture_number*(tex: ptr Texture): int64  = get_number_property properties(tex), TextureOpenGlTextureNumber
 
 proc `=destroy`*(tex) = sdl_destroy_texture  tex
 proc `=destroy`*(ren) = sdl_destroy_renderer ren
@@ -324,6 +288,6 @@ proc draw_geometry*(ren; verts: openArray[Vertex]; inds: openArray[int32] = []; 
 proc read_pixels*(ren; rect = Rect()): Surface =
     let src = if rect.w != 0 and rect.h != 0: rect.addr else: nil
     result = sdl_render_read_pixels(ren, src)
-    sdl_assert result != nil, &"Failed to read renderer's pixels from {rect}"
+    sdl_assert result, &"Failed to read renderer's pixels from {rect}"
 
 {.pop.}
