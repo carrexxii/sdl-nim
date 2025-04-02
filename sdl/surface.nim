@@ -301,5 +301,3 @@ proc `[]=`*(surf: Surface; x, y: distinct SomeNumber; colour: Colour | ColourF):
     write_pixel surf, x, y, colour
 
 {.pop.}
-
-import image
