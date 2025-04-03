@@ -137,7 +137,7 @@ proc fullscreen_modes*(display): seq[DisplayModeObj] =
     sdl_assert modes != nil, &"Failed to get fullscreen display modes"
     for mode in to_open_array(modes, 0'i32, count - 1):
         result.add mode[]
-    SDL_free modes
+    sdl_free modes
 
 proc desktop_mode*(display): DisplayMode =
     result = sdl_get_desktop_display_mode display
