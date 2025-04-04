@@ -149,6 +149,18 @@ const
     IoStreamDynamicMemoryPointer*   = PropertyName "SDL.iostream.dynamic.memory"
     IoStreamDynamicChunkSizeNumber* = PropertyName "SDL.iostream.dynamic.chunksize"
 
+    JoystickCapMonoLedBoolean*       = PropertyName "SDL.joystick.cap.mono_led"
+    JoystickCapRgbLedBoolean*        = PropertyName "SDL.joystick.cap.rgb_led"
+    JoystickCapPlayerLedBoolean*     = PropertyName "SDL.joystick.cap.player_led"
+    JoystickCapRumbleBoolean*        = PropertyName "SDL.joystick.cap.rumble"
+    JoystickCapTriggerRumbleBoolean* = PropertyName "SDL.joystick.cap.trigger_rumble"
+
+    GamepadCapMonoLedBoolean*       = JoystickCapMonoLedBoolean
+    GamepadCapRgbLedBoolean*        = JoystickCapRgbLedBoolean
+    GamepadCapPlayerLedBoolean*     = JoystickCapPlayerLedBoolean
+    GamepadCapRumbleBoolean*        = JoystickCapRumbleBoolean
+    GamepadCapTriggerRumbleBoolean* = JoystickCapTriggerRumbleBoolean
+
 type
     Property*   = distinct pointer
     PropertyId* = distinct uint32
