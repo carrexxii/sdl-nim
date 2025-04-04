@@ -15,9 +15,30 @@ type
     Version* = distinct cint
     Time*    = distinct int64
 
-proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SdlLib.}
-proc sdl_free*(p: pointer) {.importc: "SDL_free"    , dynlib: SdlLib.}
+{.push cdecl, dynlib: SdlLib.}
+proc get_error*(): cstring     {.importc: "SDL_GetError"         .}
+proc sdl_free*(p: pointer)     {.importc: "SDL_free"             .}
+proc allocation_count*(): cint {.importc: "SDL_GetNumAllocations".}
+{.pop.}
 
 proc sdl_assert*(cond: bool; msg: string) {.inline.} =
     when not defined SdlNoAssert:
         assert cond, &"{msg}: '{get_error()}'"
+
+#[ -------------------------------------------------------------------- ]#
+# SDL_guid.h
+
+type Guid* = object
+    data: array[16, byte]
+
+{.push importc, cdecl, dynlib: SdlLib.}
+proc SDL_GUIDToString*(guid: Guid; pszGUID: cstring; cbGUID: cint)
+proc SDL_StringToGUID*(pchGUID: cstring): Guid
+{.pop.}
+
+proc `$`*(guid: Guid): string =
+    result = new_string(40)
+    SDL_GUIDToString(guid, result[0].addr, cint result.len)
+
+proc to_guid*(guid: string): Guid =
+    SDL_StringToGUID cstring guid
