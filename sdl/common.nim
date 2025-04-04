@@ -13,6 +13,7 @@ type
     FunctionPointer* = proc() {.cdecl.}
 
     Version* = distinct cint
+    Time*    = distinct int64
 
 proc get_error*(): cstring {.importc: "SDL_GetError", dynlib: SdlLib.}
 proc sdl_free*(p: pointer) {.importc: "SDL_free"    , dynlib: SdlLib.}
