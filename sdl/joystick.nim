@@ -159,7 +159,7 @@ proc lock_joysticks*()      = SDL_LockJoysticks()
 proc unlock_joysticks*()    = SDL_UnlockJoysticks()
 proc have_joystick*(): bool = SDL_HasJoystick()
 
-proc joysticks*(): seq[JoystickId] =
+proc get_joysticks*(): seq[JoystickId] =
     var cnt: cint
     let sticks = SDL_GetJoysticks(cnt.addr)
     if sticks != nil:

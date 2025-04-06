@@ -1,6 +1,7 @@
 import common, joystick, power, sensor
 from properties import PropertyId
 from iostream   import IoStream
+from timer      import Milliseconds
 
 type
     GamepadKind* {.size: sizeof(cint).} = enum
@@ -72,7 +73,8 @@ type
         Hat
 
 type
-    Gamepad* = distinct pointer
+    Gamepad*   = distinct pointer
+    GamepadId* = distinct JoystickId
 
     GamepadBinding* = object
         input_kind* : GamepadBindingKind
@@ -103,6 +105,11 @@ type
         axis_min*: int32
         axis_max*: int32
 
+converter `Gamepad -> bool`*(gamepad: Gamepad): bool = nil != pointer gamepad
+converter `GamepadId -> bool`*(id: GamepadId): bool  = 0 != int id
+
+proc `$`*(id: GamepadId): string {.borrow.}
+
 {.push importc, cdecl, dynlib: SdlLib.}
 proc SDL_AddGamepadMapping*(mapping: cstring): cint
 proc SDL_AddGamepadMappingsFromIO*(stream: IoStream; close_io: bool): cint
@@ -111,25 +118,26 @@ proc SDL_ReloadGamepadMappings*(): bool
 proc SDL_GetGamepadMappings*(cnt: ptr cint): cstringArray
 proc SDL_GetGamepadMappingForGUID*(guid: Guid): cstring
 proc SDL_GetGamepadMapping*(gamepad: Gamepad): cstring
-proc SDL_SetGamepadMapping*(id: JoystickId; mapping: cstring): bool
+proc SDL_SetGamepadMapping*(id: GamepadId; mapping: cstring): bool
+
 proc SDL_HasGamepad*(): bool
-proc SDL_GetGamepads*(cnt: ptr cint): ptr UncheckedArray[JoystickId]
+proc SDL_GetGamepads*(cnt: ptr cint): ptr UncheckedArray[GamepadId]
 proc SDL_IsGamepad*(id: JoystickId): bool
-proc SDL_GetGamepadNameForID*(id: JoystickId): cstring
-proc SDL_GetGamepadPathForID*(id: JoystickId): cstring
-proc SDL_GetGamepadPlayerIndexForID*(id: JoystickId): cint
-proc SDL_GetGamepadGUIDForID*(id: JoystickId): Guid
-proc SDL_GetGamepadVendorForID*(id: JoystickId): uint16
-proc SDL_GetGamepadProductForID*(id: JoystickId): uint16
-proc SDL_GetGamepadProductVersionForID*(id: JoystickId): uint16
-proc SDL_GetGamepadTypeForID*(id: JoystickId): GamepadKind
-proc SDL_GetRealGamepadTypeForID*(id: JoystickId): GamepadKind
-proc SDL_GetGamepadMappingForID*(id: JoystickId): cstring
-proc SDL_OpenGamepad*(id: JoystickId): Gamepad
-proc SDL_GetGamepadFromID*(id: JoystickId): Gamepad
+proc SDL_GetGamepadNameForID*(id: GamepadId): cstring
+proc SDL_GetGamepadPathForID*(id: GamepadId): cstring
+proc SDL_GetGamepadPlayerIndexForID*(id: GamepadId): cint
+proc SDL_GetGamepadGUIDForID*(id: GamepadId): Guid
+proc SDL_GetGamepadVendorForID*(id: GamepadId): uint16
+proc SDL_GetGamepadProductForID*(id: GamepadId): uint16
+proc SDL_GetGamepadProductVersionForID*(id: GamepadId): uint16
+proc SDL_GetGamepadTypeForID*(id: GamepadId): GamepadKind
+proc SDL_GetRealGamepadTypeForID*(id: GamepadId): GamepadKind
+proc SDL_GetGamepadMappingForID*(id: GamepadId): cstring
+proc SDL_OpenGamepad*(id: GamepadId): Gamepad
+proc SDL_GetGamepadFromID*(id: GamepadId): Gamepad
 proc SDL_GetGamepadFromPlayerIndex*(player_idx: cint): Gamepad
 proc SDL_GetGamepadProperties*(gamepad: Gamepad): PropertyId
-proc SDL_GetGamepadID*(gamepad: Gamepad): JoystickId
+proc SDL_GetGamepadID*(gamepad: Gamepad): GamepadId
 proc SDL_GetGamepadName*(gamepad: Gamepad): cstring
 proc SDL_GetGamepadPath*(gamepad: Gamepad): cstring
 proc SDL_GetGamepadType*(gamepad: Gamepad): GamepadKind
@@ -177,4 +185,137 @@ proc SDL_SendGamepadEffect*(gamepad: Gamepad; data: pointer; sz: cint): bool
 proc SDL_CloseGamepad*(gamepad: Gamepad)
 proc SDL_GetGamepadAppleSFSymbolsNameForButton*(gamepad: Gamepad; btn: GamepadButton): cstring
 proc SDL_GetGamepadAppleSFSymbolsNameForAxis*(gamepad: Gamepad; axis: GamepadAxis): cstring
+{.pop.}
+
+# TODO: mappings
+
+{.push inline.}
+
+proc have_gamepad*(): bool = SDL_HasGamepad()
+
+proc get_gamepads*(): seq[GamepadId] =
+    var cnt: cint
+    let gps = SDL_GetGamepads(cnt.addr)
+    if gps != nil:
+        result = new_seq_of_cap[GamepadId](cnt)
+        for i in 0..<cnt:
+            result.add gps[i]
+        sdl_free gps
+
+proc is_gamepad*(id: JoystickId): bool      = SDL_IsGamepad id
+proc name*(id: GamepadId): string           = $SDL_GetGamepadNameForID(id)
+proc path*(id: GamepadId): string           = $SDL_GetGamepadPathForID(id)
+proc player_index*(id: GamepadId): int32    = int32 SDL_GetGamepadPlayerIndexForID id
+proc guid*(id: GamepadId): Guid             = SDL_GetGamepadGUIDForID id
+proc vendor*(id: GamepadId): uint16         = SDL_GetGamepadVendorForID id
+proc product*(id: GamepadId): uint16        = SDL_GetGamepadProductForID id
+proc version*(id: GamepadId): uint16        = SDL_GetGamepadProductVersionForID id
+proc kind*(id: GamepadId): GamepadKind      = SDL_GetGamepadTypeForID id
+proc real_kind*(id: GamepadId): GamepadKind = SDL_GetRealGamepadTypeForID id
+proc mapping*(id: GamepadId): string        = $SDL_GetGamepadMappingForID(id)
+
+proc open*(id: GamepadId): Gamepad =
+    result = SDL_OpenGamepad(id)
+    sdl_assert result, &"Failed to open gamepad with id '{id}'"
+
+proc gamepad*(id: GamepadId): Gamepad =
+    result = SDL_GetGamepadFromID(id)
+    sdl_assert result, &"Failed to get gamepad from id '{id}'"
+
+proc gamepad*(player_idx: SomeInteger): Gamepad =
+    result = SDL_GetGamepadFromPlayerIndex(cint player_idx)
+    sdl_assert result, &"Failed to get gamepad from player index '{player_idx}'"
+
+proc properties*(gamepad: Gamepad): PropertyId   = SDL_GetGamepadProperties gamepad
+proc id*(gamepad: Gamepad): GamepadId            = SDL_GetGamepadID gamepad
+proc name*(gamepad: Gamepad): string             = $SDL_GetGamepadName(gamepad)
+proc path*(gamepad: Gamepad): string             = $SDL_GetGamepadPath(gamepad)
+proc kind*(gamepad: Gamepad): GamepadKind        = SDL_GetGamepadType gamepad
+proc real_kind*(gamepad: Gamepad): GamepadKind   = SDL_GetRealGamepadType gamepad
+proc player_index*(gamepad: Gamepad): int32      = int32 SDL_GetGamepadPlayerIndex gamepad
+proc vendor*(gamepad: Gamepad): uint16           = SDL_GetGamepadVendor gamepad
+proc product*(gamepad: Gamepad): uint16          = SDL_GetGamepadProduct gamepad
+proc product_version*(gamepad: Gamepad): uint16  = SDL_GetGamepadProductVersion gamepad
+proc firmware_version*(gamepad: Gamepad): uint16 = SDL_GetGamepadFirmwareVersion gamepad
+proc serial*(gamepad: Gamepad): string           = $SDL_GetGamepadSerial(gamepad)
+proc steam_handle*(gamepad: Gamepad): uint64     = SDL_GetGamepadSteamHandle gamepad
+proc is_connected*(gamepad: Gamepad): bool       = SDL_GamepadConnected gamepad
+proc joystick*(gamepad: Gamepad): Joystick       = SDL_GetGamepadJoystick gamepad
+proc gamepad_events_enabled*(): bool             = SDL_GamepadEventsEnabled()
+proc kind*(str: string): GamepadKind             = SDL_GetGamepadTypeFromString cstring str
+proc `$`*(kind: GamepadKind): string             = $SDL_GetGamepadStringForType(kind)
+proc axis*(str: string): GamepadAxis             = SDL_GetGamepadAxisFromString cstring str
+proc `$`*(axis: GamepadAxis): string             = $SDL_GetGamepadStringForAxis(axis)
+proc button*(str: string): GamepadButton         = SDL_GetGamepadButtonFromString cstring str
+proc `$`*(btn: GamepadButton): string            = $SDL_GetGamepadStringForButton(btn)
+proc connection_state*(gamepad: Gamepad): JoystickConnectionState      = SDL_GetGamepadConnectionState gamepad
+proc has_axis*(gamepad: Gamepad; axis: GamepadAxis): bool              = SDL_GamepadHasAxis gamepad, axis
+proc axis*(gamepad: Gamepad; axis: GamepadAxis): int16                 = SDL_GetGamepadAxis gamepad, axis
+proc has_button*(gamepad: Gamepad; btn: GamepadButton): bool           = SDL_GamepadHasButton gamepad, btn
+proc button*(gamepad: Gamepad; btn: GamepadButton): bool               = SDL_GetGamepadButton gamepad, btn
+proc label*(kind: GamepadKind; btn: GamepadButton): GamepadButtonLabel = SDL_GetGamepadButtonLabelForType kind, btn
+proc label*(gamepad: Gamepad; btn: GamepadButton): GamepadButtonLabel  = SDL_GetGamepadButtonLabel gamepad, btn
+proc power_info*(gamepad: Gamepad): tuple[state: PowerState; percent: int32] =
+    result.state = SDL_GetGamepadPowerInfo(gamepad, result.percent.addr)
+
+proc set_player_index*(gamepad: Gamepad; player_idx: SomeInteger): bool {.discardable.} =
+    result = SDL_SetGamepadPlayerIndex(gamepad, cint player_idx)
+    sdl_assert result, &"Failed to set gamepad player index to '{player_idx}'"
+proc `player_index=`*(gamepad: Gamepad; player_idx: SomeInteger) = set_player_index gamepad, player_idx
+
+proc gamepad_events_enabled*(enabled: bool) =
+    SDL_SetGamepadEventsEnabled enabled
+
+proc update_gamepads*() =
+    SDL_UpdateGamepads()
+
+proc touchpad_count*(gamepad: Gamepad): int32 =
+    int32 SDL_GetNumGamepadTouchpads gamepad
+
+proc touchpad_finger_count*(gamepad: Gamepad; touchpad: SomeInteger): int32 =
+    int32 SDL_GetNumGamepadTouchpadFingers(gamepad, cint touchpad)
+
+proc touchpad_finger*(gamepad: Gamepad; touchpad, finger: distinct SomeInteger): tuple[down: bool; x, y, pressure: float32] =
+    let success = SDL_GetGamepadTouchpadFinger(gamepad, cint touchpad, cint finger, result.down.addr,
+                                               result.x.addr, result.y.adr, result.pressure.addr)
+    sdl_assert success, &"Failed to get touchpad finger data for gamepad (touchpad: {touchpad}; finger: {finger})"
+
+proc has_sensor*(gamepad: Gamepad; kind: SensorKind): bool   = SDL_GamepadHasSensor gamepad, kind
+proc is_enabled*(gamepad: Gamepad; kind: SensorKind): bool   = SDL_GamepadSensorEnabled gamepad, kind
+proc data_rate*(gamepad: Gamepad; kind: SensorKind): float32 = float32 SDL_GetGamepadSensorDataRate(gamepad, kind)
+
+proc enable_sensor*(gamepad: Gamepad; kind: SensorKind): bool {.discardable.} =
+    result = SDL_SetGamepadSensorEnabled(gamepad, kind, true)
+    sdl_assert result, &"Failed to enable sensor '{kind}'"
+proc disable_sensor*(gamepad: Gamepad; kind: SensorKind): bool {.discardable.} =
+    result = SDL_SetGamepadSensorEnabled(gamepad, kind, false)
+    sdl_assert result, &"Failed to disable sensor '{kind}'"
+
+proc sensor_data*[N: static[int]](gamepad: Gamepad; kind: SensorKind): array[N, float32] =
+    let success = SDL_GetGamepadSensorData(gamepad, kind, result[0].addr, N)
+    sdl_assert success, &"Failed to get sensor data of {N} values"
+
+proc rumble*(gamepad: Gamepad; low_freq, high_freq: uint16; duration: Milliseconds): bool {.discardable.} =
+    result = SDL_RumbleGamepad(gamepad, low_freq, high_freq, uint32 duration)
+    sdl_assert result, &"Failed to rumble gamepad (low frequency: {low_freq}; high frequency: {high_freq}; duration: {uint32 duration}ms)"
+
+proc rumble_triggers*(gamepad: Gamepad; left, right: uint16; duration: Milliseconds): bool {.discardable.} =
+    result = SDL_RumbleGamepadTriggers(gamepad, left, right, uint32 duration)
+    sdl_assert result, &"Failed to rumble gamepad (left rumble: {left}; right rumble: {right}; duration: {uint32 duration}ms)"
+
+proc set_led*(gamepad: Gamepad; r, g, b: uint8): bool {.discardable.} =
+    result = SDL_SetGamepadLED(gamepad, r, g, b)
+    sdl_assert result, &"Failed to set LED colour to ({r}, {g}, {b})"
+proc set_led*(gamepad: Gamepad; rgb: array[3, uint8]): bool {.discardable.} =
+    set_led gamepad, rgb[0], rgb[1], rgb[2]
+proc `led=`*(gamepad: Gamepad; rgb: array[3, uint8]) = set_led gamepad, rgb[0], rgb[1], rgb[2]
+
+proc send_effect*[T](gamepad: Gamepad; data: openArray[T]): bool {.discardable.} =
+    let sz = cint (data.len * sizeof T)
+    result = SDL_SendGamepadEffect(gamepad, data[0].addr, sz)
+    sdl_assert result, &"Failed to send effect to gamepad ({data})"
+
+proc close*(gamepad: Gamepad) =
+    SDL_CloseGamepad gamepad
+
 {.pop.}
