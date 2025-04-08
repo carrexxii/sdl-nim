@@ -2,6 +2,14 @@ import common
 
 type PropertyName* = distinct cstring
 const
+    AppMetadataName*       = PropertyName "SDL.app.metadata.name"
+    AppMetadataVersion*    = PropertyName "SDL.app.metadata.version"
+    AppMetadataIdentifier* = PropertyName "SDL.app.metadata.identifier"
+    AppMetadataCreator*    = PropertyName "SDL.app.metadata.creator"
+    AppMetadataCopyright*  = PropertyName "SDL.app.metadata.copyright"
+    AppMetadataUrl*        = PropertyName "SDL.app.metadata.url"
+    AppMetadataKind*       = PropertyName "SDL.app.metadata.type"
+
     WindowShapePointer*                         = PropertyName "SDL.window.shape"
     WindowAndroidWindowPointer*                 = PropertyName "SDL.window.android.window"
     WindowAndroidSurfacePointer*                = PropertyName "SDL.window.android.surface"

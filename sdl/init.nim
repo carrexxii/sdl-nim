@@ -1,28 +1,19 @@
 import common, bitgen
-from std/strformat import `&`
-
-const
-    AppMetadataName*       = cstring "SDL.app.metadata.name"
-    AppMetadataVersion*    = cstring "SDL.app.metadata.version"
-    AppMetadataIdentifier* = cstring "SDL.app.metadata.identifier"
-    AppMetadataCreator*    = cstring "SDL.app.metadata.creator"
-    AppMetadataCopyright*  = cstring "SDL.app.metadata.copyright"
-    AppMetadataUrl*        = cstring "SDL.app.metadata.url"
-    AppMetadataKind*       = cstring "SDL.app.metadata.type"
+from properties import PropertyName
 
 type InitFlag* = distinct uint32
 InitFlag.gen_bit_ops(
     _, _, _, _,
-    initAudio, initVideo, _, _,
-    _, initJoystick, _, _,
-    initHaptic, initGamepad, initEvents, initSensor,
-    initCamera
+    InitAudio, InitVideo, _, _,
+    _, InitJoystick, _, _,
+    InitHaptic, InitGamepad, InitEvents, InitSensor,
+    InitCamera
 )
 
 type AppResult* {.size: sizeof(cint).} = enum
-    appContinue
-    appSuccess
-    appFailure
+    Continue
+    Success
+    Failure
 
 func version*(major, minor, patch: int): Version =
     Version (1000*(1000_000*major + minor) + patch)
@@ -32,17 +23,16 @@ func micro*(v: Version): int =  (int v) mod 1000
 func `$`*(v: Version): string =
     &"{v.major}.{v.minor}.{v.micro}"
 
-{.push cdecl, dynlib: SdlLib.}
-proc sdl_get_version*(): Version                                            {.importc: "SDL_GetVersion"            .}
-proc sdl_init*(flags: InitFlag): bool                                       {.importc: "SDL_Init"                  .}
-proc sdl_init_subsystem*(flags: InitFlag): bool                             {.importc: "SDL_InitSubSystem"         .}
-proc sdl_quit_subsystem*(flags: InitFlag)                                   {.importc: "SDL_QuitSubSystem"         .}
-proc sdl_was_init*(flags: InitFlag): InitFlag                               {.importc: "SDL_WasInit"               .}
-proc sdl_quit*()                                                            {.importc: "SDL_Quit"                  .}
-proc sdl_set_app_metadata*(app_name, app_version, app_ident: cstring): bool {.importc: "SDL_SetAppMetadata"        .}
-proc sdl_set_app_metadata_property*(name, val: cstring): bool               {.importc: "SDL_SetAppMetadataProperty".}
-proc sdl_get_app_metadata_property*(name: cstring): cstring                 {.importc: "SDL_GetAppMetadataProperty".}
-
+{.push importc, cdecl, dynlib: SdlLib.}
+proc SDL_GetVersion*(): Version
+proc SDL_Init*(flags: InitFlag): bool
+proc SDL_InitSubSystem*(flags: InitFlag): bool
+proc SDL_QuitSubSystem*(flags: InitFlag)
+proc SDL_WasInit*(flags: InitFlag): InitFlag
+proc SDL_Quit*()
+proc SDL_SetAppMetadata*(app_name, app_version, app_ident: cstring): bool
+proc SDL_SetAppMetadataProperty*(name: PropertyName; val: cstring): bool
+proc SDL_GetAppMetadataProperty*(name: PropertyName): cstring
 proc SDL_SetMemoryFunctions*(
     malloc_fn : proc(sz: csize_t): pointer               {.cdecl.};
     calloc_fn : proc(n, sz: csize_t): pointer            {.cdecl.};
@@ -59,14 +49,38 @@ proc nim_free(mem: pointer)                          {.cdecl.} = dealloc mem
 {.push inline.}
 
 proc version*(): Version =
-    sdl_get_version()
+    SDL_GetVersion()
 
 proc init*(flags: InitFlag): bool {.discardable.} =
     # TODO: This causes a hang
     # if not SDL_SetMemoryFunctions(nim_malloc, nim_calloc, nim_realloc, nim_free):
     #     echo "Failed to set SDL memory functions: " & $get_error()
 
-    result = sdl_init flags
-    sdl_assert result, "Failed to initialize SDL"
+    result = SDL_Init(flags)
+    sdl_assert result, &"Failed to initialize SDL (flags: {flags})"
+
+proc quit*() =
+    SDL_Quit()
+
+proc init_subsystem*(flags: InitFlag): bool {.discardable.} =
+    result = SDL_InitSubSystem(flags)
+    sdl_assert result, &"Failed to initialize SDL subsystem (flags: {flags})"
+
+proc quit_subsystem*(flags: InitFlag) =
+    SDL_QuitSubSystem flags
+
+proc was_init*(): InitFlag {.discardable.} =
+    SDL_WasInit InitFlag 0
+
+proc set_metadata*(name, version, ident: string): bool {.discardable.} =
+    result = SDL_SetAppMetadata(cstring name, cstring version, cstring ident)
+    sdl_assert result, &"Failed to set metadata for app (name: {name}; version: {version}; ident: {ident})"
+
+proc set_metadata*(name: PropertyName; val: string): bool {.discardable.} =
+    result = SDL_SetAppMetadataProperty(name, cstring val)
+    sdl_assert result, &"Failed to set app metadata ({cstring name}: {val})"
+
+proc metadata*(name: PropertyName): string =
+    $SDL_GetAppMetadataProperty(name)
 
 {.pop.}

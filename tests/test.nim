@@ -23,7 +23,7 @@ echo &"Nim version    : {NimVersion}"
 echo &"SDL version    : {sdl.version()}"
 echo &"SDL_ttf version: {ttf.version()}"
 
-init(initVideo or initEvents)
+init(InitVideo or InitEvents)
 ttf.init()
 
 let (win, ren) = create_window_and_renderer("SDL Tests", WinW, WinH, winResizeable)

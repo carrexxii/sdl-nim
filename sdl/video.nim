@@ -72,7 +72,6 @@ using
 proc sdl_create_window*(title: cstring; w, h: cint; flags: WindowFlag): Window             {.importc: "SDL_CreateWindow"     .}
 proc sdl_create_popup_window*(parent: Window; x, y, w, h: cint; flags: WindowFlag): Window {.importc: "SDL_CreatePopupWindow".}
 proc sdl_destroy_window*(win)                                                              {.importc: "SDL_DestroyWindow"    .}
-proc sdl_quit*()                                                                           {.importc: "SDL_Quit"             .}
 
 proc sdl_set_window_position*(win; x, y: cint): bool  {.importc: "SDL_SetWindowPosition".}
 proc sdl_set_window_title*(win; title: cstring): bool {.importc: "SDL_SetWindowTitle"   .}
@@ -110,7 +109,6 @@ proc sdl_get_window_pixel_format*(win): PixelFormat                             
 {.push inline.}
 
 proc `destroy=`*(win) = sdl_destroy_window win
-proc quit*() = sdl_quit()
 
 proc create_window*(title: string; w, h: SomeInteger; flags = winNone): Window =
     result = sdl_create_window(cstring title, cint w, cint h, flags)

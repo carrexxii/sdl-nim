@@ -10,8 +10,8 @@ echo &"Nim version    : {NimVersion}"
 echo &"SDL version    : {sdl.version()}"
 echo &"SDL_ttf version: {ttf.version()}"
 
-assert init(initVideo or initEvents)
-assert ttf.init()
+init(InitVideo or InitEvents)
+ttf.init()
 
 let (win, ren) = create_window_and_renderer("SDL UI Tests", WinW, WinH, winResizeable)
 ren.draw_colour = Olive
