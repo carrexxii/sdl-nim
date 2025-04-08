@@ -144,7 +144,7 @@ proc `colourspace=`*(surf: Surface; colourspace: Colourspace) = set_colourspace 
 
 proc set_palette*(surf: Surface; palette: Palette): bool {.discardable.} =
     let success = SDL_SetSurfacePalette(surf, palette)
-    sdl_assert success, &"Failed to set palette for surface to '{palette[]}' ({surf})"
+    sdl_assert success, &"Failed to set palette for surface to '{palette}' ({surf})"
 proc `palette=`*(surf: Surface; palette: Palette) = set_palette surf, palette
 
 proc create_palette*(surf: Surface): Palette =
@@ -220,7 +220,7 @@ proc convert*(surf: Surface; fmt: PixelFormat): Surface =
     sdl_assert result, &"Failed to convert surface to {fmt} ({surf})"
 proc convert*(surf: Surface; fmt: PixelFormat; palette: Palette; colourspace: Colourspace; props: PropertyId = InvalidProperty): Surface =
     result = SDL_ConvertSurfaceAndColorspace(surf, fmt, palette, colourspace, props)
-    sdl_assert result, &"Failed to convert surface with values (format: {fmt}; palette: {palette[]}; colourspace: {colourspace}; props: {props}) ({surf})"
+    sdl_assert result, &"Failed to convert surface with values (format: {fmt}; palette: {palette}; colourspace: {colourspace}; props: {props}) ({surf})"
 
 proc premultiply_alpha*(surf: Surface; linear: bool): bool {.discardable.} =
     let success = SDL_PremultiplySurfaceAlpha(surf, linear)

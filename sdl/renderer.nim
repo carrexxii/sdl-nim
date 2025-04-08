@@ -161,7 +161,7 @@ proc sz*(ren): tuple[x, y: int32] =
     sdl_assert success, &"Failed to get renderer size"
     (int32 x, int32 y)
 
-proc create_texture*(ren; w, h: int; fmt = pxFmtRgba8; access = texAccessStatic): Texture =
+proc create_texture*(ren; w, h: int; fmt = Rgba8888; access = texAccessStatic): Texture =
     result = sdl_create_texture(ren, fmt, access, cint w, cint h)
     sdl_assert result, &"Failed to create texture ({w}x{h}, {fmt}, {access})"
 proc create_texture*(ren; surf): Texture =

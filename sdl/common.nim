@@ -21,9 +21,19 @@ proc sdl_free*(p: pointer)     {.importc: "SDL_free"             .}
 proc allocation_count*(): cint {.importc: "SDL_GetNumAllocations".}
 {.pop.}
 
-proc sdl_assert*(cond: bool; msg: string) {.inline.} =
+{.push inline.}
+
+proc sdl_assert*(cond: bool; msg: string) =
     when not defined SdlNoAssert:
         assert cond, &"{msg}: '{get_error()}'"
+
+func fourcc*(a, b, c, d: distinct SomeInteger): uint32 =
+    (cast[uint32](cast[uint8](a)) shl 0 ) or
+    (cast[uint32](cast[uint8](b)) shl 8 ) or
+    (cast[uint32](cast[uint8](c)) shl 16) or
+    (cast[uint32](cast[uint8](d)) shl 24)
+
+{.pop.}
 
 #[ -------------------------------------------------------------------- ]#
 # SDL_guid.h
