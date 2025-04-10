@@ -1,5 +1,5 @@
 import std/options, common
-from properties import PropertyId
+from properties import PropertiesId
 from surface    import Surface
 from pixels     import PixelFormat, Colourspace
 
@@ -40,7 +40,7 @@ proc SDL_GetCameraPosition*(inst_id: CameraId): CameraPosition
 proc SDL_OpenCamera*(inst_id: CameraId; spec: ptr CameraSpec): Camera
 proc SDL_GetCameraPermissionState*(cam: Camera): CameraPermission
 proc SDL_GetCameraID*(cam: Camera): CameraId
-proc SDL_GetCameraProperties*(cam: Camera): PropertyId
+proc SDL_GetCameraProperties*(cam: Camera): PropertiesId
 proc SDL_GetCameraFormat*(cam: Camera; spec: ptr CameraSpec): bool
 proc SDL_AcquireCameraFrame*(cam: Camera; timestamp_ns: ptr uint64): Surface
 proc SDL_ReleaseCameraFrame*(cam: Camera; frame: Surface)
@@ -110,9 +110,9 @@ proc id*(cam: Camera): CameraId =
     result = SDL_GetCameraID(cam)
     sdl_assert result, "Failed to get id for camera"
 
-proc properties*(cam: Camera): PropertyId =
+proc properties*(cam: Camera): PropertiesId =
     SDL_GetCameraProperties cam
-proc props*(cam: Camera): PropertyId = properties cam
+proc props*(cam: Camera): PropertiesId = properties cam
 
 proc format*(cam: Camera): CameraSpec =
     let success = SDL_GetCameraFormat(cam, result.addr)

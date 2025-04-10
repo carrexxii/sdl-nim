@@ -98,7 +98,7 @@ type
         w*, h*, num_ops*    : cint
         ops*                : DrawOperation
         cluster_count*      : cint
-        props*              : PropertyId
+        props*              : PropertiesId
         needs_engine_update*: bool
         engine*             : TextEngine
         engine_text*        : pointer
@@ -135,13 +135,13 @@ proc ttf_version*(): Version                                  {.importc: "TTF_Ve
 proc ttf_get_freetype_version*(major, minor, patch: ptr cint) {.importc: "TTF_GetFreeTypeVersion".}
 proc ttf_get_harfbuzz_version*(major, minor, patch: ptr cint) {.importc: "TTF_GetHarfBuzzVersion".}
 
-proc ttf_init*(): bool                                       {.importc: "TTF_Init"                  .}
-proc ttf_open_font*(file: cstring; pt_sz: cfloat): Font      {.importc: "TTF_OpenFont"              .}
-proc ttf_open_font_with_properties*(props: PropertyId): Font {.importc: "TTF_OpenFontWithProperties".}
-proc ttf_get_font_properties*(font): PropertyId              {.importc: "TTF_GetFontProperties"     .}
-proc ttf_close_font*(font)                                   {.importc: "TTF_CloseFont"             .}
-proc ttf_quit*()                                             {.importc: "TTF_Quit"                  .}
-proc ttf_was_init*(): cint                                   {.importc: "TTF_WasInit"               .}
+proc ttf_init*(): bool                                         {.importc: "TTF_Init"                  .}
+proc ttf_open_font*(file: cstring; pt_sz: cfloat): Font        {.importc: "TTF_OpenFont"              .}
+proc ttf_open_font_with_properties*(props: PropertiesId): Font {.importc: "TTF_OpenFontWithProperties".}
+proc ttf_get_font_properties*(font): PropertiesId              {.importc: "TTF_GetFontProperties"     .}
+proc ttf_close_font*(font)                                     {.importc: "TTF_CloseFont"             .}
+proc ttf_quit*()                                               {.importc: "TTF_Quit"                  .}
+proc ttf_was_init*(): cint                                     {.importc: "TTF_WasInit"               .}
 
 proc ttf_font_is_fixed_width*(font): bool                                {.importc: "TTF_FontIsFixedWidth"    .}
 proc ttf_font_is_scalable*(font): bool                                   {.importc: "TTF_FontIsScalable"      .}
@@ -201,7 +201,7 @@ proc ttf_draw_renderer_text*(text; x, y: cfloat): bool                          
 proc ttf_destroy_renderer_text_engine*(engine)                                                 {.importc: "TTF_DestroyRendererTextEngine".}
 proc ttf_create_text*(engine; font; text: cstring; len: csize_t): Text                         {.importc: "TTF_CreateText"               .}
 proc ttf_create_text_wrapped*(engine; font; text: cstring; len: csize_t; wrap_len: cint): Text {.importc: "TTF_CreateText_Wrapped"       .}
-proc ttf_get_text_properties*(text): PropertyId                                                {.importc: "TTF_GetTextProperties"        .}
+proc ttf_get_text_properties*(text): PropertiesId                                              {.importc: "TTF_GetTextProperties"        .}
 proc ttf_set_text_engine*(text; engine): bool                                                  {.importc: "TTF_SetTextEngine"            .}
 proc ttf_get_text_engine*(text): TextEngine                                                    {.importc: "TTF_GetTextEngine"            .}
 proc ttf_set_text_font*(text; font): bool                                                      {.importc: "TTF_SetTextFont"              .}
@@ -250,7 +250,7 @@ proc open_font*(path: string; pt_sz = DefaultFontSize): Font =
 
 proc close*(font) = ttf_close_font font
 
-proc properties*(font): PropertyId    = ttf_get_font_properties font
+proc properties*(font): PropertiesId  = ttf_get_font_properties font
 proc is_fixed_width*(font): bool      = ttf_font_is_fixed_width font
 proc is_scalable*(font)   : bool      = ttf_font_is_scalable font
 proc has_glyph*(font; ch: Rune): bool = ttf_font_has_glyph font, uint32 ch
@@ -332,7 +332,7 @@ proc `hinting=`*(font; hinting: Hinting)                  = ttf_set_font_hinting
 proc `kerning=`*(font; enabled: bool)                     = ttf_set_font_kerning font, enabled
 proc `wrap_alignment=`*(font; align: HorizontalAlignment) = ttf_set_font_wrap_alignment font, align
 
-proc props*(font): PropertyId               = font.properties
+proc props*(font): PropertiesId               = font.properties
 proc sz*(font): float32                     = font.size
 proc dir*(font): Direction                  = font.direction
 proc wrap_align*(font): HorizontalAlignment = font.wrap_alignment
@@ -408,7 +408,7 @@ proc draw*(text; x, y: SomeNumber): bool {.discardable.} =
     result = ttf_draw_renderer_text(text, cfloat x, cfloat y)
     sdl_assert result, &"Failed to draw text '{text}' ({x}, {y})"
 
-proc properties*(text): PropertyId = ttf_get_text_properties text
+proc properties*(text): PropertiesId = ttf_get_text_properties text
 proc engine*(text): TextEngine =
     result = ttf_get_text_engine text
     sdl_assert result, &"Failed to get text engine for text"
@@ -454,7 +454,7 @@ proc update*(text): bool {.discardable.} =
     sdl_assert result, &"Failed to update text '{text}'"
 proc destroy*(text) = ttf_destroy_text text
 
-proc props*(text): PropertyId      = text.properties
+proc props*(text): PropertiesId    = text.properties
 proc sz*(text): tuple[w, h: int32] = text.size
 
 {.pop.} # inline

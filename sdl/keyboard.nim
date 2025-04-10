@@ -569,7 +569,7 @@ proc sdl_get_scancode_from_name*(name: cstring): ScanCode                       
 proc sdl_get_key_name*(key: KeyCode): cstring                                                {.importc: "SDL_GetKeyName"                  .}
 proc sdl_get_key_from_name*(name: cstring): KeyCode                                          {.importc: "SDL_GetKeyFromName"              .}
 proc sdl_start_text_input*(win): bool                                                        {.importc: "SDL_StartTextInput"              .}
-proc sdl_start_text_input_with_properties*(win; props: PropertyId): bool                     {.importc: "SDL_StartTextInputWithProperties".}
+proc sdl_start_text_input_with_properties*(win; props: PropertiesId): bool                   {.importc: "SDL_StartTextInputWithProperties".}
 proc sdl_text_input_active*(win): bool                                                       {.importc: "SDL_TextInputActive"             .}
 proc sdl_stop_text_input*(win): bool                                                         {.importc: "SDL_StopTextInput"               .}
 proc sdl_clear_composition*(win): bool                                                       {.importc: "SDL_ClearComposition"            .}
@@ -609,8 +609,8 @@ proc set_text_input_area*(win: Window; rect: Rect; cursor: SomeInteger): bool {.
     result = sdl_set_text_input_area(win, rect.addr, cint cursor)
     sdl_assert result, &"Failed to set text input area to '{rect}' (cursor {cursor})"
 
-proc start_text_input*(win): bool                    {.discardable.} = sdl_start_text_input win
-proc start_text_input*(win; props: PropertyId): bool {.discardable.} = sdl_start_text_input_with_properties win, props
-proc stop_text_input*(win): bool                     {.discardable.} = sdl_stop_text_input win
+proc start_text_input*(win): bool                      {.discardable.} = sdl_start_text_input win
+proc start_text_input*(win; props: PropertiesId): bool {.discardable.} = sdl_start_text_input_with_properties win, props
+proc stop_text_input*(win): bool                       {.discardable.} = sdl_stop_text_input win
 
 {.pop.}

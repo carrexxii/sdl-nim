@@ -53,7 +53,7 @@ func must_lock*(surf: Surface | SurfaceObj): bool {.inline.} =
 proc SDL_CreateSurface*(w, h: cint; fmt: PixelFormat): Surface
 proc SDL_CreateSurfaceFrom*(w, h: cint; fmt: PixelFormat; pxs: pointer; pitch: cint): Surface
 
-proc SDL_GetSurfaceProperties*(surf: Surface): PropertyId
+proc SDL_GetSurfaceProperties*(surf: Surface): PropertiesId
 proc SDL_SetSurfaceColorspace*(surf: Surface; colorspace: Colourspace): bool
 proc SDL_GetSurfaceColorspace*(surf: Surface): Colourspace
 proc SDL_CreateSurfacePalette*(surf: Surface): Palette
@@ -89,10 +89,10 @@ proc SDL_FlipSurface*(surf: Surface; flip: FlipMode): bool
 proc SDL_DuplicateSurface*(surf: Surface): Surface
 proc SDL_ScaleSurface*(surf: Surface; w, h: cint; scale_mode: ScaleMode): Surface
 proc SDL_ConvertSurface*(surf: Surface; fmt: PixelFormat): Surface
-proc SDL_ConvertSurfaceAndColorspace*(surf: Surface; fmt: PixelFormat; palette: Palette, colorspace: Colourspace; props: PropertyId): Surface
+proc SDL_ConvertSurfaceAndColorspace*(surf: Surface; fmt: PixelFormat; palette: Palette, colorspace: Colourspace; props: PropertiesId): Surface
 proc SDL_ConvertPixels*(w, h: cint; src_fmt: PixelFormat; src: pointer; src_pitch: cint; dst_fmt: PixelFormat; dst: pointer; dst_pitch: cint): bool
-proc SDL_ConvertPixelsAndColorspace*(w, h: cint; src_fmt: PixelFormat; src_colorspace: Colourspace; src_props: PropertyId; src: pointer; src_pitch: cint;
-                                                 dst_fmt: PixelFormat; dst_colorspace: Colourspace; dst_props: PropertyId; dst: pointer; dst_pitch: cint): bool
+proc SDL_ConvertPixelsAndColorspace*(w, h: cint; src_fmt: PixelFormat; src_colorspace: Colourspace; src_props: PropertiesId; src: pointer; src_pitch: cint;
+                                                 dst_fmt: PixelFormat; dst_colorspace: Colourspace; dst_props: PropertiesId; dst: pointer; dst_pitch: cint): bool
 proc SDL_PremultiplyAlpha*(w, h: cint; src_fmt: PixelFormat; src: pointer; src_pitch: cint; dst_fmt: PixelFormat; dst: pointer; dst_pitch: cint; linear: bool): bool
 proc SDL_PremultiplySurfaceAlpha*(surf: Surface; linear: bool): bool
 
@@ -129,9 +129,9 @@ proc create_surface*(fmt: PixelFormat; pxs: pointer; w, h, pitch: distinct SomeI
     result = SDL_CreateSurfaceFrom(pxs, cint w, cint h, cint pitch, fmt)
     sdl_assert result, &"Failed to create surface from data ({fmt}: {w}x{h}, pitch = {pitch})"
 
-proc properties*(surf: Surface): PropertyId   = SDL_GetSurfaceProperties surf
+proc properties*(surf: Surface): PropertiesId   = SDL_GetSurfaceProperties surf
 proc colourspace*(surf: Surface): Colourspace = SDL_GetSurfaceColorspace surf
-proc props*(surf: Surface): PropertyId = properties surf
+proc props*(surf: Surface): PropertiesId = properties surf
 
 proc palette*(surf: Surface): Palette =
     result = SDL_GetSurfacePalette surf
@@ -218,7 +218,7 @@ proc scale*(surf: Surface; w, h: distinct SomeInteger; mode: ScaleMode = Linear)
 proc convert*(surf: Surface; fmt: PixelFormat): Surface =
     result = SDL_ConvertSurface(surf, fmt)
     sdl_assert result, &"Failed to convert surface to {fmt} ({surf})"
-proc convert*(surf: Surface; fmt: PixelFormat; palette: Palette; colourspace: Colourspace; props: PropertyId = InvalidProperty): Surface =
+proc convert*(surf: Surface; fmt: PixelFormat; palette: Palette; colourspace: Colourspace; props: PropertiesId = InvalidProperty): Surface =
     result = SDL_ConvertSurfaceAndColorspace(surf, fmt, palette, colourspace, props)
     sdl_assert result, &"Failed to convert surface with values (format: {fmt}; palette: {palette}; colourspace: {colourspace}; props: {props}) ({surf})"
 

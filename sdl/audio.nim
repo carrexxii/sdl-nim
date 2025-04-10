@@ -1,5 +1,5 @@
 import std/options, common
-from properties import PropertyId
+from properties import PropertiesId
 from iostream   import IoStream
 
 const
@@ -91,7 +91,7 @@ proc SDL_UnbindAudioStreams*(streams: ptr Stream; stream_cnt: cint)
 proc SDL_UnbindAudioStream*(stream: Stream)
 proc SDL_GetAudioStreamDevice*(stream: Stream): DeviceId
 proc SDL_CreateAudioStream*(src_spec, dst_spec: ptr Spec): Stream
-proc SDL_GetAudioStreamProperties*(stream: Stream): PropertyId
+proc SDL_GetAudioStreamProperties*(stream: Stream): PropertiesId
 proc SDL_GetAudioStreamFormat*(stream: Stream; src_spec, dst_spec: ptr Spec): bool
 proc SDL_SetAudioStreamFormat*(stream: Stream; src_spec, dst_spec: ptr Spec): bool
 proc SDL_GetAudioStreamFrequencyRatio*(stream: Stream): cfloat
@@ -206,12 +206,12 @@ proc create_stream*(src_spec, dst_spec: Spec): Stream =
     result = SDL_CreateAudioStream(src_spec.addr, dst_spec.addr)
     sdl_assert result, &"Failed to create stream (src_spec: {src_spec}; dst_spec: {dst_spec})"
 
-proc device*(stream: Stream): DeviceId       = SDL_GetAudioStreamDevice stream
-proc properties*(stream: Stream): PropertyId = SDL_GetAudioStreamProperties stream
-proc gain*(stream: Stream): float32          = float32 SDL_GetAudioStreamGain stream
-proc is_pause*(stream: Stream): bool         = SDL_AudioStreamDevicePaused stream
-proc name*(fmt: Format): string              = $SDL_GetAudioFormatName(fmt)
-proc silence_value*(fmt: Format): int32      = int32 SDL_GetSilenceValueForFormat fmt
+proc device*(stream: Stream): DeviceId         = SDL_GetAudioStreamDevice stream
+proc properties*(stream: Stream): PropertiesId = SDL_GetAudioStreamProperties stream
+proc gain*(stream: Stream): float32            = float32 SDL_GetAudioStreamGain stream
+proc is_pause*(stream: Stream): bool           = SDL_AudioStreamDevicePaused stream
+proc name*(fmt: Format): string                = $SDL_GetAudioFormatName(fmt)
+proc silence_value*(fmt: Format): int32        = int32 SDL_GetSilenceValueForFormat fmt
 
 proc frequency_ratio*(stream: Stream): float32 =
     result = float32 SDL_GetAudioStreamFrequencyRatio(stream)

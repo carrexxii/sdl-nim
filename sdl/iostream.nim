@@ -51,7 +51,7 @@ proc SDL_IOFromDynamicMem*(): IoStream
 
 proc SDL_OpenIO*(iface: ptr IoStreamInterface; user_data: pointer): IoStream
 proc SDL_CloseIO*(ctx: IoStream): bool
-proc SDL_GetIOProperties*(ctx: IoStream): PropertyId
+proc SDL_GetIOProperties*(ctx: IoStream): PropertiesId
 proc SDL_GetIOStatus*(ctx: IoStream): IoStatus
 proc SDL_GetIOSize*(ctx: IoStream): int64
 proc SDL_SeekIO*(ctx: IoStream; offset: int64; whence: IoWhence): int64
@@ -111,7 +111,7 @@ proc iostream_from_mem*[T](data: openArray[T]): IoStream =
     let sz = data.len*sizeof T
     iostream_from_mem data[0].addr, sz
 
-proc properties*(stream: IoStream): PropertyId =
+proc properties*(stream: IoStream): PropertiesId =
     result = SDL_GetIOProperties stream
     sdl_assert result != InvalidProperty, &"Failed to get properties for stream"
 

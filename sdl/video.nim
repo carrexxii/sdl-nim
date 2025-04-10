@@ -1,4 +1,5 @@
 import common, bitgen, pixels, rect
+from properties import PropertiesId
 
 type WindowFlag* = distinct uint64
 WindowFlag.gen_bit_ops(
@@ -62,8 +63,6 @@ converter `DisplayId -> bool`*(disp_id: DisplayId): bool  = 0 != int disp_id
 
 #[ -------------------------------------------------------------------- ]#
 
-from properties import PropertyId
-
 using
     win    : Window
     display: DisplayID
@@ -82,7 +81,7 @@ proc sdl_get_current_video_driver*(): cstring                                   
 proc sdl_get_system_theme*(): SystemTheme                                                              {.importc: "SDL_GetSystemTheme"                 .}
 proc sdl_get_displays*(count: ptr cint): ptr DisplayId                                                 {.importc: "SDL_GetDisplays"                    .}
 proc sdl_get_primary_display*(): DisplayId                                                             {.importc: "SDL_GetPrimaryDisplay"              .}
-proc sdl_get_display_properties*(display): PropertyId                                                  {.importc: "SDL_GetDisplayProperties"           .}
+proc sdl_get_display_properties*(display): PropertiesId                                                {.importc: "SDL_GetDisplayProperties"           .}
 proc sdl_get_display_name*(display): cstring                                                           {.importc: "SDL_GetDisplayName"                 .}
 proc sdl_get_display_bounds*(display; rect: ptr Rect): bool                                            {.importc: "SDL_GetDisplayBounds"               .}
 proc sdl_get_display_usable_bounds*(display; rect: ptr Rect): bool                                     {.importc: "SDL_GetDisplayUsableBounds"         .}

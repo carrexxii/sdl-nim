@@ -1,5 +1,5 @@
 import common
-from properties import PropertyId
+from properties import PropertiesId
 
 const StandardGravity* = 9.80665'f32
 
@@ -28,7 +28,7 @@ proc SDL_GetSensorTypeForID*(id: SensorId): SensorKind
 proc SDL_GetSensorNonPortableTypeForID*(id: SensorId): cint
 proc SDL_OpenSensor*(id: SensorId): Sensor
 proc SDL_GetSensorFromID*(id: SensorId): Sensor
-proc SDL_GetSensorProperties*(sensor: Sensor): PropertyId
+proc SDL_GetSensorProperties*(sensor: Sensor): PropertiesId
 proc SDL_GetSensorName*(sensor: Sensor): cstring
 proc SDL_GetSensorType*(sensor: Sensor): SensorKind
 proc SDL_GetSensorNonPortableType*(sensor: Sensor): cint
@@ -60,10 +60,10 @@ proc sensor*(id: SEnsorId): Sensor =
     result = SDL_GetSensorFromID(id)
     sdl_assert result, &"Failed to get sensor (if: {id})"
 
-proc properties*(sensor: Sensor): PropertyId = SDL_GetSensorProperties sensor
-proc name*(sensor: Sensor): string           = $SDL_GetSensorName(sensor)
-proc kind*(sensor: Sensor): SensorKind       = SDL_GetSensorType sensor
-proc id*(sensor: Sensor): SensorId           = SDL_GetSensorID sensor
+proc properties*(sensor: Sensor): PropertiesId = SDL_GetSensorProperties sensor
+proc name*(sensor: Sensor): string             = $SDL_GetSensorName(sensor)
+proc kind*(sensor: Sensor): SensorKind         = SDL_GetSensorType sensor
+proc id*(sensor: Sensor): SensorId             = SDL_GetSensorID sensor
 
 proc data*[N: static[int]](sensor: Sensor): array[N, float32] =
     let success = SDL_GetSensorData(sensor, result[0].addr, N)

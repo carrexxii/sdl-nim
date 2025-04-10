@@ -1,5 +1,5 @@
 import common, joystick, power, sensor
-from properties import PropertyId
+from properties import PropertiesId
 from iostream   import IoStream
 from timer      import Milliseconds
 
@@ -136,7 +136,7 @@ proc SDL_GetGamepadMappingForID*(id: GamepadId): cstring
 proc SDL_OpenGamepad*(id: GamepadId): Gamepad
 proc SDL_GetGamepadFromID*(id: GamepadId): Gamepad
 proc SDL_GetGamepadFromPlayerIndex*(player_idx: cint): Gamepad
-proc SDL_GetGamepadProperties*(gamepad: Gamepad): PropertyId
+proc SDL_GetGamepadProperties*(gamepad: Gamepad): PropertiesId
 proc SDL_GetGamepadID*(gamepad: Gamepad): GamepadId
 proc SDL_GetGamepadName*(gamepad: Gamepad): cstring
 proc SDL_GetGamepadPath*(gamepad: Gamepad): cstring
@@ -226,7 +226,7 @@ proc gamepad*(player_idx: SomeInteger): Gamepad =
     result = SDL_GetGamepadFromPlayerIndex(cint player_idx)
     sdl_assert result, &"Failed to get gamepad from player index '{player_idx}'"
 
-proc properties*(gamepad: Gamepad): PropertyId   = SDL_GetGamepadProperties gamepad
+proc properties*(gamepad: Gamepad): PropertiesId = SDL_GetGamepadProperties gamepad
 proc id*(gamepad: Gamepad): GamepadId            = SDL_GetGamepadID gamepad
 proc name*(gamepad: Gamepad): string             = $SDL_GetGamepadName(gamepad)
 proc path*(gamepad: Gamepad): string             = $SDL_GetGamepadPath(gamepad)

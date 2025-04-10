@@ -1,5 +1,5 @@
 import common, power
-from properties import PropertyId
+from properties import PropertiesId
 from sensor     import SensorKind
 
 const
@@ -117,7 +117,7 @@ proc SDL_SetJoystickVirtualButton*(joystick: Joystick; btn: JoystickButton; down
 proc SDL_SetJoystickVirtualHat*(joystick: Joystick; hat: JoystickHat; val: HatState): bool
 proc SDL_SetJoystickVirtualTouchpad*(joystick: Joystick; touchpad, finger: cint; down: bool; x, y, pressure: cfloat): bool
 proc SDL_SendJoystickVirtualSensorData*(joystick: Joystick; kind: SensorKind; sensor_timestamp: uint64; data: ptr cfloat; val_cnt: cint): bool
-proc SDL_GetJoystickProperties*(joystick: Joystick): PropertyId
+proc SDL_GetJoystickProperties*(joystick: Joystick): PropertiesId
 proc SDL_GetJoystickName*(joystick: Joystick): cstring
 proc SDL_GetJoystickPath*(joystick: Joystick): cstring
 proc SDL_GetJoystickPlayerIndex*(joystick: Joystick): cint
@@ -242,7 +242,7 @@ proc send_sensor_data*(joystick: Joystick; kind: SensorKind; timestamp: uint64; 
     result = SDL_SendJoystickVirtualSensorData(joystick, kind, timestamp, data[0].addr, cint data.len)
     sdl_assert result, &"Failed to send sensor data to joystick (kind: {kind}; timestamp: {timestamp}; data: {data})"
 
-proc properties*(joystick: Joystick): PropertyId   = SDL_GetJoystickProperties joystick
+proc properties*(joystick: Joystick): PropertiesId = SDL_GetJoystickProperties joystick
 proc name*(joystick: Joystick): string             = $SDL_GetJoystickName(joystick)
 proc path*(joystick: Joystick): string             = $SDL_GetJoystickPath(joystick)
 proc player_index*(joystick: Joystick): int32      = int32 SDL_GetJoystickPlayerIndex joystick

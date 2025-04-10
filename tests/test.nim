@@ -49,7 +49,7 @@ while running:
         else: discard
 
     fill ren
-    ren.draw_texture tex, dst_rect = frect(100, 100, msg.w, msg.h)
+    ren.draw_texture tex, dst_rect = rectf(100, 100, msg.w, msg.h)
     ren.present()
 
 # close font

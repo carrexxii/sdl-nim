@@ -411,7 +411,7 @@ type
         enable_anisotropy*: bool
         enable_cmp*       : bool
         _                 : array[2, byte]
-        props*            : PropertyId
+        props*            : PropertiesId
 
     VertexBufferDescription* = object
         slot*      : uint32
@@ -459,7 +459,7 @@ type
         storage_tex_cnt*: uint32
         storage_buf_cnt*: uint32
         uniform_buf_cnt*: uint32
-        props*          : PropertyId
+        props*          : PropertiesId
 
     TextureCreateInfo* = object
         kind*              : TextureKind
@@ -469,17 +469,17 @@ type
         depth_or_layer_cnt*: uint32
         lvl_cnt*           : uint32
         sample_cnt*        : SampleCount
-        props*             : PropertyId
+        props*             : PropertiesId
 
     BufferCreateInfo* = object
         usage*: BufferUsageFlag
         sz*   : uint32
-        props*: PropertyId
+        props*: PropertiesId
 
     TransferBufferCreateInfo* = object
         usage*: TransferBufferUsage
         sz*   : uint32
-        props*: PropertyId
+        props*: PropertiesId
 
     RasterizerState* = object
         fill_mode*              : FillMode
@@ -529,7 +529,7 @@ type
         multisample_state*  : MultisampleState
         depth_stencil_state*: DepthStencilState
         target_info*        : GraphicsPipelineTargetInfo
-        props*              : PropertyId
+        props*              : PropertiesId
 
     ComputePipelineCreateInfo* = object
         code_sz*                  : uint
@@ -545,7 +545,7 @@ type
         thread_cnt_x*             : uint32
         thread_cnt_y*             : uint32
         thread_cnt_z*             : uint32
-        props*                    : PropertyId
+        props*                    : PropertiesId
 
     ColourTargetInfo* = object
         tex*                 : Texture
@@ -689,11 +689,11 @@ using
     bind_cnt: uint32
 
 {.push dynlib: SdlLib.}
-proc sdl_gpu_supports_shader_formats*(fmt_flags: ShaderFormatFlag; name: cstring): bool           {.importc: "SDL_GPUSupportsShaderFormats"     .}
-proc sdl_gpu_supports_properties*(props: PropertyId): bool                                        {.importc: "SDL_GPUSupportsProperties"        .}
+proc sdl_gpu_supports_shader_formats*(fmt_flags: ShaderFormatFlag; name: cstring): bool {.importc: "SDL_GPUSupportsShaderFormats"     .}
+proc sdl_gpu_supports_properties*(props: PropertiesId): bool                            {.importc: "SDL_GPUSupportsProperties"        .}
 
 proc sdl_create_gpu_device*(fmt_flags: ShaderFormatFlag; debug_mode: bool; name: cstring): Device {.importc: "SDL_CreateGPUDevice"              .}
-proc sdl_create_gpu_device_with_properties*(props: PropertyId): Device                            {.importc: "SDL_CreateGPUDeviceWithProperties".}
+proc sdl_create_gpu_device_with_properties*(props: PropertiesId): Device                          {.importc: "SDL_CreateGPUDeviceWithProperties".}
 proc sdl_destroy_gpu_device*(dev)                                                                 {.importc: "SDL_DestroyGPUDevice"             .}
 proc sdl_get_num_gpu_drivers*(): cint                                                             {.importc: "SDL_GetNumGPUDrivers"             .}
 proc sdl_get_gpu_driver*(idx: cint): cstring                                                      {.importc: "SDL_GetGPUDriver"                 .}
@@ -837,7 +837,7 @@ const block_sz* = block_size
 proc create_device*(fmt_flags: ShaderFormatFlag; debug_mode: bool; name = ""): Device =
     result = sdl_create_gpu_device(fmt_flags, debug_mode, (if name == "": nil else: cstring name))
     sdl_assert result, &"Failed to create GPU device: '{get_error()}'"
-proc create_device*(props: PropertyId): Device =
+proc create_device*(props: PropertiesId): Device =
     result = sdl_create_gpu_device_with_properties props
     sdl_assert result, &"Failed to create GPU device: '{get_error()}'"
 
@@ -1004,7 +1004,7 @@ proc create_texture*(dev; w, h: uint32;
 # TODO: have an option for a permanent multi-use transfer buffer
 proc create_transfer_buffer*(dev; sz: SomeInteger;
                              usage: TransferBufferUsage = Upload;
-                             props: PropertyId          = InvalidProperty;
+                             props: PropertiesId        = InvalidProperty;
                              ): TransferBuffer =
     let ci = TransferBufferCreateInfo(
         usage: usage,
