@@ -1,0 +1,25 @@
+### Modules Not Done
+- SDL_assert
+- SDL_asyncio
+- SDL_atomic
+- SDL_bits
+- SDL_egl
+- SDL_endian
+- SDL_error
+- SDL_haptic
+- SDL_hidapi
+- SDL_intrin
+- SDL_loadso
+- SDL_locale
+- SDL_log
+- SDL_main
+- SDL_metal
+- SDL_misc
+- SDL_mutex
+- SDL_opengl / SDL_opengl_glext
+- SDL_opengles*
+- SDL_process
+- SDL_storage
+- SDL_system
+- SDL_thread
+- SDL_time
