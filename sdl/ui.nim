@@ -9,26 +9,26 @@ type
         Horizontal
         Vertical
 
-    UITheme* = tuple[default: Colour,
-                     hovered: Colour,
-                     clicked: Colour]
+    UITheme* = tuple[default: SdlColour,
+                     hovered: SdlColour,
+                     clicked: SdlColour]
     UIThemeSet* = object
         font_size* = 18
-        font*   = colour(225, 225, 225)
-        bg*     = colour(45 , 45 , 45 )
+        font*   = sdl_colour(225, 225, 225)
+        bg*     = sdl_colour(45 , 45 , 45 )
         panel*: UITheme =
-            (default: colour(15, 15, 55),
-             hovered: colour(15, 15, 95),
-             clicked: colour(15, 15, 125))
+            (default: sdl_colour(15, 15, 55),
+             hovered: sdl_colour(15, 15, 95),
+             clicked: sdl_colour(15, 15, 125))
         button*: UITheme =
-            (default: colour(30 , 70 , 155),
-             hovered: colour(50 , 90 , 205),
-             clicked: colour(70 , 110, 235))
+            (default: sdl_colour(30 , 70 , 155),
+             hovered: sdl_colour(50 , 90 , 205),
+             clicked: sdl_colour(70 , 110, 235))
 
     UIObjectKind* = enum
         Button
     UIObject* = ref object
-        rect*   : RectF
+        rect*   : SdlRectF
         z*      : int
         hovered*: bool
         clicked*: bool
@@ -37,31 +37,31 @@ type
             cb*       : proc(obj: UIObject)
             has_text* : bool
             text*     : Texture
-            text_rect*: RectF
+            text_rect*: SdlRectF
 
     UIPanel* = ref object
         ctx*    : UIContext
         hovered*: bool
         clicked*: bool
-        rect*   : RectF
+        rect*   : SdlRectF
         z*      : int
         objs*   : seq[UIObject]
 
     UIContext* = ref object
         renderer*: Renderer
         theme*   : UIThemeSet
-        rect*    : RectF
+        rect*    : SdlRectF
         panels*  : seq[UIPanel]
         font*    : Font
 
-func create_context*(renderer: Renderer; font: Font; theme = UIThemeSet(); rect = RectF()): UIContext =
+func create_context*(renderer: Renderer; font: Font; theme = UIThemeSet(); rect = SdlRectF()): UIContext =
     assert ttf.was_init(), "UI needs TTF initialized"
     font.size = theme.font_size
 
-    var ui_rect: RectF
+    var ui_rect: SdlRectF
     if rect.w == 0 or rect.h == 0:
         let (w, h) = renderer.sz
-        ui_rect = rectf(0, 0, w, h)
+        ui_rect = sdl_rectf(0, 0, w, h)
     else:
         ui_rect = rect
 
@@ -76,7 +76,7 @@ func create_context*(renderer: Renderer; font: Font; theme = UIThemeSet(); rect 
 proc add_panel*(ctx: var UIContext; x, y, w, h: SomeNumber): UIPanel =
     result = UIPanel(
         ctx : ctx,
-        rect: rectf(x, y, w, h),
+        rect: sdl_rectf(x, y, w, h),
         z   : ctx.panels.len,
         objs: @[],
     )
@@ -91,8 +91,8 @@ proc add_object*(panel: var UIPanel; kind: UIObjectKind; x, y, w, h: float32; te
             let text_surf = ctx.font.render(text, ctx.theme.font)
             let text_tex  = ctx.renderer.create_texture text_surf
             let (tw, th)  = ctx.font.size text
-            let trect = rectf(w/2 - tw/2, h/2 - th/2, float32 tw, float32 th)
-            result = UIObject(kind: kind, rect: rectf(x, y, w, h), z: objz, cb: cb,
+            let trect = sdl_rectf(w/2 - tw/2, h/2 - th/2, float32 tw, float32 th)
+            result = UIObject(kind: kind, rect: sdl_rectf(x, y, w, h), z: objz, cb: cb,
                               has_text: true, text_rect: trect, text: text_tex)
 
     panel.objs.add result
@@ -164,7 +164,7 @@ proc update*(ctx: UIContext) =
     lmb_prev = lmb_state
 
 proc draw*(ctx: UIContext) =
-    template colour(obj, cset): Colour =
+    template colour(obj, cset): SdlColour =
         if   obj.clicked: cset.clicked
         elif obj.hovered: cset.hovered
         else: cset.default
@@ -179,7 +179,7 @@ proc draw*(ctx: UIContext) =
             let w = if obj.rect.x + obj.rect.w > panel.rect.w: panel.rect.w - obj.rect.x else: obj.rect.w
             let h = if obj.rect.y + obj.rect.h > panel.rect.h: panel.rect.h - obj.rect.y else: obj.rect.h
             ren.draw_colour = (obj.colour ctx.theme.button)
-            ren.draw_fill_rect rectf(panel.rect.x + obj.rect.x, panel.rect.y + obj.rect.y, w, h)
+            ren.draw_fill_rect sdl_rectf(panel.rect.x + obj.rect.x, panel.rect.y + obj.rect.y, w, h)
 
             case obj.kind
             of Button:
@@ -191,6 +191,6 @@ proc draw*(ctx: UIContext) =
                     ty = panel.rect.y + obj.rect.y + obj.text_rect.y
                     tw = if obj.text_rect.x + obj.text_rect.w > w: w - obj.text_rect.x else: obj.text_rect.w
                     th = if obj.text_rect.y + obj.text_rect.h > h: h - obj.text_rect.y else: obj.text_rect.h
-                ren.draw_texture(obj.text, dst_rect = rectf(tx   , ty, tw, th),
-                                           src_rect = rectf(0'f32, 0 , tw, th))
+                ren.draw_texture(obj.text, dst_rect = sdl_rectf(tx   , ty, tw, th),
+                                           src_rect = sdl_rectf(0'f32, 0 , tw, th))
 

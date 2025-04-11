@@ -8,7 +8,7 @@ type Vertex = object
 
 const
     ShaderDir   = "tests/shaders"
-    ClearColour = colour(0.28, 0.12, 0.28, 1.0)
+    ClearColour = sdl_colour(0.28, 0.12, 0.28, 1.0)
     TriVerts = [
         Vertex(pos: [-0.5, -0.5, 0.0], colour: [1.0, 0.0, 0.0, 1.0]),
         Vertex(pos: [ 0.0,  0.5, 0.0], colour: [0.0, 1.0, 0.0, 1.0]),
@@ -17,12 +17,12 @@ const
 
 var
     viewport = none Viewport
-    scissor  = none Rect
+    scissor  = none SdlRect
     small_viewport = viewport(160, 120, 320, 240, 0.1, 1.0)
-    small_scissor  = rect(320, 240, 320, 240)
+    small_scissor  = sdl_rect(320, 240, 320, 240)
 
 init(InitVideo or InitEvents)
-let device = create_device(sffSpirV, false) # TODO: debug mode fails to find required valdiation layers (03/03/25)
+let device = create_device(ShaderFmtSpirV, true)
 let window = create_window("GPU Test", 640, 480, winNone)
 device.claim window
 
@@ -58,7 +58,7 @@ let
     )
 var pipeln = fill_pipeln
 
-let verts_buf = device.upload(bufVertex, TriVerts)
+let verts_buf = device.upload(BufUsageVertex, TriVerts)
 
 proc draw() =
     let cmd_buf   = acquire_cmd_buf device
@@ -92,7 +92,7 @@ while running:
             of kc1: pipeln = fill_pipeln
             of kc2: pipeln = line_pipeln
             of kcV: viewport = if viewport.is_some: none Viewport else: some small_viewport
-            of kcS: scissor  = if scissor.is_some : none Rect     else: some small_scissor
+            of kcS: scissor  = if scissor.is_some : none SdlRect  else: some small_scissor
             else: discard
         else: discard
 

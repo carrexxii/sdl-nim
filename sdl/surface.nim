@@ -1,6 +1,6 @@
 import std/options, common, bitgen, pixels, blendmode, properties
 from iostream import IoStream
-from rect     import Rect
+from rect     import SdlRect
 
 type SurfaceFlag* = distinct uint32
 SurfaceFlag.gen_bit_ops PreAllocated, LockNeeded, Locked, SimdAligned
@@ -19,7 +19,7 @@ type
     BlitMap* = ptr object
 
     Surface* = distinct pointer
-    SurfaceObj = object
+    SurfaceObj* = object
         flags*  : SurfaceFlag
         fmt*    : PixelFormat
         w*, h*  : int32
@@ -32,13 +32,8 @@ proc SDL_DestroySurface*(surf: Surface) {.importc, cdecl, dynlib: SdlLib.}
 proc `=destroy`*(surf: Surface) =
     SDL_DestroySurface surf
 
-# There should be a better way, converter doesn't work
-proc flags*(surf: Surface): SurfaceFlag = cast[ptr SurfaceObj](surf).flags
-proc fmt*(surf: Surface): PixelFormat   = cast[ptr SurfaceObj](surf).fmt
-proc w*(surf: Surface): int32           = cast[ptr SurfaceObj](surf).w
-proc h*(surf: Surface): int32           = cast[ptr SurfaceObj](surf).h
-proc pitch*(surf: Surface): int32       = cast[ptr SurfaceObj](surf).pitch
-proc pxs*(surf: Surface): pointer       = cast[ptr SurfaceObj](surf).pxs
+template `.`*(surf: Surface; field: untyped): untyped =
+    cast[ptr SurfaceObj](surf).field
 
 converter `Surface -> bool`*(surf: Surface): bool = nil != pointer surf
 export `Surface -> bool`
@@ -83,8 +78,8 @@ proc SDL_SetSurfaceAlphaMod*(surf: Surface; alpha: uint8): bool
 proc SDL_GetSurfaceAlphaMod*(surf: Surface; alpha: ptr uint8): bool
 proc SDL_SetSurfaceBlendMode*(surf: Surface; blend_mode: BlendMode): bool
 proc SDL_GetSurfaceBlendMode*(surf: Surface; blend_mode: ptr BlendMode): bool
-proc SDL_SetSurfaceClipRect*(surf: Surface; rect: ptr Rect): bool
-proc SDL_GetSurfaceClipRect*(surf: Surface; rect: ptr Rect): bool
+proc SDL_SetSurfaceClipRect*(surf: Surface; rect: ptr SdlRect): bool
+proc SDL_GetSurfaceClipRect*(surf: Surface; rect: ptr SdlRect): bool
 proc SDL_FlipSurface*(surf: Surface; flip: FlipMode): bool
 proc SDL_DuplicateSurface*(surf: Surface): Surface
 proc SDL_ScaleSurface*(surf: Surface; w, h: cint; scale_mode: ScaleMode): Surface
@@ -97,16 +92,16 @@ proc SDL_PremultiplyAlpha*(w, h: cint; src_fmt: PixelFormat; src: pointer; src_p
 proc SDL_PremultiplySurfaceAlpha*(surf: Surface; linear: bool): bool
 
 proc SDL_ClearSurface*(surf: Surface; r, g, b, a: cfloat): bool
-proc SDL_FillSurfaceRect*(dst: Surface; rect: ptr Rect; colour: uint32): bool
-proc SDL_FillSurfaceRects*(dst: Surface; rects: ptr Rect; cnt: cint; colour: uint32): bool
-proc SDL_BlitSurface*(src: Surface; src_rect: ptr Rect; dst: Surface; dst_rect: ptr Rect): bool
-proc SDL_BlitSurfaceUnchecked*(src: Surface; src_rect: ptr Rect; dst: Surface; dst_rect: ptr Rect): bool
-proc SDL_BlitSurfaceScaled*(src: Surface; src_rect: ptr Rect; dst: Surface; dst_rect: ptr Rect; scale_mode: ScaleMode): bool
-proc SDL_BlitSurfaceUncheckedScaled*(src: Surface; src_rect: ptr Rect; dst: Surface; dst_rect: ptr Rect; scale_mode: ScaleMode): bool
-proc SDL_StretchSurface*(src: Surface; src_rect: ptr Rect; dst: Surface; dst_rect: ptr Rect; scale_mode: ScaleMode): bool
-proc SDL_BlitSurfaceTiled*(src: Surface; src_rect: ptr Rect; dst: Surface; dst_rect: ptr Rect): bool
-proc SDL_BlitSurfaceTiledWithScale*(src: Surface; src_rect: ptr Rect; scale: cfloat; scale_mode: ScaleMode, dst: Surface; dst_rect: ptr Rect): bool
-proc SDL_BlitSurface9Grid*(src: Surface; src_rect: ptr Rect; left_w, right_w, top_h, bottom_h: cint; scale: cfloat; scale_mode: ScaleMode, dst: Surface; dst_rect: ptr Rect): bool
+proc SDL_FillSurfaceRect*(dst: Surface; rect: ptr SdlRect; colour: uint32): bool
+proc SDL_FillSurfaceRects*(dst: Surface; rects: ptr SdlRect; cnt: cint; colour: uint32): bool
+proc SDL_BlitSurface*(src: Surface; src_rect: ptr SdlRect; dst: Surface; dst_rect: ptr SdlRect): bool
+proc SDL_BlitSurfaceUnchecked*(src: Surface; src_rect: ptr SdlRect; dst: Surface; dst_rect: ptr SdlRect): bool
+proc SDL_BlitSurfaceScaled*(src: Surface; src_rect: ptr SdlRect; dst: Surface; dst_rect: ptr SdlRect; scale_mode: ScaleMode): bool
+proc SDL_BlitSurfaceUncheckedScaled*(src: Surface; src_rect: ptr SdlRect; dst: Surface; dst_rect: ptr SdlRect; scale_mode: ScaleMode): bool
+proc SDL_StretchSurface*(src: Surface; src_rect: ptr SdlRect; dst: Surface; dst_rect: ptr SdlRect; scale_mode: ScaleMode): bool
+proc SDL_BlitSurfaceTiled*(src: Surface; src_rect: ptr SdlRect; dst: Surface; dst_rect: ptr SdlRect): bool
+proc SDL_BlitSurfaceTiledWithScale*(src: Surface; src_rect: ptr SdlRect; scale: cfloat; scale_mode: ScaleMode, dst: Surface; dst_rect: ptr SdlRect): bool
+proc SDL_BlitSurface9Grid*(src: Surface; src_rect: ptr SdlRect; left_w, right_w, top_h, bottom_h: cint; scale: cfloat; scale_mode: ScaleMode, dst: Surface; dst_rect: ptr SdlRect): bool
 proc SDL_MapSurfaceRGB*(surf: Surface; r, g, b: uint8): uint32
 proc SDL_MapSurfaceRGBA*(surf: Surface; r, g, b, a: uint8): uint32
 proc SDL_ReadSurfacePixel*(surf: Surface; x, y: cint; r, g, b, a: ptr uint8): bool
@@ -167,7 +162,7 @@ proc alpha_mod*(surf: Surface): uint8 =
 proc blend_mode*(surf: Surface): BlendMode =
     let success = SDL_GetSurfaceBlendMode(surf, result.addr)
     sdl_assert success, &"Failed to get blend mode for surface ({surf})"
-proc clip_rect*(surf: Surface): Rect =
+proc clip_rect*(surf: Surface): SdlRect =
     let success = SDL_GetSurfaceClipRect(surf, result.addr)
     sdl_assert success, &"Failed to get clip rect for surface ({surf})"
 proc colour_key*(surf: Surface): uint32 =
@@ -189,7 +184,7 @@ proc set_alpha_mod*(surf: Surface; `mod`: uint8): bool {.discardable.} =
 proc set_blend_mode*(surf: Surface; blend_mode: BlendMode): bool {.discardable.} =
     let success = SDL_SetSurfaceBlendMode(surf, blend_mode)
     sdl_assert success, &"Failed to set blend mode for surface to '{blend_mode}' ({surf})"
-proc set_clip_rect*(surf: Surface; rect: Rect): bool {.discardable.} =
+proc set_clip_rect*(surf: Surface; rect: SdlRect): bool {.discardable.} =
     let success = SDL_SetSurfaceClipRect(surf, rect.addr)
     sdl_assert success, &"Failed to set clip rect for surface to '{rect}' ({surf})"
 
@@ -197,7 +192,7 @@ proc `colour_key=`*(surf: Surface; key: uint32)                  = set_colour_ke
 proc `colour_mod=`*(surf: Surface; `mod`: tuple[r, g, b: uint8]) = set_colour_mod surf, `mod`
 proc `alpha_mod=`*(surf: Surface; `mod`: uint8)                  = set_alpha_mod surf, `mod`
 proc `blend_mode=`*(surf: Surface; blend_mode: BlendMode)        = set_blend_mode surf, blend_mode
-proc `clip_rect=`*(surf: Surface; rect: Rect)                    = set_clip_rect surf, rect
+proc `clip_rect=`*(surf: Surface; rect: SdlRect)                    = set_clip_rect surf, rect
 
 proc disable_colour_key*(surf: Surface): bool {.discardable.} =
     var ck: uint32
@@ -229,39 +224,39 @@ proc premultiply_alpha*(surf: Surface; linear: bool): bool {.discardable.} =
 proc clear*(surf: Surface; r, g, b, a: float32): bool {.discardable.} =
     let success = SDL_ClearSurface(surf, cfloat r, cfloat g, cfloat b, cfloat a)
     sdl_assert success, &"Failed to clear surface with colour ({r}, {g}, {b}, {a}) ({surf})"
-proc clear*(surf: Surface; colour: ColourF): bool {.discardable.}    = clear surf, colour.r, colour.g, colour.b, colour.a
+proc clear*(surf: Surface; colour: SdlColourF): bool {.discardable.}    = clear surf, colour.r, colour.g, colour.b, colour.a
 proc fill*(surf: Surface; r, g, b, a: float32): bool {.discardable.} = clear surf, r, g, b, a
-proc fill*(surf: Surface; colour: ColourF): bool {.discardable.}     = clear surf, colour
+proc fill*(surf: Surface; colour: SdlColourF): bool {.discardable.}     = clear surf, colour
 
-proc fill*(surf: Surface; rect: Rect; colour: uint32 | Colour): bool {.discardable.} =
+proc fill*(surf: Surface; rect: SdlRect; colour: uint32 | SdlColour): bool {.discardable.} =
     let success = SDL_FillSurfaceRect(surf, rect.addr, colour)
     sdl_assert success, &"Failed to fill surface rect '{rect}' with colour '0x{colour:X}' ({surf})"
-proc fill*(surf: Surface; rects: openArray[Rect]; colour: uint32 | Colour): bool {.discardable.} =
+proc fill*(surf: Surface; rects: openArray[SdlRect]; colour: uint32 | SdlColour): bool {.discardable.} =
     let success = SDL_FillSurfaceRects(surf, rects[0].addr, cint rects.len, colour)
     sdl_assert success, &"Failed to fill surface rects '{rects}' with colour '0x{colour:X}' ({surf})"
 
-func ropt(r: Rect | Option[Rect]): ptr Rect =
-    when r is Rect:
+func ropt(r: SdlRect | Option[SdlRect]): ptr SdlRect =
+    when r is SdlRect:
         r.addr
     else:
         if r.is_some:
             (get r).addr
         else: nil
-proc blit*(src: Surface; src_rect: Rect | Option[Rect]; dst: Surface; dst_rect: Rect | Option[Rect]): bool {.discardable.} =
+proc blit*(src: Surface; src_rect: SdlRect | Option[SdlRect]; dst: Surface; dst_rect: SdlRect | Option[SdlRect]): bool {.discardable.} =
     let success = SDL_BlitSurface(src, ropt src_rect, dst, ropt dst_rect)
     sdl_assert success, &"Failed to blit from surface ({src_rect}: {src[]}) to ({dst_rect}: {dst[]})"
-proc blit*(src: Surface; src_rect: Rect | Option[Rect]; dst: Surface; dst_rect: Rect | Option[Rect]; scale_mode: ScaleMode): bool {.discardable.} =
+proc blit*(src: Surface; src_rect: SdlRect | Option[SdlRect]; dst: Surface; dst_rect: SdlRect | Option[SdlRect]; scale_mode: ScaleMode): bool {.discardable.} =
     let success = SDL_BlitSurfaceScaled(src, ropt src_rect, dst, ropt dst_rect, scale_mode)
     sdl_assert success, &"Failed to blit from surface scaled '{scale_mode}' ({src_rect}: {src[]}) to ({dst_rect}: {dst[]})"
 
-proc blit_tiled*(src: Surface; src_rect: Rect | Option[Rect]; dst: Surface; dst_rect: Rect | Option[Rect]): bool {.discardable.} =
+proc blit_tiled*(src: Surface; src_rect: SdlRect | Option[SdlRect]; dst: Surface; dst_rect: SdlRect | Option[SdlRect]): bool {.discardable.} =
     let success = SDL_BlitSurfaceTiled(src, ropt src_rect, dst, ropt dst_rect)
     sdl_assert success, &"Failed to blit from surface tiled ({src_rect}: {src[]}) to ({dst_rect}: {dst[]})"
-proc blit_tiled*(src: Surface; src_rect: Rect | Option[Rect]; dst: Surface; dst_rect: Rect | Option[Rect]; scale: SomeNumber; scale_mode: ScaleMode): bool {.discardable.} =
+proc blit_tiled*(src: Surface; src_rect: SdlRect | Option[SdlRect]; dst: Surface; dst_rect: SdlRect | Option[SdlRect]; scale: SomeNumber; scale_mode: ScaleMode): bool {.discardable.} =
     let success = SDL_BlitSurfaceTiledWithScale(src, ropt src_rect, cfloat scale, dst, ropt dst_rect, scale_mode)
     sdl_assert success, &"Failed to blit from surface tiled and scaled (x{scale}) '{scale_mode}' ({src_rect}: {src[]}) to ({dst_rect}: {dst[]})"
 
-proc blit_9grid*(src: Surface; src_rect: Rect | Option[Rect]; dst: Surface; dst_rect: Rect | Option[Rect];
+proc blit_9grid*(src: Surface; src_rect: SdlRect | Option[SdlRect]; dst: Surface; dst_rect: SdlRect | Option[SdlRect];
                  left_w, right_w, top_h, bottom_h: distinct SomeNumber;
                  scale: SomeNumber; scale_mode: ScaleMode;
                  ): bool {.discardable.} =
@@ -271,33 +266,33 @@ proc blit_9grid*(src: Surface; src_rect: Rect | Option[Rect]; dst: Surface; dst_
                                        cfloat scale, scale_mode, dst, ropt dst_rect)
     sdl_assert success, &"Failed to blit 9grid to surface [{left_w}, {right_h}, {top_h}, {bottom_h}] (scalex{scale} {scale_mode}) ({src_rect}: {src[]}) to ({dst_rect}: {dst[]})"
 
-proc stretch*(src: Surface; src_rect: Rect | Option[Rect]; dst: Surface; dst_rect: Rect | Option[Rect]; scale_mode: ScaleMode): bool {.discardable.} =
+proc stretch*(src: Surface; src_rect: SdlRect | Option[SdlRect]; dst: Surface; dst_rect: SdlRect | Option[SdlRect]; scale_mode: ScaleMode): bool {.discardable.} =
     let success = SDL_StretchSurface(src, ropt src_rect, dst, ropt dst_rect, scale_mode)
     sdl_assert success, &"Failed to stretch surface '{scale_mode}' ({src_rect}: {src[]}) to ({dst_rect}: {dst[]})"
 
-proc map*(surf: Surface; r, g, b: uint8): Colour    = SDL_MapSurfaceRGB surf, r, g, b
-proc map*(surf: Surface; r, g, b, a: uint8): Colour = SDL_MapSurfaceRGBA surf, r, g, b, a
-proc map*(surf: Surface; colour: Colour): Colour    = SDL_MapSurfaceRGBA surf, colour.r, colour.g, colour.b, colour.a
+proc map*(surf: Surface; r, g, b: uint8): SdlColour    = SDL_MapSurfaceRGB surf, r, g, b
+proc map*(surf: Surface; r, g, b, a: uint8): SdlColour = SDL_MapSurfaceRGBA surf, r, g, b, a
+proc map*(surf: Surface; colour: SdlColour): SdlColour = SDL_MapSurfaceRGBA surf, colour.r, colour.g, colour.b, colour.a
 
-proc read_pixel*(surf: Surface; x, y: distinct SomeNumber): Colour =
+proc read_pixel*(surf: Surface; x, y: distinct SomeNumber): SdlColour =
     let success = SDL_ReadSurfacePixel(surf, cint x, cint y, result.r.addr, result.g.addr, result.b.addr, result.a.addr)
     sdl_assert success, &"Failed to read pixel at {x}x{y} ({surf})"
-proc read_pixel_float*(surf: Surface; x, y: distinct SomeNumber): ColourF =
+proc read_pixel_float*(surf: Surface; x, y: distinct SomeNumber): SdlColourF =
     let success = SDL_ReadSurfacePixelFloat(surf, cint x, cint y, result.r.addr, result.g.addr, result.b.addr, result.a.addr)
     sdl_assert success, &"Failed to read pixel at {x}x{y} ({surf})"
 
-proc write_pixel*(surf: Surface; x, y: distinct SomeNumber; r, g, b, a: uint8): Colour =
+proc write_pixel*(surf: Surface; x, y: distinct SomeNumber; r, g, b, a: uint8): SdlColour =
     let success = SDL_WriteSurfacePixel(surf, cint x, cint y, result.r, result.g, result.b, result.a)
     sdl_assert success, &"Failed to write pixel at {x}x{y} ({r}, {g}, {b}, {a}) ({surf})"
-proc write_pixel*(surf: Surface; x, y: distinct SomeNumber; r, g, b, a: distinct SomeFloat): ColourF =
+proc write_pixel*(surf: Surface; x, y: distinct SomeNumber; r, g, b, a: distinct SomeFloat): SdlColourF =
     let success = SDL_WriteSurfacePixelFloat(surf, cint x, cint y, cfloat result.r, cfloat result.g, cfloat result.b, cfloat result.a)
     sdl_assert success, &"Failed to write pixel at {x}x{y} ({r}, {g}, {b}, {a}) ({surf})"
-proc write_pixel*(surf: Surface; x, y: distinct SomeNumber; colour: Colour | ColourF): Colour =
+proc write_pixel*(surf: Surface; x, y: distinct SomeNumber; colour: SdlColour | SdlColourF): SdlColour =
     write_pixel surf, x, y, colour.r, colour.g, colour.b, colour.a
 
-proc `[]`*(surf: Surface; x, y: distinct SomeNumber): Colour =
+proc `[]`*(surf: Surface; x, y: distinct SomeNumber): SdlColour =
     read_pixel surf, x, y
-proc `[]=`*(surf: Surface; x, y: distinct SomeNumber; colour: Colour | ColourF): Colour =
+proc `[]=`*(surf: Surface; x, y: distinct SomeNumber; colour: SdlColour | SdlColourF): SdlColour =
     write_pixel surf, x, y, colour
 
 {.pop.}

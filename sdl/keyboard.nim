@@ -1,6 +1,6 @@
 import common, bitgen, properties
 from video import Window
-from rect  import Rect
+from rect  import SdlRect
 
 const
     TextInputKindNumber*             = cstring "SDL.textinput.type"
@@ -573,8 +573,8 @@ proc sdl_start_text_input_with_properties*(win; props: PropertiesId): bool      
 proc sdl_text_input_active*(win): bool                                                       {.importc: "SDL_TextInputActive"             .}
 proc sdl_stop_text_input*(win): bool                                                         {.importc: "SDL_StopTextInput"               .}
 proc sdl_clear_composition*(win): bool                                                       {.importc: "SDL_ClearComposition"            .}
-proc sdl_set_text_input_area*(win; rect: ptr Rect; cursor: cint): bool                       {.importc: "SDL_SetTextInputArea"            .}
-proc sdl_get_text_input_area*(win; rect: ptr Rect; cursor: ptr cint): bool                   {.importc: "SDL_GetTextInputArea"            .}
+proc sdl_set_text_input_area*(win; rect: ptr SdlRect; cursor: cint): bool                    {.importc: "SDL_SetTextInputArea"            .}
+proc sdl_get_text_input_area*(win; rect: ptr SdlRect; cursor: ptr cint): bool                {.importc: "SDL_GetTextInputArea"            .}
 proc sdl_has_screen_keyboard_support*(): bool                                                {.importc: "SDL_HasScreenKeyboardSupport"    .}
 proc sdl_screen_keyboard_shown*(win): bool                                                   {.importc: "SDL_ScreenKeyboardShown"         .}
 {.pop.}
@@ -605,7 +605,7 @@ proc scancode*(name: string): ScanCode                      = sdl_get_scancode_f
 proc `$`*(code: ScanCode): string = $(sdl_get_scancode_name code)
 proc `$`*(key: KeyCode):   string = $(sdl_get_key_name key)
 
-proc set_text_input_area*(win: Window; rect: Rect; cursor: SomeInteger): bool {.discardable.} =
+proc set_text_input_area*(win: Window; rect: SdlRect; cursor: SomeInteger): bool {.discardable.} =
     result = sdl_set_text_input_area(win, rect.addr, cint cursor)
     sdl_assert result, &"Failed to set text input area to '{rect}' (cursor {cursor})"
 

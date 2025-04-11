@@ -1,5 +1,5 @@
 import std/options, common, bitgen, properties, pixels
-from rect    import Rect
+from rect    import SdlRect
 from surface import FlipMode
 from video   import Window
 
@@ -7,27 +7,27 @@ from video   import Window
 
 type TextureUsageFlag* = distinct uint32
 TextureUsageFlag.gen_bit_ops(
-    tufSampler           , tufColourTarget       , tufDepthStencilTarget                 , tufGraphicsStorageRead,
-    tufComputeStorageRead, tufComputeStorageWrite, tufComputeStorageSimultaneousReadWrite,
+    TexUsageSampler           , TexUsageColourTarget       , TexUsageDepthStencilTarget                 , TexUsageGraphicsStorageRead,
+    TexUsageComputeStorageRead, TexUsageComputeStorageWrite, TexUsageComputeStorageSimultaneousReadWrite,
 )
 
 type BufferUsageFlag* = distinct uint32
 BufferUsageFlag.gen_bit_ops(
-    bufVertex            , bufIndex              , bufIndirect, bufGraphicsStorage,
-    bufComputeStorageRead, bufComputeStorageWrite,
+    BufUsageVertex            , BufUsageIndex              , BufUsageIndirect, BufUsageGraphicsStorage,
+    BufUsageComputeStorageRead, BufUsageComputeStorageWrite,
 )
 
 type ShaderFormatFlag* = distinct uint32
 ShaderFormatFlag.gen_bit_ops(
-    sffPrivate, sffSpirV   , sffDxBc, sffDxIl,
-    sffMsl    , sffMetalLib,
+    ShaderFmtPrivate, ShaderFmtSpirV   , ShaderFmtDxBc, ShaderFmtDxIl,
+    ShaderFmtMsl    , ShaderFmtMetalLib,
 )
-const sffInvalid* = ShaderFormatFlag 0
+const ShaderFmtInvalid* = ShaderFormatFlag 0
 
 type ColourComponentFlag* = distinct uint8
-ColourComponentFlag.gen_bit_ops ccfR, ccfG, ccfB, ccfA
-const ccfNone* = ColourComponentFlag 0
-const ccfRgba* = ccfR or ccfG or ccfB or ccfA
+ColourComponentFlag.gen_bit_ops ColourCompR, ColourCompG, ColourCompB, ColourCompA
+const ColourCompNone* = ColourComponentFlag 0
+const ColourCompRgba* = ColourCompR or ColourCompG or ColourCompB or ColourCompA
 
 type
     PrimitiveKind* {.size: sizeof(cint).} = enum
@@ -551,7 +551,7 @@ type
         tex*                 : Texture
         mip_lvl*             : uint32
         layer_or_depth_plane*: uint32
-        clear_colour*        : ColourF
+        clear_colour*        : SdlColourF
         load_op*             : LoadOp
         store_op*            : StoreOp
         resolve_tex*         : Texture
@@ -575,7 +575,7 @@ type
     BlitInfo* = object
         src*, dst*   : BlitRegion
         load_op*     : LoadOp
-        clear_colour*: ColourF
+        clear_colour*: SdlColourF
         flip_mode*   : FlipMode
         filter*      : Filter
         cycle*       : bool
@@ -731,8 +731,8 @@ using dsti: ptr DepthStencilTargetInfo
 proc sdl_begin_gpu_render_pass*(cmd_buf; cti: ptr ColourTargetInfo; ct_cnt: uint32; dsti): RenderPass                    {.importc: "SDL_BeginGPURenderPass"              .}
 proc sdl_bind_gpu_graphics_pipeline*(ren_pass; gfx_pipeln)                                                               {.importc: "SDL_BindGPUGraphicsPipeline"         .}
 proc sdl_set_gpu_viewport*(ren_pass; viewport: ptr Viewport)                                                             {.importc: "SDL_SetGPUViewport"                  .}
-proc sdl_set_gpu_scissor*(ren_pass; scissor: ptr Rect)                                                                   {.importc: "SDL_SetGPUScissor"                   .}
-proc sdl_set_gpu_blend_constants*(ren_pass; blend_consts: ColourF)                                                       {.importc: "SDL_SetGPUBlendConstants"            .}
+proc sdl_set_gpu_scissor*(ren_pass; scissor: ptr SdlRect)                                                                {.importc: "SDL_SetGPUScissor"                   .}
+proc sdl_set_gpu_blend_constants*(ren_pass; blend_consts: SdlColourF)                                                    {.importc: "SDL_SetGPUBlendConstants"            .}
 proc sdl_set_gpu_stencil_reference*(ren_pass; `ref`: uint8)                                                              {.importc: "SDL_SetGPUStencilReference"          .}
 proc sdl_bind_gpu_vertex_buffer*(ren_pass; fst_slot; binds: ptr BufferBinding; bind_cnt)                                 {.importc: "SDL_BindGPUVertexBuffers"            .}
 proc sdl_bind_gpu_index_buffer*(ren_pass; `bind`: ptr BufferBinding; idx_elem_sz: IndexElementSize)                      {.importc: "SDL_BindGPUIndexBuffer"              .}
@@ -865,7 +865,7 @@ proc create_graphics_pipeline*(dev; vs, fs: Shader; vtx_input_state: VertexInput
 
 proc create_compute_pipeline*(dev; code: string; thread_cnt: array[3, SomeInteger];
                               entry = "main";
-                              fmt   = sffSpirV;
+                              fmt   = ShaderFmtSpirV;
                               props = InvalidProperty;
                               sampler_cnt    : SomeInteger = 0;
                               r_tex_cnt      : SomeInteger = 0;
@@ -895,7 +895,7 @@ proc create_compute_pipeline*(dev; code: string; thread_cnt: array[3, SomeIntege
 
 proc create_shader*(dev; stage: ShaderStage; code: string;
                     entry = "main";
-                    fmt   = sffSpirV;
+                    fmt   = ShaderFmtSpirV;
                     props = InvalidProperty;
                     sampler_cnt    : SomeInteger = 0;
                     storage_tex_cnt: SomeInteger = 0;
@@ -920,7 +920,7 @@ proc create_shader*(dev; stage: ShaderStage; code: string;
 # TODO: shader format and shader stage detection via file extension
 proc create_shader_from_file*(dev; stage: ShaderStage; path: string;
                               entry = "main";
-                              fmt   = sffSpirV;
+                              fmt   = ShaderFmtSpirV;
                               props = InvalidProperty;
                               sampler_cnt    : SomeInteger = 0;
                               storage_tex_cnt: SomeInteger = 0;
@@ -981,7 +981,7 @@ proc create_sampler*(dev;
 proc create_texture*(dev; w, h: uint32;
                      kind               = Texture2D;
                      fmt                = R8G8B8A8Unorm;
-                     usage              = Sampler;
+                     usage              = TexUsageSampler;
                      props              = InvalidProperty;
                      sample_cnt         = Samples1;
                      depth_or_layer_cnt = 1'u32;
@@ -1145,16 +1145,16 @@ proc `bind`*(ren_pass; buf: BufferBinding; idx_elem_sz: IndexElementSize)     = 
 proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[BufferBinding]) = ren_pass.sdl_bind_gpu_vertex_buffer uint32 fst_slot, bufs[0].addr, uint32 bufs.len
 proc `bind`*(ren_pass; fst_slot: SomeInteger; binds: openArray[TextureSamplerBinding]; stage: ShaderStage = Fragment) =
     case stage
-    of ssVertex  :ren_pass.sdl_bind_gpu_vertex_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
-    of ssFragment:ren_pass.sdl_bind_gpu_fragment_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
+    of Vertex  :ren_pass.sdl_bind_gpu_vertex_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
+    of Fragment:ren_pass.sdl_bind_gpu_fragment_samplers uint32 fst_slot, binds[0].addr, uint32 binds.len
 proc `bind`*(ren_pass; fst_slot: SomeInteger; texs: openArray[Texture]; stage: ShaderStage = Vertex) =
     case stage
-    of ssVertex  : ren_pass.sdl_bind_gpu_vertex_storage_textures   uint32 fst_slot, texs[0].addr, uint32 texs.len
-    of ssFragment: ren_pass.sdl_bind_gpu_fragment_storage_textures uint32 fst_slot, texs[0].addr, uint32 texs.len
+    of Vertex  : ren_pass.sdl_bind_gpu_vertex_storage_textures   uint32 fst_slot, texs[0].addr, uint32 texs.len
+    of Fragment: ren_pass.sdl_bind_gpu_fragment_storage_textures uint32 fst_slot, texs[0].addr, uint32 texs.len
 proc `bind`*(ren_pass; fst_slot: SomeInteger; bufs: openArray[Buffer]; stage: ShaderStage = Vertex) =
     case stage
-    of ssVertex  : ren_pass.sdl_bind_gpu_vertex_storage_buffers   uint32 fst_slot, bufs[0].addr, uint32 bufs.len
-    of ssFragment: ren_pass.sdl_bind_gpu_fragment_storage_buffers uint32 fst_slot, bufs[0].addr, uint32 bufs.len
+    of Vertex  : ren_pass.sdl_bind_gpu_vertex_storage_buffers   uint32 fst_slot, bufs[0].addr, uint32 bufs.len
+    of Fragment: ren_pass.sdl_bind_gpu_fragment_storage_buffers uint32 fst_slot, bufs[0].addr, uint32 bufs.len
 
 proc draw*(ren_pass; vtx_cnt: SomeInteger;
            inst_cnt: SomeInteger = 1;
@@ -1203,10 +1203,10 @@ proc dispatch_indirect*(compute_pass; buf: Buffer; offset: SomeInteger) = sdl_di
 proc end_compute_pass*(compute_pass) = sdl_end_gpu_compute_pass compute_pass
 proc `end`*(compute_pass) = end_compute_pass compute_pass
 
-proc `viewport=`*(ren_pass; vp: Option[Viewport])  = ren_pass.sdl_set_gpu_viewport (if vp.is_some: (get vp).addr else: nil)
-proc `scissor=`*(ren_pass; scissor: Option[Rect])  = ren_pass.sdl_set_gpu_scissor (if scissor.is_some: (get scissor).addr else: nil)
-proc `blend_consts=`*(ren_pass; consts: ColourF)   = ren_pass.sdl_set_gpu_blend_constants consts
-proc `stencil_ref=`*(ren_pass; `ref`: SomeInteger) = ren_pass.sdl_set_gpu_stencil_reference uint8 `ref`
+proc `viewport=`*(ren_pass; vp: Option[Viewport])     = ren_pass.sdl_set_gpu_viewport (if vp.is_some: (get vp).addr else: nil)
+proc `scissor=`*(ren_pass; scissor: Option[SdlRect])  = ren_pass.sdl_set_gpu_scissor (if scissor.is_some: (get scissor).addr else: nil)
+proc `blend_consts=`*(ren_pass; consts: SdlColourF)   = ren_pass.sdl_set_gpu_blend_constants consts
+proc `stencil_ref=`*(ren_pass; `ref`: SomeInteger)    = ren_pass.sdl_set_gpu_stencil_reference uint8 `ref`
 
 proc set_buf_name*(dev; buf; text: string) = sdl_set_gpu_buffer_name  dev, buf, cstring text
 proc set_tex_name*(dev; tex; text: string) = sdl_set_gpu_texture_name dev, tex, cstring text

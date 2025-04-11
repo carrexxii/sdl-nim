@@ -213,13 +213,13 @@ const
 type
     Pixel* = distinct uint32
 
-    Colour* = object
+    SdlColour* = object
         r*: uint8
         g*: uint8
         b*: uint8
         a*: uint8
 
-    ColourF* = object
+    SdlColourF* = object
         r*: float32
         g*: float32
         b*: float32
@@ -228,7 +228,7 @@ type
     Palette* = distinct pointer
     PaletteObj* = object
         colour_cnt*: int32
-        colours*   : ptr UncheckedArray[Colour]
+        colours*   : ptr UncheckedArray[SdlColour]
         version: uint32
         ref_cnt: int32
 
@@ -260,18 +260,18 @@ func pixel_format*(kind: PixelKind; order: PackedOrder; layout: PackedLayout; bi
         ((int32 bytes) shl 0 )
     )
 
-func colour*(r, g, b: uint8; a = 255'u8): Colour   =  Colour(r: r, g: g, b: b, a: a)
-func colour*(r, g, b: float32; a = 1'f32): ColourF = ColourF(r: r, g: g, b: b, a: a)
-func colour*(hex: uint32): Colour =
-    Colour(r: uint8(hex and 0x0000_00FF'u32),
-           g: uint8(hex and 0x0000_FF00'u32),
-           b: uint8(hex and 0x00FF_0000'u32),
-           a: uint8(hex and 0xFF00_0000'u32))
+func sdl_colour*(r, g, b: uint8; a = 255'u8): SdlColour   =  SdlColour(r: r, g: g, b: b, a: a)
+func sdl_colour*(r, g, b: float32; a = 1'f32): SdlColourF = SdlColourF(r: r, g: g, b: b, a: a)
+func sdl_colour*(hex: uint32): SdlColour =
+    SdlColour(r: uint8(hex and 0x0000_00FF'u32),
+              g: uint8(hex and 0x0000_FF00'u32),
+              b: uint8(hex and 0x00FF_0000'u32),
+              a: uint8(hex and 0xFF00_0000'u32))
 
-converter to_colour*(rgba: uint32): Colour = colour rgba
+converter to_sdl_colour*(rgba: uint32): SdlColour = sdl_colour rgba
 
-func `+`*[T: Colour | ColourF](a, b: T): T = colour a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a
-func `-`*[T: Colour | ColourF](a, b: T): T = colour a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a
+func `+`*[T: SdlColour | SdlColourF](a, b: T): T = sdl_colour a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a
+func `-`*[T: SdlColour | SdlColourF](a, b: T): T = sdl_colour a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a
 
 {.push importc, cdecl, dynlib: SdlLib.}
 proc SDL_GetPixelFormatName(fmt: PixelFormat): cstring
@@ -279,7 +279,7 @@ proc SDL_GetMasksForPixelFormat*(fmt: PixelFormat; bpp: ptr cint; rmask, gmask, 
 proc SDL_GetPixelFormatForMasks*(bpp: cint; rmask, gmask, bmask, amask: uint32): PixelFormat
 proc SDL_GetPixelFormatDetails*(fmt: PixelFormat): PixelFormatDetails
 proc SDL_CreatePalette*(colour_cnt: cint): Palette
-proc SDL_SetPaletteColors*(palette: Palette; colors: ptr Colour; fst_colour, colour_cnt: cint): bool
+proc SDL_SetPaletteColors*(palette: Palette; colors: ptr SdlColour; fst_colour, colour_cnt: cint): bool
 proc SDL_MapRGB*(fmt: PixelFormatDetails; palette: Palette; r, g, b: uint8): Pixel
 proc SDL_MapRGBA*(fmt: PixelFormatDetails; palette: Palette; r, g, b, a: uint8): Pixel
 proc SDL_GetRGB*(px: Pixel; fmt: PixelFormatDetails; palette: Palette; r, g, b: ptr uint8)
@@ -302,10 +302,10 @@ proc create_palette*(colour_cnt: SomeInteger): Palette =
     result = SDL_CreatePalette(cint colour_cnt)
     sdl_assert result, &"Failed to create palette with {colour_cnt} colours"
 
-proc set_colours*(palette: Palette; colours: openArray[Colour]; fst_colour: SomeInteger = 0): bool {.discardable.} =
+proc set_colours*(palette: Palette; colours: openArray[SdlColour]; fst_colour: SomeInteger = 0): bool {.discardable.} =
     result = SDL_SetPaletteColors(palette, colours[0].addr, cint fst_colour, cint colours.len)
     sdl_assert result, &"Failed to set colours for palette (starting from {fst_colour} -> {colours})"
-proc `colours=`*(palette: Palette; colours: openArray[Colour]) = set_colours palette, colours
+proc `colours=`*(palette: Palette; colours: openArray[SdlColour]) = set_colours palette, colours
 
 proc map*(fmt: PixelFormatDetails; palette: Palette; r, g, b: uint8): Pixel    = SDL_MapRGB fmt, palette, r, g, b
 proc map*(fmt: PixelFormatDetails; palette: Palette; r, g, b, a: uint8): Pixel = SDL_MapRGBA fmt, palette, r, g, b, a
@@ -321,36 +321,36 @@ proc rgba*(px: Pixel; fmt: PixelFormatDetails; palette: Option[Palette]): tuple[
 {.pop.}
 
 const
-    Black*   = colour(0  , 0  , 0  )
-    White*   = colour(255, 255, 255)
-    Red*     = colour(255, 0  , 0  )
-    Lime*    = colour(0  , 255, 0  )
-    Blue*    = colour(0  , 0  , 255)
-    Yellow*  = colour(255, 255, 0  )
-    Cyan*    = colour(0  , 255, 255)
-    Magenta* = colour(255, 0  , 255)
-    Silver*  = colour(192, 192, 192)
-    Grey*    = colour(128, 128, 128)
-    Maroon*  = colour(128, 0  , 0  )
-    Olive*   = colour(128, 128, 0  )
-    Green*   = colour(0  , 128, 0  )
-    Purple*  = colour(128, 0  , 128)
-    Teal*    = colour(0  , 128, 128)
-    Navy*    = colour(0  , 0  , 128)
+    Black*   = sdl_colour(0  , 0  , 0  )
+    White*   = sdl_colour(255, 255, 255)
+    Red*     = sdl_colour(255, 0  , 0  )
+    Lime*    = sdl_colour(0  , 255, 0  )
+    Blue*    = sdl_colour(0  , 0  , 255)
+    Yellow*  = sdl_colour(255, 255, 0  )
+    Cyan*    = sdl_colour(0  , 255, 255)
+    Magenta* = sdl_colour(255, 0  , 255)
+    Silver*  = sdl_colour(192, 192, 192)
+    Grey*    = sdl_colour(128, 128, 128)
+    Maroon*  = sdl_colour(128, 0  , 0  )
+    Olive*   = sdl_colour(128, 128, 0  )
+    Green*   = sdl_colour(0  , 128, 0  )
+    Purple*  = sdl_colour(128, 0  , 128)
+    Teal*    = sdl_colour(0  , 128, 128)
+    Navy*    = sdl_colour(0  , 0  , 128)
 
-    FBlack*   = colour(0.0, 0.0, 0.0)
-    FWhite*   = colour(1.0, 1.0, 1.0)
-    FRed*     = colour(1.0, 0.0, 0.0)
-    FLime*    = colour(0.0, 1.0, 0.0)
-    FBlue*    = colour(0.0, 0.0, 1.0)
-    FYellow*  = colour(1.0, 1.0, 0.0)
-    FCyan*    = colour(0.0, 1.0, 1.0)
-    FMagenta* = colour(1.0, 0.0, 1.0)
-    FSilver*  = colour(0.8, 0.8, 0.8)
-    FGrey*    = colour(0.5, 0.5, 0.5)
-    FMaroon*  = colour(0.5, 0.0, 0.0)
-    FOlive*   = colour(0.5, 0.5, 0.0)
-    FGreen*   = colour(0.0, 0.5, 0.0)
-    FPurple*  = colour(0.5, 0.0, 0.5)
-    FTeal*    = colour(0.0, 0.5, 0.5)
-    FNavy*    = colour(0.0, 0.0, 0.5)
+    FBlack*   = sdl_colour(0.0, 0.0, 0.0)
+    FWhite*   = sdl_colour(1.0, 1.0, 1.0)
+    FRed*     = sdl_colour(1.0, 0.0, 0.0)
+    FLime*    = sdl_colour(0.0, 1.0, 0.0)
+    FBlue*    = sdl_colour(0.0, 0.0, 1.0)
+    FYellow*  = sdl_colour(1.0, 1.0, 0.0)
+    FCyan*    = sdl_colour(0.0, 1.0, 1.0)
+    FMagenta* = sdl_colour(1.0, 0.0, 1.0)
+    FSilver*  = sdl_colour(0.8, 0.8, 0.8)
+    FGrey*    = sdl_colour(0.5, 0.5, 0.5)
+    FMaroon*  = sdl_colour(0.5, 0.0, 0.0)
+    FOlive*   = sdl_colour(0.5, 0.5, 0.0)
+    FGreen*   = sdl_colour(0.0, 0.5, 0.0)
+    FPurple*  = sdl_colour(0.5, 0.0, 0.5)
+    FTeal*    = sdl_colour(0.0, 0.5, 0.5)
+    FNavy*    = sdl_colour(0.0, 0.0, 0.5)

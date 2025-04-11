@@ -58,7 +58,7 @@ type
     Text* = ptr TextObj
     TextObj* = object
         text*     : cstring
-        colour*   : ColourF
+        colour*   : SdlColourF
         ln_count* : cint
         ref_count*: cint
         _         : TextData
@@ -69,19 +69,19 @@ type
         len*        : cint
         ln_idx*     : cint
         cluster_idx*: cint
-        rect*       : Rect
+        rect*       : SdlRect
 
     FillOperation* = ptr FillOperationObj
     FillOperationObj* = object
         cmd* : DrawCommand
-        rect*: Rect
+        rect*: SdlRect
 
     CopyOperation* = ptr CopyOperationObj
     CopyOperationObj* = object
         cmd*        : DrawCommand
         text_offset*: cint
         glyph_index*: uint32
-        src*, dst*  : Rect
+        src*, dst*  : SdlRect
         _           : pointer
 
     DrawOperation* = ptr DrawOperationObj
@@ -183,15 +183,15 @@ proc ttf_get_string_size*(font; text: cstring; len: csize_t; w, h: ptr cint): bo
 proc ttf_get_string_size_wrapped*(font; text: cstring; len: csize_t; wrap_len: cint; w, h: ptr cint): bool  {.importc: "TTF_GetStringSizeWrapped" .}
 proc ttf_measure_string*(font; text: cstring; len: csize_t; measure_w: cint; extent, count: ptr cint): bool {.importc: "TTF_MeasureString"        .}
 
-proc ttf_render_text_shaded*(font; text: cstring; len: csize_t; fg, bg: Colour): Surface                         {.importc: "TTF_RenderText_Shaded"         .}
-proc ttf_render_text_shaded_wrapped*(font; text: cstring; len: csize_t; fg, bg: Colour; wrap_len: cint): Surface {.importc: "TTF_RenderText_Shaded_Wrapped" .}
-proc ttf_render_glyph_shaded*(font; ch: uint32; fg, bg: Colour): Surface                                         {.importc: "TTF_RenderGlyph_Shaded"        .}
-proc ttf_render_text_blended*(font; text: cstring; len: csize_t; fg: Colour): Surface                            {.importc: "TTF_RenderText_Blended"        .}
-proc ttf_render_text_blended_wrapped*(font; text: cstring; len: csize_t; fg: Colour; wrap_len: cint): Surface    {.importc: "TTF_RenderText_Blended_Wrapped".}
-proc ttf_render_glyph_blended*(font; ch: uint32; fg: Colour): Surface                                            {.importc: "TTF_RenderGlyph_Blended"       .}
-proc ttf_render_text_lcd*(font; text: cstring; len: csize_t; fg, bg: Colour): Surface                            {.importc: "TTF_RenderText_LCD"            .}
-proc ttf_render_text_lcd_wrapped*(font; text: cstring; len: csize_t; fg, bg: Colour; wrap_len: cint): Surface    {.importc: "TTF_RenderText_LCD_Wrapped"    .}
-proc ttf_render_glyph_lcd*(font; ch: uint32; fg, bg: Colour): Surface                                            {.importc: "TTF_RenderGlyph_LCD"           .}
+proc ttf_render_text_shaded*(font; text: cstring; len: csize_t; fg, bg: SdlColour): Surface                         {.importc: "TTF_RenderText_Shaded"         .}
+proc ttf_render_text_shaded_wrapped*(font; text: cstring; len: csize_t; fg, bg: SdlColour; wrap_len: cint): Surface {.importc: "TTF_RenderText_Shaded_Wrapped" .}
+proc ttf_render_glyph_shaded*(font; ch: uint32; fg, bg: SdlColour): Surface                                         {.importc: "TTF_RenderGlyph_Shaded"        .}
+proc ttf_render_text_blended*(font; text: cstring; len: csize_t; fg: SdlColour): Surface                            {.importc: "TTF_RenderText_Blended"        .}
+proc ttf_render_text_blended_wrapped*(font; text: cstring; len: csize_t; fg: SdlColour; wrap_len: cint): Surface    {.importc: "TTF_RenderText_Blended_Wrapped".}
+proc ttf_render_glyph_blended*(font; ch: uint32; fg: SdlColour): Surface                                            {.importc: "TTF_RenderGlyph_Blended"       .}
+proc ttf_render_text_lcd*(font; text: cstring; len: csize_t; fg, bg: SdlColour): Surface                            {.importc: "TTF_RenderText_LCD"            .}
+proc ttf_render_text_lcd_wrapped*(font; text: cstring; len: csize_t; fg, bg: SdlColour; wrap_len: cint): Surface    {.importc: "TTF_RenderText_LCD_Wrapped"    .}
+proc ttf_render_glyph_lcd*(font; ch: uint32; fg, bg: SdlColour): Surface                                            {.importc: "TTF_RenderGlyph_LCD"           .}
 
 proc ttf_create_surface_text_engine*(): TextEngine                                             {.importc: "TTF_CreateSurfaceTextEngine"  .}
 proc ttf_draw_surface_text*(text; x, y: cint; surface): bool                                   {.importc: "TTF_DrawSurfaceText"          .}
@@ -345,7 +345,7 @@ proc `lang=`*(font; lang_bcp47: string)               = font.language       = la
 using
     text    : string
     ch      : Rune
-    bg, fg  : Colour
+    bg, fg  : SdlColour
     wrap_len: SomeInteger
 proc render_assert(res: Surface; text: string) =
     sdl_assert res, &"Failed to render font text '{text}'"

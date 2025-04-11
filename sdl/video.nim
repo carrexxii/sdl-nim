@@ -83,8 +83,8 @@ proc sdl_get_displays*(count: ptr cint): ptr DisplayId                          
 proc sdl_get_primary_display*(): DisplayId                                                             {.importc: "SDL_GetPrimaryDisplay"              .}
 proc sdl_get_display_properties*(display): PropertiesId                                                {.importc: "SDL_GetDisplayProperties"           .}
 proc sdl_get_display_name*(display): cstring                                                           {.importc: "SDL_GetDisplayName"                 .}
-proc sdl_get_display_bounds*(display; rect: ptr Rect): bool                                            {.importc: "SDL_GetDisplayBounds"               .}
-proc sdl_get_display_usable_bounds*(display; rect: ptr Rect): bool                                     {.importc: "SDL_GetDisplayUsableBounds"         .}
+proc sdl_get_display_bounds*(display; rect: ptr SdlRect): bool                                         {.importc: "SDL_GetDisplayBounds"               .}
+proc sdl_get_display_usable_bounds*(display; rect: ptr SdlRect): bool                                  {.importc: "SDL_GetDisplayUsableBounds"         .}
 proc sdl_get_natural_display_orientation*(display): DisplayOrientation                                 {.importc: "SDL_GetNaturalDisplayOrientation"   .}
 proc sdl_get_current_display_orientation*(display): DisplayOrientation                                 {.importc: "SDL_GetCurrentDisplayOrientation"   .}
 proc sdl_get_display_content_scale*(display): cfloat                                                   {.importc: "SDL_GetDisplayContentScale"         .}
@@ -92,8 +92,8 @@ proc sdl_get_fullscreen_display_modes*(display; count: ptr cint): ptr UncheckedA
 proc sdl_get_closest_fullscreen_display_mode*(display; w, h: cint; refresh: cfloat; hd: bool): pointer {.importc: "SDL_GetClosestFullscreenDisplayMode".}
 proc sdl_get_desktop_display_mode*(display): DisplayMode                                               {.importc: "SDL_GetDesktopDisplayMode"          .}
 proc sdl_get_current_display_mode*(display): DisplayMode                                               {.importc: "SDL_GetCurrentDisplayMode"          .}
-proc sdl_get_display_for_point*(point: ptr Point): DisplayId                                           {.importc: "SDL_GetDisplayForPoint"             .}
-proc sdl_get_display_for_rect*(point: ptr Rect): DisplayId                                             {.importc: "SDL_GetDisplayForRect"              .}
+proc sdl_get_display_for_point*(point: ptr SdlPoint): DisplayId                                        {.importc: "SDL_GetDisplayForPoint"             .}
+proc sdl_get_display_for_rect*(point: ptr SdlRect): DisplayId                                          {.importc: "SDL_GetDisplayForRect"              .}
 proc sdl_get_display_for_window*(win): DisplayId                                                       {.importc: "SDL_GetDisplayForWindow"            .}
 proc sdl_get_window_pixel_density*(win): cfloat                                                        {.importc: "SDL_GetWindowPixelDensity"          .}
 proc sdl_get_window_display_scale*(win): cfloat                                                        {.importc: "SDL_GetWindowDisplayScale"          .}
@@ -117,10 +117,10 @@ proc create_popup*(parent: Window; x, y, w, h: SomeInteger; flags = winNone): Wi
     result = sdl_create_popup_window(parent, cint x, cint y, cint w, cint h, flags)
     sdl_assert result, &"Failed to create popup window"
 
-proc bounds*(display): Rect =
+proc bounds*(display): SdlRect =
     let success = sdl_get_display_bounds(display, result.addr)
     sdl_assert success, &"Failed to get display bounds"
-proc usable_bounds*(display): Rect =
+proc usable_bounds*(display): SdlRect =
     let success = sdl_get_display_usable_bounds(display, result.addr)
     sdl_assert success, &"Failed to get display usable bounds"
 
@@ -157,12 +157,12 @@ proc centre_window*(win): bool {.discardable.} =
     sdl_assert result, &"Failed to centre window"
 
 proc get_display_at*(x, y: SomeInteger): DisplayId =
-    let point = point(x, y)
+    let point = sdl_point(x, y)
     result = sdl_get_display_for_point point.addr
     sdl_assert result, &"Failed to get display at ({x}, {y})"
 
 proc get_display_at*(x, y, w, h: SomeInteger): DisplayId =
-    let rect = rect(x, y, w, h)
+    let rect = sdl_rect(x, y, w, h)
     result = sdl_get_display_for_rect rect.addr
     sdl_assert result, &"Failed to get display at {rect}"
 
