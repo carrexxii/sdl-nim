@@ -55,7 +55,7 @@ type
         font*    : Font
 
 func create_context*(renderer: Renderer; font: Font; theme = UIThemeSet(); rect = SdlRectF()): UIContext =
-    assert ttf.was_init(), "UI needs TTF initialized"
+    assert ttf.init_count() > 0, "UI needs TTF initialized"
     font.size = theme.font_size
 
     var ui_rect: SdlRectF
@@ -88,7 +88,7 @@ proc add_object*(panel: var UIPanel; kind: UIObjectKind; x, y, w, h: float32; te
     case kind
     of Button:
         if text != "":
-            let text_surf = ctx.font.render(text, ctx.theme.font)
+            let text_surf = ctx.font.render_blended(text, ctx.theme.font)
             let text_tex  = ctx.renderer.create_texture text_surf
             let (tw, th)  = ctx.font.size text
             let trect = sdl_rectf(w/2 - tw/2, h/2 - th/2, float32 tw, float32 th)

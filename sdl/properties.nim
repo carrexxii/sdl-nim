@@ -169,6 +169,23 @@ const
     GamepadCapRumbleBoolean*        = JoystickCapRumbleBoolean
     GamepadCapTriggerRumbleBoolean* = JoystickCapTriggerRumbleBoolean
 
+    FontCreateFilenameString*           = PropertyName "SDL_ttf.font.create.filename"
+    FontCreateIostreamPointer*          = PropertyName "SDL_ttf.font.create.iostream"
+    FontCreateIostreamOffsetNumber*     = PropertyName "SDL_ttf.font.create.iostream.offset"
+    FontCreateIostreamAutocloseBoolean* = PropertyName "SDL_ttf.font.create.iostream.autoclose"
+    FontCreateSizeFloat*                = PropertyName "SDL_ttf.font.create.size"
+    FontCreateFaceNumber*               = PropertyName "SDL_ttf.font.create.face"
+    FontCreateHorizontalDpiNumber*      = PropertyName "SDL_ttf.font.create.hdpi"
+    FontCreateVerticalDpiNumber*        = PropertyName "SDL_ttf.font.create.vdpi"
+    FontCreateExistingFont*             = PropertyName "SDL_ttf.font.create.existing_font"
+    FontOutlineLineCapNumber*           = PropertyName "SDL_ttf.font.outline.line_cap"
+    FontOutlineLineJoinNumber*          = PropertyName "SDL_ttf.font.outline.line_join"
+    FontOutlineMiterLimitNumber*        = PropertyName "SDL_ttf.font.outline.miter_limit"
+    RendererTextEngineRenderer*         = PropertyName "SDL_ttf.renderer_text_engine.create.renderer"
+    RendererTextEngineAtlasTextureSize* = PropertyName "SDL_ttf.renderer_text_engine.create.atlas_texture_size"
+    GpuTextEngineDevice*                = PropertyName "SDL_ttf.gpu_text_engine.create.device"
+    GpuTextEngineAtlasTextureSize*      = PropertyName "SDL_ttf.gpu_text_engine.create.atlas_texture_size"
+
 type PropertyKind* {.size: sizeof(cint).} = enum
     Invalid
     Pointer

@@ -16,8 +16,7 @@ ttf.init()
 let (win, ren) = create_window_and_renderer("SDL UI Tests", WinW, WinH, winResizeable)
 ren.draw_colour = Olive
 
-let font = open_font &"tests/fonts/{FontName}.ttf"
-font.sz = 16
+let font = open_font(&"tests/fonts/{FontName}.ttf", 16)
 
 var ui_ctx = ren.create_context font
 

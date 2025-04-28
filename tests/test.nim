@@ -29,8 +29,7 @@ ttf.init()
 let (win, ren) = create_window_and_renderer("SDL Tests", WinW, WinH, winResizeable)
 ren.draw_colour = Olive
 
-let font = open_font &"tests/fonts/{FontName}.ttf"
-font.size = 16
+let font = open_font(&"tests/fonts/{FontName}.ttf", 16)
 let font_h = font.height()
 
 let msg = font.render_lcd(&"Font: '{FontName}'\n\n" & TestText, Black, Olive, wrap_len = WinW - 200)
